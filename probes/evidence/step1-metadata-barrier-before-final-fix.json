@@ -1,0 +1,1112 @@
+{
+  "cleanup": {
+    "clear_reply": {
+      "id": "step1-1169860371921875",
+      "result": {
+        "type": "ok"
+      }
+    }
+  },
+  "commands": [
+    {
+      "argv": [
+        "/Users/iurysouza/.local/bin/herdr",
+        "--default-config"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "# herdr configuration\n# Place this file at ~/.config/herdr/config.toml\n\n# Show first-run notification setup on startup.\n# Missing also shows onboarding; set false after you've chosen.\n# onboarding = true\n\n[theme]\n# Built-in themes: catppuccin, terminal, tokyo-night, dracula, nord,\n#                  gruvbox, one-dark, solarized, kanagawa, rose-pine,\n#                  vesper\n# name = \"catppuccin\"\n\n# Follow host terminal light/dark appearance and switch Herdr UI themes.\n# Existing manual behavior is unchanged unless this is true.\n# auto_switch = false\n# dark_name = \"catppuccin\"\n# light_name = \"catppuccin-latte\"\n\n# Override individual color tokens on top of the base theme.\n# Accepts: hex (#rrggbb), named colors, rgb(r,g,b), or panel_bg = \"reset\"\n# [theme.custom]\n# sidebar_bg = \"#181825\"\n# active_row_bg = \"#1e1e2e\"\n# selection_bg = \"#313244\"\n# panel_bg = \"reset\"\n# accent = \"#f5c2e7\"\n# red = \"#ff6188\"\n# green = \"#a6e3a1\"\n\n[terminal]\n# Executable used for new interactive panes.\n# Empty means $SHELL, then /bin/sh.\n# default_shell = \"\"\n\n# Startup mode for new interactive pane shells: \"auto\", \"login\", or \"non_login\".\n# \"auto\" uses login shells on macOS and keeps the current behavior elsewhere.\n# shell_mode = \"auto\"\n\n# CWD policy for new panes, tabs, and workspaces when no explicit --cwd is provided.\n# Use \"follow\" to inherit the source pane/workspace, \"home\" for $HOME,\n# \"current\" for Herdr's process directory, or a fixed path such as \"~/Projects\".\n# new_cwd = \"follow\"\n\n[update]\n# Update channel used by background version checks and `herdr update`.\n# Stable builds default to \"stable\". Windows preview builds default to \"preview\"\n# so existing preview installs stay there until explicitly switched.\n# channel = \"stable\"\n\n# Check herdr.dev for new Herdr versions in the background.\n# version_check = true\n\n# Check herdr.dev for remote agent-detection manifest updates in the background.\n# manifest_check = true\n\n[keys]\n# Prefix key to enter prefix mode (default: \"ctrl+b\")\n# Examples: \"ctrl+b\", \"f12\", \"esc\", \"-\"\n# Action bindings use explicit syntax: \"prefix+n\" requires the prefix;\n# \"ctrl+alt+n\" is a direct terminal-mode shortcut.\n# Accepted key syntax: plain keys, ctrl/shift/alt/cmd/super modifiers, and special keys like enter/tab/esc/left/right/up/down.\n# Named punctuation such as minus, comma, ampersand, plus, and backtick is also accepted.\n# Most reliable direct bindings are ctrl+letter, function keys, and explicit modified chords.\n# alt+..., cmd/super, and punctuation-with-modifiers may depend on your terminal/tmux setup.\n# prefix = \"ctrl+b\"\n\n# Prefix-mode actions\n# help = \"prefix+?\"\n# settings = \"prefix+s\"\n# detach = \"prefix+q\"\n# reload_config = \"prefix+shift+r\"\n# open_notification_target = \"prefix+o\"\n# workspace_picker = \"prefix+w\"\n# goto = \"prefix+g\"\n# new_workspace = \"prefix+shift+n\"\n# new_worktree = \"prefix+shift+g\"\n# open_worktree = \"\"    # optional, unset by default\n# remove_worktree = \"\"  # optional, unset by default; opens confirmation\n# rename_workspace = \"prefix+shift+w\"\n# close_workspace = \"prefix+shift+d\"\n# previous_workspace = \"\" # optional, unset by default\n# next_workspace = \"\"     # optional, unset by default\n# previous_agent = \"\"     # optional, unset by default\n# next_agent = \"\"         # optional, unset by default\n# focus_agent = \"\"        # optional indexed binding, e.g. \"prefix+alt+1..9\"\n# remote_image_paste = \"ctrl+v\" # only active in herdr --remote; empty disables raw-key image paste\n# new_tab = \"prefix+c\"\n# rename_tab = \"prefix+shift+t\"\n# previous_tab = \"prefix+p\"\n# next_tab = \"prefix+n\"\n# move_tab_previous = \"\"   # optional, e.g. \"alt+shift+left\" moves the tab toward the front\n# move_tab_next = \"\"       # optional, e.g. \"alt+shift+right\" moves the tab toward the back\n# switch_tab = \"prefix+1..9\"\n# switch_workspace = \"\"   # optional indexed binding, e.g. \"prefix+shift+1..9\"\n# close_tab = \"prefix+shift+x\"\n# rename_pane = \"prefix+shift+p\"\n# edit_scrollback = \"prefix+e\"\n# focus_pane_left = \"prefix+h\"\n# focus_pane_down = \"prefix+j\"\n# focus_pane_up = \"prefix+k\"\n# focus_pane_right = \"prefix+l\"\n# cycle_pane_next = \"prefix+tab\"\n# cycle_pane_previous = \"prefix+shift+tab\"\n# last_pane = \"\"          # optional, unset by default; bind e.g. \"prefix+tab\" for global back-and-forth\n# split_vertical = \"prefix+v\"\n# split_horizontal = \"prefix+minus\"\n# close_pane = \"prefix+x\"\n# zoom = \"prefix+z\"       # legacy alias: fullscreen\n# resize_mode = \"prefix+r\"\n# resize_pane_left = \"\"   # optional, e.g. \"ctrl+shift+alt+left\" resizes without entering resize mode\n# resize_pane_down = \"\"   # optional, e.g. \"ctrl+shift+alt+down\"\n# resize_pane_up = \"\"     # optional, e.g. \"ctrl+shift+alt+up\"\n# resize_pane_right = \"\"  # optional, e.g. \"ctrl+shift+alt+right\"\n# toggle_sidebar = \"prefix+b\"\n\n# Navigate-mode movement. These local shortcuts win while navigate mode is open.\n# They are independent from focus_pane_*. Do not include prefix+, esc, enter, tab, or 1..9 here.\n# navigate_workspace_up = \"up\"\n# navigate_workspace_down = \"down\"\n# navigate_pane_left = \"h\"      # left arrow always focuses the pane to the left\n# navigate_pane_down = \"j\"\n# navigate_pane_up = \"k\"\n# navigate_pane_right = \"l\"     # right arrow always focuses the pane to the right\n\n# Custom commands use the same binding syntax.\n# type = \"shell\" runs detached in the background.\n# type = \"pane\" opens a temporary pane and closes it when the command exits.\n# type = \"popup\" opens a session-modal terminal without changing the tab layout.\n# Popup width and height accept terminal cells or percentages such as \"80%\".\n# On Windows, command strings run through cmd.exe /d /c.\n# [[keys.command]]\n# key = \"prefix+alt+g\"\n# type = \"popup\"\n# command = \"lazygit\"\n# width = \"80%\"\n# height = \"80%\"\n\n# Legacy indexed shortcut config is still parsed for compatibility.\n# Prefer switch_tab, switch_workspace, and focus_agent for new configs.\n# [keys.indexed]\n# tabs = \"\"       # e.g. \"ctrl\" makes ctrl+1..9 switch tabs directly\n# workspaces = \"\" # e.g. \"ctrl+shift\" makes ctrl+shift+1..9 switch workspaces directly\n# agents = \"\"     # e.g. \"alt\" makes alt+1..9 focus agent rows directly\n\n# Size of the virtual terminal used when no client is attached.\n# Attached clients always use their own terminal size.\n[server]\n# headless_cols = 120\n# headless_rows = 40\n\n# [worktrees]\n# directory = \"~/.herdr/worktrees\"\n\n[ui]\n# Sidebar width (auto-scaled based on workspace names, this sets the default)\n# sidebar_width = 26\n\n# Minimum sidebar width when expanded (columns)\n# sidebar_min_width = 18\n\n# Maximum sidebar width when expanded (columns)\n# sidebar_max_width = 36\n\n# Start with the sidebar collapsed. Changes take effect on the next launch.\n# sidebar_start_collapsed = false\n\n# Collapsed sidebar presentation: \"compact\" keeps the narrow status rail, \"hidden\" uses zero width.\n# sidebar_collapsed_mode = \"compact\"\n\n# Terminal width at or below which Herdr uses the mobile single-column layout.\n# Increase this for foldables, tablets, or wide phone terminals.\n# mobile_width_threshold = 64\n\n# Capture mouse input for Herdr's mouse UI.\n# Set false to let the terminal handle normal clicks, such as Cmd-clicking URLs.\n# Pane apps like lazygit and btop can still receive mouse when they request it.\n# mouse_capture = true\n\n# Automatically copy text selected with the mouse.\n# Set false to retain drag or double-click word selection until Ctrl+C,\n# or Cmd+C when the host forwards it, copies and clears it.\n# copy_on_select = true\n\n# Host cursor policy: \"auto\", \"native\", or \"drawn\".\n# \"auto\" draws Herdr's own cursor on native Windows builds and WSL to avoid ConPTY cursor flicker, and uses the native terminal cursor elsewhere.\n# \"native\" always uses the outer terminal cursor. \"drawn\" always draws Herdr's cursor as terminal cell content.\n# host_cursor = \"auto\"\n\n# Optional modifier that forwards right-click hold/drag gestures to pane apps instead of opening Herdr's pane menu.\n# Empty/off disables this. Shift is intentionally unsupported because terminals commonly reserve Shift+mouse.\n# right_click_passthrough_modifier = \"\"\n\n# Force a full redraw when the outer terminal regains focus.\n# Set false to reduce visible flashing when switching back to Herdr.\n# Trade-off: rare host terminal surface corruption may persist until the next full redraw.\n# redraw_on_focus_gained = true\n\n# Pane scrollback lines to scroll per mouse wheel notch.\n# mouse_scroll_lines = 3\n\n# Ask for confirmation before closing a workspace\n# confirm_close = true\n\n# Ask for a tab name before creating a new tab.\n# Set false to create tabs immediately with generated names.\n# prompt_new_tab_name = true\n\n# Ask for a workspace name before interactive creation.\n# prompt_new_workspace_name = false\n\n# Draw borders around split panes.\n# pane_borders = true\n\n# Draw borders along the outside edge of the pane area.\n# Disable for tmux-style internal splitters without an outside frame.\n# pane_outer_borders = true\n\n# Draw interactive scrollbars beside terminal panes.\n# Set false to reclaim the scrollbar column and keep it out of terminal-native selections.\n# pane_scrollbars = true\n\n# Keep split panes visually separated instead of sharing divider borders.\n# pane_gaps = true\n\n# Show detected/reported agent labels in split pane borders when no manual pane name is set.\n# show_agent_labels_on_pane_borders = false\n\n# Hide the tab row when a workspace has exactly one tab.\n# New tabs can still be created with the configured keybinding.\n# hide_tab_bar_when_single_tab = false\n\n# Desktop tab row placement: \"top\" or \"bottom\".\n# tab_bar_position = \"top\"\n\n# Ordered status entries at the right edge of the desktop tab bar.\n# Supported types: zoom, hostname, datetime, text, and command.\n# Hostname, datetime, and command entries resolve on the Herdr server.\n# tab_bar_right = []\n# tab_bar_right_separator = \" \"\n\n# Title Herdr writes to the terminal it runs in, which is what window managers\n# show in title, tab, and group bars. Tokens are {hostname}, {workspace}, {tab},\n# {pane}, and {terminal_title}; {{ and }} are literal braces.\n# The title renders on the Herdr server, so {hostname} names the host the panes\n# run on even when attaching from a remote client.\n# Set to \"\" to leave the outer terminal title alone.\n# window_title = \"{hostname}: {workspace}\"\n\n# Agent panel ordering: \"spaces\" (grouped by space) or \"priority\" (attention queue).\n# \"workspaces\" is accepted as an alias for \"spaces\".\n# agent_panel_sort = \"spaces\"\n\n# Agent status indicators: \"dots\" preserves the compact color marks; \"symbols\" uses\n# distinct static glyphs for blocked, working, done, idle, and unknown states.\n# status_indicators = \"dots\"\n\n# Expanded agent rows. Built-ins are state_icon, state_text, workspace, tab, pane, agent,\n# terminal_title, and terminal_title_stripped.\n# Custom values reported through pane metadata use a $name token.\n# A token occurrence may be styled with { token = \"workspace\", fg = \"#89b4fa\", bold = true, dim = false }.\n# Omitted style fields preserve the contextual default.\n# [ui.sidebar.agents]\n# Blank rows between agent entries. Set to 1 to restore the previous spacing.\n# row_gap = 0\n# rows = [[\"state_icon\", \"workspace\", \"tab\"], [\"agent\"]]\n# Optional canonical agent IDs replace the default rows for matching agents.\n# [ui.sidebar.agents.rows_by_agent]\n# claude = [[\"state_icon\", \"workspace\", \"tab\"], [\"terminal_title_stripped\"], [\"agent\"]]\n\n# Expanded space rows. Built-ins are state_icon, state_text, workspace, branch, and git_status.\n# Custom values reported through workspace metadata use a $name token, for example $jj_status.\n# Inline token styles accept strict #RGB/#RRGGBB foregrounds plus bold and dim booleans.\n# [ui.sidebar.spaces]\n# Blank rows between space entries. Set to 1 to restore the previous spacing.\n# row_gap = 0\n# rows = [[\"state_icon\", \"workspace\"], [\"branch\", \"git_status\"]]\n\n# Accent color for highlights, borders, and navigation UI.\n# Accepts: hex (#89b4fa), named colors (cyan, blue, magenta), or rgb(r,g,b)\n# accent = \"cyan\"\n\n# Background notification popup delivery\n[ui.toast]\n# off = disable pop-up notifications\n# herdr = show in-app toasts\n# terminal = ask the outer terminal to show a desktop notification\n# system = ask the OS notification service directly\n# delivery = \"off\"\n# delay_seconds = 1\n\n[ui.toast.herdr]\n# position = \"bottom-right\"\n\n[ui.toast.clipboard]\n# enabled = true\n# position = \"bottom-center\"\n\n# Play sounds when agents change state in background workspaces\n[ui.sound]\n# enabled = true\n# Optional custom mp3 sound files. Relative paths are resolved from this config file's directory.\n# path = \"sounds/notification.mp3\"   # one mp3 file for all sound notifications\n# done_path = \"sounds/done.mp3\"      # overrides only finished notifications\n# request_path = \"sounds/request.mp3\" # overrides only needs-attention notifications\n\n# Per-agent overrides: default | on | off\n# By default, droid is muted.\n# [ui.sound.agents]\n# droid = \"off\"\n\n[session]\n# Resume supported AI-agent panes into their native conversation sessions after\n# a Herdr server restart. Requires official integrations that report session refs.\n# resume_agents_on_restore = true\n\n[remote]\n# Whether herdr manages the ssh config used for `herdr --remote`.\n# When true (default), herdr runs remote ssh through a generated config that\n# includes your ~/.ssh/config first and adds ServerAliveInterval/\n# ServerAliveCountMax as fallbacks (so any keepalive values you set yourself\n# still win) to survive idle network/NAT timeouts. Herdr also uses a private\n# per-attach OpenSSH control socket to reuse the first authenticated connection.\n# Set false to run plain ssh against your ssh config unchanged \u2014 this does not\n# force keepalive or multiplexing off, it only stops herdr from adding its own.\n# manage_ssh_config = true\n\n[experimental]\n# Allow launching herdr from inside a herdr-managed pane.\n# allow_nested = false\n# Experimental local Kitty graphics rendering for attached clients.\n# Requires a Kitty graphics-compatible outer terminal.\n# kitty_graphics = false\n# Save recent pane screen history across full server restarts.\npane_history = false\n# While prefix mode is active, temporarily switch the host input source to\n# an ASCII-capable mode so prefix commands register even when an IME is\n# active, then restore the previous input source when prefix mode exits. On\n# macOS this selects the ASCII-capable keyboard layout; on Windows it toggles\n# a Korean IME between Hangul and English (other IME languages are left\n# unchanged). macOS and Windows only; best-effort. Default: false.\n# switch_ascii_input_source_in_prefix = false\n# Expose the focused pane's cursor to the outer terminal so macOS input\n# methods keep tracking the candidate window when TUIs paint their own\n# cursor (Claude Code, pi, codex). Trade-off: extra cursor visible for\n# apps that hide it without painting a replacement (vim normal mode, etc.).\n# reveal_hidden_cursor_for_cjk_ime = false\n# Optional allow-list: only reveal for focused panes whose detected agent\n# matches one of these names. Empty means apply to any focused pane.\n# If the list contains no valid names, the reveal does not apply.\n# Accepted: pi, claude, codex, gemini, cursor, devin, cline, opencode,\n# copilot, kimi, kiro, droid, amp, grok, hermes, kilo, qodercli, qoder, qwen,\n# qwen-code, maki.\n# cjk_ime_agents = []\n# Cursor shape rendered when reveal_hidden_cursor_for_cjk_ime is true.\n# Values: block, steady_block (default), underline, steady_underline, bar, steady_bar.\n# cjk_ime_cursor_shape = \"steady_block\"\n\n[advanced]\n# Maximum scrollback buffer size in bytes retained per pane terminal.\n# Matches Ghostty's default scrollback-limit behavior.\n# scrollback_limit_bytes = 10000000\n"
+    },
+    {
+      "argv": [
+        "/Users/iurysouza/.local/bin/herdr",
+        "config",
+        "check"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "config: ok\n"
+    },
+    {
+      "argv": [
+        "/Users/iurysouza/.local/bin/herdr",
+        "--session",
+        "step1-probe",
+        "workspace",
+        "create",
+        "--cwd",
+        "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+        "--label",
+        "Step1-barrier-A",
+        "--no-focus"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "{\"id\":\"cli:workspace:create\",\"result\":{\"root_pane\":{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":true,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w1:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":40},\"tab_id\":\"w1:t1\",\"terminal_id\":\"term_65ac0dfb391561\",\"workspace_id\":\"w1\"},\"tab\":{\"agent_status\":\"unknown\",\"focused\":true,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w1:t1\",\"workspace_id\":\"w1\"},\"type\":\"workspace_created\",\"workspace\":{\"active_tab_id\":\"w1:t1\",\"agent_status\":\"unknown\",\"focused\":true,\"label\":\"Step1-barrier-A\",\"number\":1,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w1\"}}}\n"
+    },
+    {
+      "argv": [
+        "/Users/iurysouza/.local/bin/herdr",
+        "--session",
+        "step1-probe",
+        "workspace",
+        "create",
+        "--cwd",
+        "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+        "--label",
+        "Step1-barrier-B",
+        "--no-focus"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "{\"id\":\"cli:workspace:create\",\"result\":{\"root_pane\":{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":false,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w2:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w2:t1\",\"terminal_id\":\"term_65ac0dfb3b2782\",\"workspace_id\":\"w2\"},\"tab\":{\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w2:t1\",\"workspace_id\":\"w2\"},\"type\":\"workspace_created\",\"workspace\":{\"active_tab_id\":\"w2:t1\",\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"Step1-barrier-B\",\"number\":2,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w2\"}}}\n"
+    },
+    {
+      "argv": [
+        "/Users/iurysouza/.local/bin/herdr",
+        "--session",
+        "step1-probe",
+        "workspace",
+        "create",
+        "--cwd",
+        "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+        "--label",
+        "Step1-barrier-C",
+        "--no-focus"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "{\"id\":\"cli:workspace:create\",\"result\":{\"root_pane\":{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":false,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w3:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w3:t1\",\"terminal_id\":\"term_65ac0dfb3d5823\",\"workspace_id\":\"w3\"},\"tab\":{\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w3:t1\",\"workspace_id\":\"w3\"},\"type\":\"workspace_created\",\"workspace\":{\"active_tab_id\":\"w3:t1\",\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"Step1-barrier-C\",\"number\":3,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w3\"}}}\n"
+    },
+    {
+      "argv": [
+        "/Users/iurysouza/.local/bin/herdr",
+        "--session",
+        "step1-probe",
+        "api",
+        "snapshot"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "{\"id\":\"cli:api:snapshot\",\"result\":{\"snapshot\":{\"agents\":[],\"focused_pane_id\":\"w1:p1\",\"focused_tab_id\":\"w1:t1\",\"focused_workspace_id\":\"w1\",\"layouts\":[{\"area\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1},\"focused_pane_id\":\"w1:p1\",\"panes\":[{\"focused\":true,\"pane_id\":\"w1:p1\",\"rect\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1}}],\"splits\":[],\"tab_id\":\"w1:t1\",\"workspace_id\":\"w1\",\"zoomed\":false},{\"area\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1},\"focused_pane_id\":\"w2:p1\",\"panes\":[{\"focused\":true,\"pane_id\":\"w2:p1\",\"rect\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1}}],\"splits\":[],\"tab_id\":\"w2:t1\",\"workspace_id\":\"w2\",\"zoomed\":false},{\"area\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1},\"focused_pane_id\":\"w3:p1\",\"panes\":[{\"focused\":true,\"pane_id\":\"w3:p1\",\"rect\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1}}],\"splits\":[],\"tab_id\":\"w3:t1\",\"workspace_id\":\"w3\",\"zoomed\":false}],\"panes\":[{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":true,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w1:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w1:t1\",\"terminal_id\":\"term_65ac0dfb391561\",\"workspace_id\":\"w1\"},{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":false,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w2:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w2:t1\",\"terminal_id\":\"term_65ac0dfb3b2782\",\"workspace_id\":\"w2\"},{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":false,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w3:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w3:t1\",\"terminal_id\":\"term_65ac0dfb3d5823\",\"workspace_id\":\"w3\"}],\"protocol\":20,\"tabs\":[{\"agent_status\":\"unknown\",\"focused\":true,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w1:t1\",\"workspace_id\":\"w1\"},{\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w2:t1\",\"workspace_id\":\"w2\"},{\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w3:t1\",\"workspace_id\":\"w3\"}],\"version\":\"0.8.2\",\"workspaces\":[{\"active_tab_id\":\"w1:t1\",\"agent_status\":\"unknown\",\"focused\":true,\"label\":\"Step1-barrier-A\",\"number\":1,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w1\"},{\"active_tab_id\":\"w2:t1\",\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"Step1-barrier-B\",\"number\":2,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w2\"},{\"active_tab_id\":\"w3:t1\",\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"Step1-barrier-C\",\"number\":3,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w3\"}]},\"type\":\"session_snapshot\"}}\n"
+    },
+    {
+      "argv": [
+        "/Users/iurysouza/.local/bin/herdr",
+        "--session",
+        "step1-probe",
+        "api",
+        "snapshot"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "{\"id\":\"cli:api:snapshot\",\"result\":{\"snapshot\":{\"agents\":[],\"focused_pane_id\":\"w1:p1\",\"focused_tab_id\":\"w1:t1\",\"focused_workspace_id\":\"w1\",\"layouts\":[{\"area\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1},\"focused_pane_id\":\"w1:p1\",\"panes\":[{\"focused\":true,\"pane_id\":\"w1:p1\",\"rect\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1}}],\"splits\":[],\"tab_id\":\"w1:t1\",\"workspace_id\":\"w1\",\"zoomed\":false},{\"area\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1},\"focused_pane_id\":\"w2:p1\",\"panes\":[{\"focused\":true,\"pane_id\":\"w2:p1\",\"rect\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1}}],\"splits\":[],\"tab_id\":\"w2:t1\",\"workspace_id\":\"w2\",\"zoomed\":false},{\"area\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1},\"focused_pane_id\":\"w3:p1\",\"panes\":[{\"focused\":true,\"pane_id\":\"w3:p1\",\"rect\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1}}],\"splits\":[],\"tab_id\":\"w3:t1\",\"workspace_id\":\"w3\",\"zoomed\":false}],\"panes\":[{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":true,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w1:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w1:t1\",\"terminal_id\":\"term_65ac0dfb391561\",\"workspace_id\":\"w1\"},{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":false,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w2:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w2:t1\",\"terminal_id\":\"term_65ac0dfb3b2782\",\"workspace_id\":\"w2\"},{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":false,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w3:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w3:t1\",\"terminal_id\":\"term_65ac0dfb3d5823\",\"workspace_id\":\"w3\"}],\"protocol\":20,\"tabs\":[{\"agent_status\":\"unknown\",\"focused\":true,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w1:t1\",\"workspace_id\":\"w1\"},{\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w2:t1\",\"workspace_id\":\"w2\"},{\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w3:t1\",\"workspace_id\":\"w3\"}],\"version\":\"0.8.2\",\"workspaces\":[{\"active_tab_id\":\"w1:t1\",\"agent_status\":\"unknown\",\"focused\":true,\"label\":\"Step1-barrier-A\",\"number\":1,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w1\"},{\"active_tab_id\":\"w2:t1\",\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"Step1-barrier-B\",\"number\":2,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w2\"},{\"active_tab_id\":\"w3:t1\",\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"Step1-barrier-C\",\"number\":3,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w3\"}]},\"type\":\"session_snapshot\"}}\n"
+    },
+    {
+      "argv": [
+        "/Users/iurysouza/.local/bin/herdr",
+        "--session",
+        "step1-probe",
+        "api",
+        "snapshot"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "{\"id\":\"cli:api:snapshot\",\"result\":{\"snapshot\":{\"agents\":[],\"focused_pane_id\":\"w1:p1\",\"focused_tab_id\":\"w1:t1\",\"focused_workspace_id\":\"w1\",\"layouts\":[{\"area\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1},\"focused_pane_id\":\"w1:p1\",\"panes\":[{\"focused\":true,\"pane_id\":\"w1:p1\",\"rect\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1}}],\"splits\":[],\"tab_id\":\"w1:t1\",\"workspace_id\":\"w1\",\"zoomed\":false},{\"area\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1},\"focused_pane_id\":\"w2:p1\",\"panes\":[{\"focused\":true,\"pane_id\":\"w2:p1\",\"rect\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1}}],\"splits\":[],\"tab_id\":\"w2:t1\",\"workspace_id\":\"w2\",\"zoomed\":false},{\"area\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1},\"focused_pane_id\":\"w3:p1\",\"panes\":[{\"focused\":true,\"pane_id\":\"w3:p1\",\"rect\":{\"height\":39,\"width\":94,\"x\":26,\"y\":1}}],\"splits\":[],\"tab_id\":\"w3:t1\",\"workspace_id\":\"w3\",\"zoomed\":false}],\"panes\":[{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":true,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w1:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w1:t1\",\"terminal_id\":\"term_65ac0dfb391561\",\"workspace_id\":\"w1\"},{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":false,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w2:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w2:t1\",\"terminal_id\":\"term_65ac0dfb3b2782\",\"workspace_id\":\"w2\"},{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":false,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w3:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w3:t1\",\"terminal_id\":\"term_65ac0dfb3d5823\",\"workspace_id\":\"w3\"}],\"protocol\":20,\"tabs\":[{\"agent_status\":\"unknown\",\"focused\":true,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w1:t1\",\"workspace_id\":\"w1\"},{\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w2:t1\",\"workspace_id\":\"w2\"},{\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w3:t1\",\"workspace_id\":\"w3\"}],\"version\":\"0.8.2\",\"workspaces\":[{\"active_tab_id\":\"w1:t1\",\"agent_status\":\"unknown\",\"focused\":true,\"label\":\"Step1-barrier-A\",\"number\":1,\"pane_count\":1,\"tab_count\":1,\"tokens\":{\"step1_marker\":\"step1-barrier-1169859857257625\"},\"workspace_id\":\"w1\"},{\"active_tab_id\":\"w2:t1\",\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"Step1-barrier-B\",\"number\":2,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w2\"},{\"active_tab_id\":\"w3:t1\",\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"Step1-barrier-C\",\"number\":3,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w3\"}]},\"type\":\"session_snapshot\"}}\n"
+    }
+  ],
+  "completed_at_utc": "2026-09-05T18:51:34.378476Z",
+  "config_check_exit": 0,
+  "exit_code": 0,
+  "herdr_bin": "/Users/iurysouza/.local/bin/herdr",
+  "hypothesis": {
+    "blocker": "the matching metadata marker did not prove every externally acknowledged B/C/A focus event preceded it on the same reader",
+    "result": "blocked"
+  },
+  "interleaving_test": {
+    "all_focus_events_before_marker": false,
+    "external_focuses": [
+      {
+        "acknowledged": true,
+        "label": "B",
+        "pane_id": "w2:p1",
+        "reply": {
+          "id": "step1-1169860157804708",
+          "result": {
+            "pane": {
+              "agent_status": "unknown",
+              "cwd": "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+              "focused": true,
+              "foreground_cwd": "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+              "pane_id": "w2:p1",
+              "revision": 0,
+              "scroll": {
+                "max_offset_from_bottom": 0,
+                "offset_from_bottom": 0,
+                "viewport_rows": 39
+              },
+              "tab_id": "w2:t1",
+              "terminal_id": "term_65ac0dfb3b2782",
+              "workspace_id": "w2"
+            },
+            "type": "pane_info"
+          }
+        },
+        "reply_duration_ms": 0.783,
+        "reply_received_monotonic_ns": 1169860158576500,
+        "request_started_monotonic_ns": 1169860157793458
+      },
+      {
+        "acknowledged": true,
+        "label": "C",
+        "pane_id": "w3:p1",
+        "reply": {
+          "id": "step1-1169860158609791",
+          "result": {
+            "pane": {
+              "agent_status": "unknown",
+              "cwd": "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+              "focused": true,
+              "foreground_cwd": "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+              "pane_id": "w3:p1",
+              "revision": 0,
+              "scroll": {
+                "max_offset_from_bottom": 0,
+                "offset_from_bottom": 0,
+                "viewport_rows": 39
+              },
+              "tab_id": "w3:t1",
+              "terminal_id": "term_65ac0dfb3d5823",
+              "workspace_id": "w3"
+            },
+            "type": "pane_info"
+          }
+        },
+        "reply_duration_ms": 0.332,
+        "reply_received_monotonic_ns": 1169860158934708,
+        "request_started_monotonic_ns": 1169860158602625
+      },
+      {
+        "acknowledged": true,
+        "label": "A",
+        "pane_id": "w1:p1",
+        "reply": {
+          "id": "step1-1169860158947375",
+          "result": {
+            "pane": {
+              "agent_status": "unknown",
+              "cwd": "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+              "focused": true,
+              "foreground_cwd": "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+              "pane_id": "w1:p1",
+              "revision": 0,
+              "scroll": {
+                "max_offset_from_bottom": 0,
+                "offset_from_bottom": 0,
+                "viewport_rows": 39
+              },
+              "tab_id": "w1:t1",
+              "terminal_id": "term_65ac0dfb391561",
+              "workspace_id": "w1"
+            },
+            "type": "pane_info"
+          }
+        },
+        "reply_duration_ms": 0.251,
+        "reply_received_monotonic_ns": 1169860159189000,
+        "request_started_monotonic_ns": 1169860158938083
+      }
+    ],
+    "focus_acknowledged": true,
+    "focus_event_positions": [
+      {
+        "frame_positions": [
+          7
+        ],
+        "label": "B",
+        "pane_id": "w2:p1"
+      },
+      {
+        "frame_positions": [
+          11
+        ],
+        "label": "C",
+        "pane_id": "w3:p1"
+      },
+      {
+        "frame_positions": [],
+        "label": "A",
+        "pane_id": "w1:p1"
+      }
+    ],
+    "focused_after_marker": "w1:p1",
+    "focused_before_marker": "w1:p1",
+    "frames": [
+      {
+        "index": 5,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_focused",
+            "workspace_id": "w2"
+          },
+          "event": "workspace_focused"
+        },
+        "received_monotonic_ns": 1169860262437166
+      },
+      {
+        "index": 6,
+        "kind": "event",
+        "message": {
+          "data": {
+            "tab_id": "w2:t1",
+            "type": "tab_focused",
+            "workspace_id": "w2"
+          },
+          "event": "tab_focused"
+        },
+        "received_monotonic_ns": 1169860262456750
+      },
+      {
+        "index": 7,
+        "kind": "event",
+        "message": {
+          "data": {
+            "pane_id": "w2:p1",
+            "type": "pane_focused",
+            "workspace_id": "w2"
+          },
+          "event": "pane_focused"
+        },
+        "received_monotonic_ns": 1169860262460666
+      },
+      {
+        "index": 8,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_metadata_updated",
+            "workspace": {
+              "active_tab_id": "w1:t1",
+              "agent_status": "unknown",
+              "focused": true,
+              "label": "Step1-barrier-A",
+              "number": 1,
+              "pane_count": 1,
+              "tab_count": 1,
+              "workspace_id": "w1"
+            }
+          },
+          "event": "workspace_metadata_updated"
+        },
+        "received_monotonic_ns": 1169860262482458
+      },
+      {
+        "index": 9,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_focused",
+            "workspace_id": "w3"
+          },
+          "event": "workspace_focused"
+        },
+        "received_monotonic_ns": 1169860364854208
+      },
+      {
+        "index": 10,
+        "kind": "event",
+        "message": {
+          "data": {
+            "tab_id": "w3:t1",
+            "type": "tab_focused",
+            "workspace_id": "w3"
+          },
+          "event": "tab_focused"
+        },
+        "received_monotonic_ns": 1169860364869708
+      },
+      {
+        "index": 11,
+        "kind": "event",
+        "message": {
+          "data": {
+            "pane_id": "w3:p1",
+            "type": "pane_focused",
+            "workspace_id": "w3"
+          },
+          "event": "pane_focused"
+        },
+        "received_monotonic_ns": 1169860364873041
+      },
+      {
+        "index": 12,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_metadata_updated",
+            "workspace": {
+              "active_tab_id": "w1:t1",
+              "agent_status": "unknown",
+              "focused": true,
+              "label": "Step1-barrier-A",
+              "number": 1,
+              "pane_count": 1,
+              "tab_count": 1,
+              "tokens": {
+                "step1_marker": "step1-barrier-1169859857257625"
+              },
+              "workspace_id": "w1"
+            }
+          },
+          "event": "workspace_metadata_updated"
+        },
+        "received_monotonic_ns": 1169860364890750
+      }
+    ],
+    "marker_correlation": {
+      "source_in_event": null,
+      "token_name": "step1_marker",
+      "token_value": "step1-barrier-1169859857257625",
+      "workspace_id_in_event": "w1"
+    },
+    "marker_event": {
+      "data": {
+        "type": "workspace_metadata_updated",
+        "workspace": {
+          "active_tab_id": "w1:t1",
+          "agent_status": "unknown",
+          "focused": true,
+          "label": "Step1-barrier-A",
+          "number": 1,
+          "pane_count": 1,
+          "tab_count": 1,
+          "tokens": {
+            "step1_marker": "step1-barrier-1169859857257625"
+          },
+          "workspace_id": "w1"
+        }
+      },
+      "event": "workspace_metadata_updated",
+      "event_index": 11,
+      "frame_index": 12,
+      "received_monotonic_ns": 1169860364890750
+    },
+    "marker_frame_position": 12,
+    "marker_publish_reply": {
+      "id": "step1-1169860166452541",
+      "result": {
+        "type": "ok"
+      }
+    }
+  },
+  "isolation": {
+    "config_path": "/tmp/hm1-metadata-9xrm2vha/config/herdr/config.toml",
+    "default_files_after": {
+      "/Users/iurysouza/.config/herdr/config.toml": {
+        "exists": true,
+        "sha256": "590d795e258c20f0b43c5584a9740e048d8686f597a4143bceb4a1bfa5a46264"
+      },
+      "/Users/iurysouza/.config/herdr/plugins.json": {
+        "exists": true,
+        "sha256": "a3d7bd061d0b38b2b60195ee7f47c1634e98a541ccd675cece1958483fd77f39"
+      }
+    },
+    "default_files_before": {
+      "/Users/iurysouza/.config/herdr/config.toml": {
+        "exists": true,
+        "sha256": "590d795e258c20f0b43c5584a9740e048d8686f597a4143bceb4a1bfa5a46264"
+      },
+      "/Users/iurysouza/.config/herdr/plugins.json": {
+        "exists": true,
+        "sha256": "a3d7bd061d0b38b2b60195ee7f47c1634e98a541ccd675cece1958483fd77f39"
+      }
+    },
+    "default_files_unchanged": true,
+    "home": "/tmp/hm1-metadata-9xrm2vha",
+    "root": "/tmp/hm1-metadata-9xrm2vha",
+    "xdg_cache": "/tmp/hm1-metadata-9xrm2vha/cache",
+    "xdg_config": "/tmp/hm1-metadata-9xrm2vha/config",
+    "xdg_data": "/tmp/hm1-metadata-9xrm2vha/data",
+    "xdg_runtime": "/tmp/hm1-metadata-9xrm2vha/runtime",
+    "xdg_state": "/tmp/hm1-metadata-9xrm2vha/state"
+  },
+  "payload_discovery": {
+    "clear_before_test_reply": {
+      "id": "step1-1169860157523916",
+      "result": {
+        "type": "ok"
+      }
+    },
+    "focus_a_reply": {
+      "id": "step1-1169860055940166",
+      "result": {
+        "pane": {
+          "agent_status": "unknown",
+          "cwd": "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+          "focused": true,
+          "foreground_cwd": "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+          "pane_id": "w1:p1",
+          "revision": 0,
+          "scroll": {
+            "max_offset_from_bottom": 0,
+            "offset_from_bottom": 0,
+            "viewport_rows": 39
+          },
+          "tab_id": "w1:t1",
+          "terminal_id": "term_65ac0dfb391561",
+          "workspace_id": "w1"
+        },
+        "type": "pane_info"
+      }
+    },
+    "focused_before_publish": "w1:p1",
+    "frames": [
+      {
+        "index": 4,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_metadata_updated",
+            "workspace": {
+              "active_tab_id": "w1:t1",
+              "agent_status": "unknown",
+              "focused": true,
+              "label": "Step1-barrier-A",
+              "number": 1,
+              "pane_count": 1,
+              "tab_count": 1,
+              "tokens": {
+                "step1_marker": "step1-barrier-1169859857257625"
+              },
+              "workspace_id": "w1"
+            }
+          },
+          "event": "workspace_metadata_updated"
+        },
+        "received_monotonic_ns": 1169860157399000
+      }
+    ],
+    "marker_correlation": {
+      "source_in_event": null,
+      "token_name": "step1_marker",
+      "token_value": "step1-barrier-1169859857257625",
+      "workspace_id_in_event": "w1"
+    },
+    "marker_event": {
+      "data": {
+        "type": "workspace_metadata_updated",
+        "workspace": {
+          "active_tab_id": "w1:t1",
+          "agent_status": "unknown",
+          "focused": true,
+          "label": "Step1-barrier-A",
+          "number": 1,
+          "pane_count": 1,
+          "tab_count": 1,
+          "tokens": {
+            "step1_marker": "step1-barrier-1169859857257625"
+          },
+          "workspace_id": "w1"
+        }
+      },
+      "event": "workspace_metadata_updated",
+      "event_index": 3,
+      "frame_index": 4,
+      "received_monotonic_ns": 1169860157399000
+    },
+    "marker_event_found": true,
+    "publish_reply": {
+      "id": "step1-1169860063550166",
+      "result": {
+        "type": "ok"
+      }
+    },
+    "subscription_error": null,
+    "subscriptions": [
+      {
+        "type": "workspace.focused"
+      },
+      {
+        "type": "tab.focused"
+      },
+      {
+        "type": "pane.focused"
+      },
+      {
+        "type": "pane.updated"
+      },
+      {
+        "type": "workspace.metadata_updated"
+      },
+      {
+        "type": "workspace.updated"
+      }
+    ]
+  },
+  "probe": "step1-metadata-barrier",
+  "reader_final": {
+    "events": [
+      {
+        "data": {
+          "type": "workspace_focused",
+          "workspace_id": "w1"
+        },
+        "event": "workspace_focused",
+        "event_index": 0,
+        "frame_index": 1,
+        "received_monotonic_ns": 1169860055922166
+      },
+      {
+        "data": {
+          "tab_id": "w1:t1",
+          "type": "tab_focused",
+          "workspace_id": "w1"
+        },
+        "event": "tab_focused",
+        "event_index": 1,
+        "frame_index": 2,
+        "received_monotonic_ns": 1169860055927708
+      },
+      {
+        "data": {
+          "pane_id": "w1:p1",
+          "type": "pane_focused",
+          "workspace_id": "w1"
+        },
+        "event": "pane_focused",
+        "event_index": 2,
+        "frame_index": 3,
+        "received_monotonic_ns": 1169860055930500
+      },
+      {
+        "data": {
+          "type": "workspace_metadata_updated",
+          "workspace": {
+            "active_tab_id": "w1:t1",
+            "agent_status": "unknown",
+            "focused": true,
+            "label": "Step1-barrier-A",
+            "number": 1,
+            "pane_count": 1,
+            "tab_count": 1,
+            "tokens": {
+              "step1_marker": "step1-barrier-1169859857257625"
+            },
+            "workspace_id": "w1"
+          }
+        },
+        "event": "workspace_metadata_updated",
+        "event_index": 3,
+        "frame_index": 4,
+        "received_monotonic_ns": 1169860157399000
+      },
+      {
+        "data": {
+          "type": "workspace_focused",
+          "workspace_id": "w2"
+        },
+        "event": "workspace_focused",
+        "event_index": 4,
+        "frame_index": 5,
+        "received_monotonic_ns": 1169860262437166
+      },
+      {
+        "data": {
+          "tab_id": "w2:t1",
+          "type": "tab_focused",
+          "workspace_id": "w2"
+        },
+        "event": "tab_focused",
+        "event_index": 5,
+        "frame_index": 6,
+        "received_monotonic_ns": 1169860262456750
+      },
+      {
+        "data": {
+          "pane_id": "w2:p1",
+          "type": "pane_focused",
+          "workspace_id": "w2"
+        },
+        "event": "pane_focused",
+        "event_index": 6,
+        "frame_index": 7,
+        "received_monotonic_ns": 1169860262460666
+      },
+      {
+        "data": {
+          "type": "workspace_metadata_updated",
+          "workspace": {
+            "active_tab_id": "w1:t1",
+            "agent_status": "unknown",
+            "focused": true,
+            "label": "Step1-barrier-A",
+            "number": 1,
+            "pane_count": 1,
+            "tab_count": 1,
+            "workspace_id": "w1"
+          }
+        },
+        "event": "workspace_metadata_updated",
+        "event_index": 7,
+        "frame_index": 8,
+        "received_monotonic_ns": 1169860262482458
+      },
+      {
+        "data": {
+          "type": "workspace_focused",
+          "workspace_id": "w3"
+        },
+        "event": "workspace_focused",
+        "event_index": 8,
+        "frame_index": 9,
+        "received_monotonic_ns": 1169860364854208
+      },
+      {
+        "data": {
+          "tab_id": "w3:t1",
+          "type": "tab_focused",
+          "workspace_id": "w3"
+        },
+        "event": "tab_focused",
+        "event_index": 9,
+        "frame_index": 10,
+        "received_monotonic_ns": 1169860364869708
+      },
+      {
+        "data": {
+          "pane_id": "w3:p1",
+          "type": "pane_focused",
+          "workspace_id": "w3"
+        },
+        "event": "pane_focused",
+        "event_index": 10,
+        "frame_index": 11,
+        "received_monotonic_ns": 1169860364873041
+      },
+      {
+        "data": {
+          "type": "workspace_metadata_updated",
+          "workspace": {
+            "active_tab_id": "w1:t1",
+            "agent_status": "unknown",
+            "focused": true,
+            "label": "Step1-barrier-A",
+            "number": 1,
+            "pane_count": 1,
+            "tab_count": 1,
+            "tokens": {
+              "step1_marker": "step1-barrier-1169859857257625"
+            },
+            "workspace_id": "w1"
+          }
+        },
+        "event": "workspace_metadata_updated",
+        "event_index": 11,
+        "frame_index": 12,
+        "received_monotonic_ns": 1169860364890750
+      }
+    ],
+    "frames": [
+      {
+        "index": 0,
+        "kind": "response",
+        "message": {
+          "id": "step1-metadata-events",
+          "result": {
+            "type": "subscription_started"
+          }
+        },
+        "received_monotonic_ns": 1169860055850375
+      },
+      {
+        "index": 1,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_focused",
+            "workspace_id": "w1"
+          },
+          "event": "workspace_focused"
+        },
+        "received_monotonic_ns": 1169860055922166
+      },
+      {
+        "index": 2,
+        "kind": "event",
+        "message": {
+          "data": {
+            "tab_id": "w1:t1",
+            "type": "tab_focused",
+            "workspace_id": "w1"
+          },
+          "event": "tab_focused"
+        },
+        "received_monotonic_ns": 1169860055927708
+      },
+      {
+        "index": 3,
+        "kind": "event",
+        "message": {
+          "data": {
+            "pane_id": "w1:p1",
+            "type": "pane_focused",
+            "workspace_id": "w1"
+          },
+          "event": "pane_focused"
+        },
+        "received_monotonic_ns": 1169860055930500
+      },
+      {
+        "index": 4,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_metadata_updated",
+            "workspace": {
+              "active_tab_id": "w1:t1",
+              "agent_status": "unknown",
+              "focused": true,
+              "label": "Step1-barrier-A",
+              "number": 1,
+              "pane_count": 1,
+              "tab_count": 1,
+              "tokens": {
+                "step1_marker": "step1-barrier-1169859857257625"
+              },
+              "workspace_id": "w1"
+            }
+          },
+          "event": "workspace_metadata_updated"
+        },
+        "received_monotonic_ns": 1169860157399000
+      },
+      {
+        "index": 5,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_focused",
+            "workspace_id": "w2"
+          },
+          "event": "workspace_focused"
+        },
+        "received_monotonic_ns": 1169860262437166
+      },
+      {
+        "index": 6,
+        "kind": "event",
+        "message": {
+          "data": {
+            "tab_id": "w2:t1",
+            "type": "tab_focused",
+            "workspace_id": "w2"
+          },
+          "event": "tab_focused"
+        },
+        "received_monotonic_ns": 1169860262456750
+      },
+      {
+        "index": 7,
+        "kind": "event",
+        "message": {
+          "data": {
+            "pane_id": "w2:p1",
+            "type": "pane_focused",
+            "workspace_id": "w2"
+          },
+          "event": "pane_focused"
+        },
+        "received_monotonic_ns": 1169860262460666
+      },
+      {
+        "index": 8,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_metadata_updated",
+            "workspace": {
+              "active_tab_id": "w1:t1",
+              "agent_status": "unknown",
+              "focused": true,
+              "label": "Step1-barrier-A",
+              "number": 1,
+              "pane_count": 1,
+              "tab_count": 1,
+              "workspace_id": "w1"
+            }
+          },
+          "event": "workspace_metadata_updated"
+        },
+        "received_monotonic_ns": 1169860262482458
+      },
+      {
+        "index": 9,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_focused",
+            "workspace_id": "w3"
+          },
+          "event": "workspace_focused"
+        },
+        "received_monotonic_ns": 1169860364854208
+      },
+      {
+        "index": 10,
+        "kind": "event",
+        "message": {
+          "data": {
+            "tab_id": "w3:t1",
+            "type": "tab_focused",
+            "workspace_id": "w3"
+          },
+          "event": "tab_focused"
+        },
+        "received_monotonic_ns": 1169860364869708
+      },
+      {
+        "index": 11,
+        "kind": "event",
+        "message": {
+          "data": {
+            "pane_id": "w3:p1",
+            "type": "pane_focused",
+            "workspace_id": "w3"
+          },
+          "event": "pane_focused"
+        },
+        "received_monotonic_ns": 1169860364873041
+      },
+      {
+        "index": 12,
+        "kind": "event",
+        "message": {
+          "data": {
+            "type": "workspace_metadata_updated",
+            "workspace": {
+              "active_tab_id": "w1:t1",
+              "agent_status": "unknown",
+              "focused": true,
+              "label": "Step1-barrier-A",
+              "number": 1,
+              "pane_count": 1,
+              "tab_count": 1,
+              "tokens": {
+                "step1_marker": "step1-barrier-1169859857257625"
+              },
+              "workspace_id": "w1"
+            }
+          },
+          "event": "workspace_metadata_updated"
+        },
+        "received_monotonic_ns": 1169860364890750
+      }
+    ],
+    "reader_error": null,
+    "subscription_messages": [
+      {
+        "id": "step1-metadata-events",
+        "result": {
+          "type": "subscription_started"
+        }
+      },
+      {
+        "data": {
+          "type": "workspace_focused",
+          "workspace_id": "w1"
+        },
+        "event": "workspace_focused"
+      },
+      {
+        "data": {
+          "tab_id": "w1:t1",
+          "type": "tab_focused",
+          "workspace_id": "w1"
+        },
+        "event": "tab_focused"
+      },
+      {
+        "data": {
+          "pane_id": "w1:p1",
+          "type": "pane_focused",
+          "workspace_id": "w1"
+        },
+        "event": "pane_focused"
+      },
+      {
+        "data": {
+          "type": "workspace_metadata_updated",
+          "workspace": {
+            "active_tab_id": "w1:t1",
+            "agent_status": "unknown",
+            "focused": true,
+            "label": "Step1-barrier-A",
+            "number": 1,
+            "pane_count": 1,
+            "tab_count": 1,
+            "tokens": {
+              "step1_marker": "step1-barrier-1169859857257625"
+            },
+            "workspace_id": "w1"
+          }
+        },
+        "event": "workspace_metadata_updated"
+      },
+      {
+        "data": {
+          "type": "workspace_focused",
+          "workspace_id": "w2"
+        },
+        "event": "workspace_focused"
+      },
+      {
+        "data": {
+          "tab_id": "w2:t1",
+          "type": "tab_focused",
+          "workspace_id": "w2"
+        },
+        "event": "tab_focused"
+      },
+      {
+        "data": {
+          "pane_id": "w2:p1",
+          "type": "pane_focused",
+          "workspace_id": "w2"
+        },
+        "event": "pane_focused"
+      },
+      {
+        "data": {
+          "type": "workspace_metadata_updated",
+          "workspace": {
+            "active_tab_id": "w1:t1",
+            "agent_status": "unknown",
+            "focused": true,
+            "label": "Step1-barrier-A",
+            "number": 1,
+            "pane_count": 1,
+            "tab_count": 1,
+            "workspace_id": "w1"
+          }
+        },
+        "event": "workspace_metadata_updated"
+      },
+      {
+        "data": {
+          "type": "workspace_focused",
+          "workspace_id": "w3"
+        },
+        "event": "workspace_focused"
+      },
+      {
+        "data": {
+          "tab_id": "w3:t1",
+          "type": "tab_focused",
+          "workspace_id": "w3"
+        },
+        "event": "tab_focused"
+      },
+      {
+        "data": {
+          "pane_id": "w3:p1",
+          "type": "pane_focused",
+          "workspace_id": "w3"
+        },
+        "event": "pane_focused"
+      },
+      {
+        "data": {
+          "type": "workspace_metadata_updated",
+          "workspace": {
+            "active_tab_id": "w1:t1",
+            "agent_status": "unknown",
+            "focused": true,
+            "label": "Step1-barrier-A",
+            "number": 1,
+            "pane_count": 1,
+            "tab_count": 1,
+            "tokens": {
+              "step1_marker": "step1-barrier-1169859857257625"
+            },
+            "workspace_id": "w1"
+          }
+        },
+        "event": "workspace_metadata_updated"
+      }
+    ]
+  },
+  "repo": "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+  "session": "step1-probe",
+  "source": "step1-barrier",
+  "started_at_utc": "2026-09-05T18:51:33.493104Z",
+  "target": {
+    "pane_id": "w1:p1",
+    "panes": {
+      "A": "w1:p1",
+      "B": "w2:p1",
+      "C": "w3:p1"
+    },
+    "workspace_create_commands": [
+      {
+        "argv": [
+          "/Users/iurysouza/.local/bin/herdr",
+          "--session",
+          "step1-probe",
+          "workspace",
+          "create",
+          "--cwd",
+          "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+          "--label",
+          "Step1-barrier-A",
+          "--no-focus"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "{\"id\":\"cli:workspace:create\",\"result\":{\"root_pane\":{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":true,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w1:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":40},\"tab_id\":\"w1:t1\",\"terminal_id\":\"term_65ac0dfb391561\",\"workspace_id\":\"w1\"},\"tab\":{\"agent_status\":\"unknown\",\"focused\":true,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w1:t1\",\"workspace_id\":\"w1\"},\"type\":\"workspace_created\",\"workspace\":{\"active_tab_id\":\"w1:t1\",\"agent_status\":\"unknown\",\"focused\":true,\"label\":\"Step1-barrier-A\",\"number\":1,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w1\"}}}\n"
+      },
+      {
+        "argv": [
+          "/Users/iurysouza/.local/bin/herdr",
+          "--session",
+          "step1-probe",
+          "workspace",
+          "create",
+          "--cwd",
+          "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+          "--label",
+          "Step1-barrier-B",
+          "--no-focus"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "{\"id\":\"cli:workspace:create\",\"result\":{\"root_pane\":{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":false,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w2:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w2:t1\",\"terminal_id\":\"term_65ac0dfb3b2782\",\"workspace_id\":\"w2\"},\"tab\":{\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w2:t1\",\"workspace_id\":\"w2\"},\"type\":\"workspace_created\",\"workspace\":{\"active_tab_id\":\"w2:t1\",\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"Step1-barrier-B\",\"number\":2,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w2\"}}}\n"
+      },
+      {
+        "argv": [
+          "/Users/iurysouza/.local/bin/herdr",
+          "--session",
+          "step1-probe",
+          "workspace",
+          "create",
+          "--cwd",
+          "/Users/iurysouza/dev/personal/tools/herdr-window-manager",
+          "--label",
+          "Step1-barrier-C",
+          "--no-focus"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "{\"id\":\"cli:workspace:create\",\"result\":{\"root_pane\":{\"agent_status\":\"unknown\",\"cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"focused\":false,\"foreground_cwd\":\"/Users/iurysouza/dev/personal/tools/herdr-window-manager\",\"pane_id\":\"w3:p1\",\"revision\":0,\"scroll\":{\"max_offset_from_bottom\":0,\"offset_from_bottom\":0,\"viewport_rows\":39},\"tab_id\":\"w3:t1\",\"terminal_id\":\"term_65ac0dfb3d5823\",\"workspace_id\":\"w3\"},\"tab\":{\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"1\",\"number\":1,\"pane_count\":1,\"tab_id\":\"w3:t1\",\"workspace_id\":\"w3\"},\"type\":\"workspace_created\",\"workspace\":{\"active_tab_id\":\"w3:t1\",\"agent_status\":\"unknown\",\"focused\":false,\"label\":\"Step1-barrier-C\",\"number\":3,\"pane_count\":1,\"tab_count\":1,\"workspace_id\":\"w3\"}}}\n"
+      }
+    ],
+    "workspace_id": "w1",
+    "workspaces": {
+      "A": "w1",
+      "B": "w2",
+      "C": "w3"
+    }
+  },
+  "token": "step1_marker",
+  "token_value": "step1-barrier-1169859857257625"
+}

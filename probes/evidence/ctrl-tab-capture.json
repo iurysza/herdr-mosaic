@@ -1,0 +1,15 @@
+{
+  "probe": "physical-ctrl-tab",
+  "captured_at_utc": "2026-09-05T18:26:30.851701Z",
+  "duration_ms": 1086491,
+  "timed_out": false,
+  "received": true,
+  "bytes_hex": "1b5b41",
+  "bytes_decimal": [
+    27,
+    91,
+    65
+  ],
+  "operator_attestation_required": true,
+  "note": "A capture is not physical-key evidence until the coordinator confirms the operator pressed Ctrl+Tab in this pane."
+}

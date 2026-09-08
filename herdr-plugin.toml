@@ -1,0 +1,256 @@
+id = "iurysza.window-manager"
+name = "Window Manager"
+version = "1.0.0"
+# 0.8.0 (protocol 19) is the version whose API schema was verified for every call
+# this plugin makes. `agent.view.set/clear`, `client.window_title.set/clear`,
+# `workspace.report_metadata` and `pane.report_metadata` were all confirmed live
+# against 0.8.0; earlier versions were not tested. Pane layouts require 0.7.0+.
+min_herdr_version = "0.8.0"
+platforms = ["macos", "linux"]
+description = "Per-space colour identity, current spaces/agents sidebar templates, grouped agent view, optional tint, and tmux-style pane layouts."
+
+# Every command is invoked through /bin/sh so $HERDR_PLUGIN_ROOT expands: pane
+# entrypoints run with the pane's cwd, not the plugin root. Herdr also gives
+# plugin commands a minimal PATH, so the interpreter is an absolute path
+# (/usr/bin/python3 is the macOS system Python; the plugin is stdlib-only and
+# needs no packages).
+
+# Republish everything from durable state after session restore: Herdr's
+# workspace/pane metadata does not survive a server restart, but the plugin's
+# state file does. Idempotent.
+[[startup]]
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" reconcile"]
+
+# --- events ---------------------------------------------------------------
+# Only events with real work attached are hooked, so Herdr does not spawn a
+# process for churn it cannot act on. pane.created is deliberately absent (no
+# agent exists yet -- pane.agent_detected covers it). pane.closed / pane.exited
+# drop last-settled occupancy so a reused pane id cannot inherit it.
+
+[[events]]
+on = "workspace.focused"
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event workspace.focused"]
+
+[[events]]
+on = "workspace.created"
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event workspace.created"]
+
+[[events]]
+on = "workspace.renamed"
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event workspace.renamed"]
+
+[[events]]
+on = "workspace.closed"
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event workspace.closed"]
+
+[[events]]
+on = "pane.moved"
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.moved"]
+
+[[events]]
+on = "pane.agent_detected"
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.agent_detected"]
+
+[[events]]
+on = "pane.agent_status_changed"
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.agent_status_changed"]
+
+[[events]]
+on = "pane.closed"
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.closed"]
+
+[[events]]
+on = "pane.exited"
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.exited"]
+
+# --- panes ----------------------------------------------------------------
+
+[[panes]]
+id = "picker"
+title = "Window Manager"
+placement = "popup"
+width = 62
+height = 20
+description = "Pick the colour for a space."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" picker"]
+
+[[panes]]
+id = "board"
+title = "Workspace Agent Board"
+# popup, not overlay: herdr only accepts width/height for popup placement
+# (`invalid_plugin_pane_size` otherwise -- verified on 0.8.0).
+placement = "popup"
+width = "80%"
+height = "80%"
+description = "Collapsible per-space agent groups (read-only, real Herdr agent state)."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" board"]
+
+# --- actions --------------------------------------------------------------
+
+[[actions]]
+id = "set-identity"
+title = "Window Manager: Set Space Colour"
+contexts = ["workspace", "pane"]
+description = "Open the colour picker for the current space."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" set-identity"]
+
+[[actions]]
+id = "auto-assign"
+title = "Window Manager: Auto Assign Identity"
+contexts = ["global", "workspace"]
+description = "Give every space without an identity a default colour."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" auto-assign"]
+
+[[actions]]
+id = "tint-enable"
+title = "Window Manager: Enable Workspace Tint"
+contexts = ["global", "workspace"]
+description = "Tint Herdr's chrome with the focused space's colour on every switch."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" tint-enable"]
+
+[[actions]]
+id = "tint-disable"
+title = "Window Manager: Disable Workspace Tint"
+contexts = ["global", "workspace"]
+description = "Stop tinting and restore the original theme values."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" tint-disable"]
+
+[[actions]]
+id = "theme-restore"
+title = "Window Manager: Restore Original Theme"
+contexts = ["global", "workspace"]
+description = "Restore the exact theme values that were present before tinting."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" theme-restore"]
+
+[[actions]]
+id = "show-all-agents"
+title = "Window Manager: Show All Agents"
+contexts = ["global", "workspace"]
+description = "Agent view: all spaces, grouped and ordered by space."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" view all"]
+
+[[actions]]
+id = "show-current-space-agents"
+title = "Window Manager: Show Current Space Agents"
+contexts = ["global", "workspace"]
+description = "Agent view: only agents in the focused space."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" view current"]
+
+[[actions]]
+id = "open-agent-board"
+title = "Window Manager: Open Agent Board"
+contexts = ["global", "workspace"]
+description = "Open the collapsible Workspace Agent Board."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" board-open"]
+
+[[actions]]
+id = "install"
+title = "Window Manager: Install Sidebar Templates + Agent View"
+contexts = ["global", "workspace"]
+description = "Import legacy state, write owned sidebar templates, and install the agent view."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" install"]
+
+[[actions]]
+id = "migrate"
+title = "Window Manager: Import Legacy State"
+contexts = ["global", "workspace"]
+description = "Copy Chromatic/layouts identities and settings. Never applies stale Chromatic config backups."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" migrate"]
+
+[[actions]]
+id = "equalize"
+title = "Window Manager: Equalize Panes"
+description = "Arrange the current tab as equal-width vertical columns."
+contexts = ["tab", "pane"]
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout equalize"]
+
+[[actions]]
+id = "cycle"
+title = "Window Manager: Cycle Pane Layout"
+description = "Cycle the current tab through useful layout presets."
+contexts = ["tab", "pane"]
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout cycle"]
+
+[[actions]]
+id = "resize-left"
+title = "Window Manager: Resize Left"
+description = "Resize the current pane left by two percent."
+contexts = ["pane"]
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-left"]
+
+[[actions]]
+id = "resize-down"
+title = "Window Manager: Resize Down"
+description = "Resize the current pane down by two percent."
+contexts = ["pane"]
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-down"]
+
+[[actions]]
+id = "resize-up"
+title = "Window Manager: Resize Up"
+description = "Resize the current pane up by two percent."
+contexts = ["pane"]
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-up"]
+
+[[actions]]
+id = "resize-right"
+title = "Window Manager: Resize Right"
+description = "Resize the current pane right by two percent."
+contexts = ["pane"]
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-right"]
+
+[[actions]]
+id = "intensity-subtle"
+title = "Space Tint: Subtle"
+contexts = ["global", "workspace"]
+description = "Barely-there tint; accent only on borders and highlights."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" intensity subtle"]
+
+[[actions]]
+id = "intensity-medium"
+title = "Space Tint: Medium"
+contexts = ["global", "workspace"]
+description = "Clearly tinted chrome plus coloured borders/separators."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" intensity medium"]
+
+[[actions]]
+id = "intensity-bold"
+title = "Space Tint: Bold"
+contexts = ["global", "workspace"]
+description = "Unmistakable Space colour across all Herdr surfaces."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" intensity bold"]
+
+[[actions]]
+id = "preview-tint"
+title = "Window Manager: Preview Tint Intensities"
+contexts = ["global", "workspace"]
+description = "Print the generated surface colours for each intensity as swatches."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" preview"]
+
+[[actions]]
+id = "bind-picker-key"
+title = "Window Manager: Bind Picker Key (prefix+i)"
+contexts = ["global", "workspace"]
+description = "Add a [[keys.command]] binding for the identity picker (default prefix+i)."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" keybind-install"]
+
+[[actions]]
+id = "unbind-picker-key"
+title = "Window Manager: Unbind Picker Key"
+contexts = ["global", "workspace"]
+description = "Remove the keybinding this plugin added for the picker."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" keybind-remove"]
+
+[[actions]]
+id = "doctor"
+title = "Window Manager: Doctor"
+contexts = ["global", "workspace"]
+description = "Diagnose plugin, config, metadata, view and theme state."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" doctor"]
+
+[[actions]]
+id = "uninstall"
+title = "Window Manager: Restore Config (pre-unlink cleanup)"
+contexts = ["global", "workspace"]
+description = "Restore theme + sidebar config, clear the agent view, metadata and window title."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" uninstall"]

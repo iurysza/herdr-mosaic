@@ -1,0 +1,27 @@
+...............................................................................2026-09-05T20:23:19 WARN state.json unreadable (Expecting property name enclosed in double quotes: line 1 column 2 (char 1)); starting from defaults
+...2026-09-05T20:23:19 captured theme backup for 8 keys
+2026-09-05T20:23:19 theme applied for w1 (■ #4f8cff -> accent #4f8cff)
+2026-09-05T20:23:19 WARN theme keys were modified outside the plugin; not overwriting. theme.custom.accent (expected '#4f8cff', found '#123456'). Re-run with --force to take them over.
+.2026-09-05T20:23:19 captured theme backup for 8 keys
+2026-09-05T20:23:19 theme applied for w1 (■ #4f8cff -> accent #4f8cff)
+.2026-09-05T20:23:19 captured theme backup for 8 keys
+2026-09-05T20:23:19 theme applied for w1 (■ #4f8cff -> accent #4f8cff)
+.2026-09-05T20:23:19 captured theme backup for 8 keys
+2026-09-05T20:23:19 theme applied for w1 (■ #4f8cff -> accent #4f8cff)
+2026-09-05T20:23:19 theme applied for w2 (■ #a970ff -> accent #a970ff)
+.2026-09-05T20:23:19 captured theme backup for 8 keys
+2026-09-05T20:23:19 theme applied for w1 (■ #4f8cff -> accent #4f8cff)
+2026-09-05T20:23:19 theme applied for w2 (■ #a970ff -> accent #a970ff)
+.2026-09-05T20:23:19 captured theme backup for 8 keys
+2026-09-05T20:23:19 theme applied for w1 (■ #4f8cff -> accent #4f8cff)
+.2026-09-05T20:23:19 captured theme backup for 8 keys
+2026-09-05T20:23:19 theme applied for w1 (■ #4f8cff -> accent #4f8cff)
+.2026-09-05T20:23:19 captured theme backup for 8 keys
+2026-09-05T20:23:19 theme applied for w1 (■ #4f8cff -> accent #4f8cff)
+.............................
+----------------------------------------------------------------------
+Ran 118 tests in 0.237s
+
+OK
+
+exit_code=0
