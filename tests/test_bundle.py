@@ -736,6 +736,16 @@ class TestManifest(Base):
         import ctx
         self.assertEqual(ctx.PLUGIN_ID, 'iurysza.window-manager')
 
+    def test_version_files_match(self):
+        import ctx
+        import json
+        with open(os.path.join(ROOT, 'herdr-plugin.toml'), encoding='utf-8') as fh:
+            match = re.search(r'^version = "([^"]+)"', fh.read(), re.M)
+        self.assertIsNotNone(match)
+        self.assertEqual(ctx.PLUGIN_VERSION, match.group(1))
+        with open(os.path.join(ROOT, '.release-please-manifest.json'), encoding='utf-8') as fh:
+            self.assertEqual(json.load(fh)['.'], ctx.PLUGIN_VERSION)
+
 
 class TestArgvParse(unittest.TestCase):
     def test_parse_kv_accepts_bare_and_dashed_key(self):

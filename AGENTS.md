@@ -9,7 +9,7 @@ effort to discover.
 
 Personal Herdr window manager: Chromatic space colour identity, current spaces and
 agents sidebar templates, grouped agent view, optional chrome tint, and existing
-Pane Layouts actions. Plugin id `iurysza.window-manager`, version 1.0.0.
+Pane Layouts actions. Plugin id `iurysza.window-manager`, version 0.1.0.
 
 Last-focus is deferred. Title/elapsed tokens are consumed from
 `herdr-agent-elapsed`; `$themed_model_tier` is consumed from themed Pi. This

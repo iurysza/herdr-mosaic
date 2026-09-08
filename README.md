@@ -17,6 +17,12 @@ slots stay in the agent row even when they are blank at startup.
 
 ## Install
 
+From GitHub:
+
+```sh
+herdr plugin install iurysza/herdr-window-manager
+```
+
 Local checkout (after you have approved cutover — see [docs/cutover.md](docs/cutover.md)):
 
 ```sh
@@ -233,7 +239,9 @@ Manual edits of owned keys are refused unless you pass `--force`.
 python3 -m unittest discover -s tests -t tests
 ```
 
-Stdlib only. See [AGENTS.md](AGENTS.md), [docs/provenance.md](docs/provenance.md),
+Stdlib only. CI runs that command on Linux with a pinned Herdr CLI for
+`herdr config check`. See [docs/releases.md](docs/releases.md),
+[AGENTS.md](AGENTS.md), [docs/provenance.md](docs/provenance.md),
 and [docs/cutover.md](docs/cutover.md).
 
 ---

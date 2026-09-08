@@ -1,0 +1,31 @@
+name: Verify
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Herdr CLI
+        run: |
+          bash scripts/ci/install-herdr.sh "$HOME/.local/bin/herdr"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "HERDR_BIN_PATH=$HOME/.local/bin/herdr" >> "$GITHUB_ENV"
+
+      - name: Verify plugin
+        run: |
+          python3 -m py_compile src/*.py tests/*.py
+          python3 -m unittest discover -s tests -t tests
