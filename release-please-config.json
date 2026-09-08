@@ -3,10 +3,16 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "package-name": "herdr-window-manager",
+      "package-name": "herdr-mosaic",
       "extra-files": [
-        "herdr-plugin.toml",
-        "src/ctx.py"
+        {
+          "type": "generic",
+          "path": "herdr-plugin.toml"
+        },
+        {
+          "type": "generic",
+          "path": "src/ctx.py"
+        }
       ],
       "include-component-in-tag": false,
       "include-v-in-tag": true

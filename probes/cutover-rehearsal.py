@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated Window Manager migrate/install/uninstall rehearsal. No live mutations."""
+"""Isolated Mosaic migrate/install/uninstall rehearsal. No live mutations."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ LIVE_CHROMATIC_STATE = (
     LIVE_HOME / ".local" / "state" / "herdr" / "plugins"
     / "jackfrancisdalton.chromatic-spaces" / "state.json"
 )
-WM_ROOT = Path("/Users/iurysouza/dev/personal/tools/herdr-window-manager")
+WM_ROOT = Path(__file__).resolve().parents[1]
 CHROMATIC_ID = "jackfrancisdalton.chromatic-spaces"
 CHROMATIC_ROOT = Path(
     "/Users/iurysouza/.config/herdr/plugins/github/"
@@ -41,20 +41,20 @@ IDENTITIES_SRC = Path(
 )
 EVIDENCE = WM_ROOT / "probes" / "evidence" / "cutover-rehearsal-lifecycle.log"
 LAYOUT_COMMANDS = {
-    "layouts.resize-left": "iurysza.window-manager.resize-left",
-    "layouts.resize-down": "iurysza.window-manager.resize-down",
-    "layouts.resize-up": "iurysza.window-manager.resize-up",
-    "layouts.resize-right": "iurysza.window-manager.resize-right",
-    "layouts.equalize": "iurysza.window-manager.equalize",
-    "layouts.cycle": "iurysza.window-manager.cycle",
+    "layouts.resize-left": "iurysza.mosaic.resize-left",
+    "layouts.resize-down": "iurysza.mosaic.resize-down",
+    "layouts.resize-up": "iurysza.mosaic.resize-up",
+    "layouts.resize-right": "iurysza.mosaic.resize-right",
+    "layouts.equalize": "iurysza.mosaic.equalize",
+    "layouts.cycle": "iurysza.mosaic.cycle",
 }
 LAYOUT_KEYS = {
-    "ctrl+alt+h": "iurysza.window-manager.resize-left",
-    "ctrl+alt+j": "iurysza.window-manager.resize-down",
-    "ctrl+alt+k": "iurysza.window-manager.resize-up",
-    "ctrl+alt+l": "iurysza.window-manager.resize-right",
-    "ctrl+backslash": "iurysza.window-manager.equalize",
-    "prefix+space": "iurysza.window-manager.cycle",
+    "ctrl+alt+h": "iurysza.mosaic.resize-left",
+    "ctrl+alt+j": "iurysza.mosaic.resize-down",
+    "ctrl+alt+k": "iurysza.mosaic.resize-up",
+    "ctrl+alt+l": "iurysza.mosaic.resize-right",
+    "ctrl+backslash": "iurysza.mosaic.equalize",
+    "prefix+space": "iurysza.mosaic.cycle",
 }
 PRESERVED_BINDINGS = {
     "prefix+i": "jt.command-palette.open",
@@ -266,15 +266,15 @@ def live_unchanged(before_plugins: str | None, before_config: str | None, isolat
         fail("isolated config resolved to live config")
     if after_config != before_config:
         live = LIVE_CONFIG.read_text()
-        if "iurysza.window-manager." in live:
-            fail("live config gained Window Manager commands")
+        if "iurysza.mosaic." in live:
+            fail("live config gained Mosaic commands")
         print("live_config_hash_changed_without_wm_commands")
 
 
 def main() -> int:
     for path, label in (
         (Path(HERDR_BIN), "herdr"),
-        (WM_ROOT / "src" / "main.py", "window-manager main"),
+        (WM_ROOT / "src" / "main.py", "mosaic main"),
         (CHROMATIC_ROOT / "herdr-plugin.toml", "chromatic plugin"),
         (LAYOUTS_ROOT / "herdr-plugin.toml", "layouts plugin"),
         (LIVE_CONFIG, "live config"),
@@ -295,8 +295,8 @@ def main() -> int:
     stdout_path = root / "server.stdout"
     stderr_path = root / "server.stderr"
     env = make_env(root, config_path)
-    wm_state_dir = root / "state" / "herdr" / "plugins" / "iurysza.window-manager"
-    wm_config_dir = root / "config" / "herdr" / "plugins" / "config" / "iurysza.window-manager"
+    wm_state_dir = root / "state" / "herdr" / "plugins" / "iurysza.mosaic"
+    wm_config_dir = root / "config" / "herdr" / "plugins" / "config" / "iurysza.mosaic"
     chromatic_state_dir = root / "legacy" / "chromatic"
     seed_dir = root / "seed"
     for path in (wm_state_dir, wm_config_dir, chromatic_state_dir, seed_dir):
@@ -374,11 +374,11 @@ def main() -> int:
 
         require_ok(herdr(env, ["plugin", "link", str(CHROMATIC_ROOT)], root), "link chromatic")
         require_ok(herdr(env, ["plugin", "link", str(LAYOUTS_ROOT)], root), "link layouts")
-        require_ok(herdr(env, ["plugin", "link", str(WM_ROOT), "--disabled"], root), "link window-manager disabled")
+        require_ok(herdr(env, ["plugin", "link", str(WM_ROOT), "--disabled"], root), "link mosaic disabled")
         staged = plugin_map(env, root)
         print("staged", {pid: {"enabled": p.get("enabled"), "root": p.get("plugin_root")} for pid, p in staged.items()})
-        if staged.get("iurysza.window-manager", {}).get("enabled") is not False:
-            fail("window-manager was not staged disabled")
+        if staged.get("iurysza.mosaic", {}).get("enabled") is not False:
+            fail("mosaic was not staged disabled")
         if not staged.get("jackfrancisdalton.chromatic-spaces", {}).get("enabled"):
             fail("chromatic was not staged enabled")
         if not staged.get("layouts", {}).get("enabled"):
@@ -399,13 +399,13 @@ def main() -> int:
         retired = plugin_map(env, root)
         print("retired_before_wm", {pid: p.get("enabled") for pid, p in retired.items()})
         if retired.get(CHROMATIC_ID, {}).get("enabled") is not False:
-            fail("chromatic was not disabled before Window Manager enable")
+            fail("chromatic was not disabled before Mosaic enable")
         if "layouts" in retired:
-            fail("layouts remained registered before Window Manager enable")
-        if retired.get("iurysza.window-manager", {}).get("enabled") is not False:
-            fail("window-manager must stay disabled until after Chromatic/layouts retire")
+            fail("layouts remained registered before Mosaic enable")
+        if retired.get("iurysza.mosaic", {}).get("enabled") is not False:
+            fail("mosaic must stay disabled until after Chromatic/layouts retire")
 
-        require_ok(herdr(env, ["plugin", "enable", "iurysza.window-manager"], root), "enable window-manager")
+        require_ok(herdr(env, ["plugin", "enable", "iurysza.mosaic"], root), "enable mosaic")
         migrate = run(env, [PYTHON, str(WM_ROOT / "src" / "main.py"), "migrate"], WM_ROOT)
         print("migrate_stdout", migrate.stdout[-2000:])
         print("migrate_stderr", migrate.stderr[-1000:])
@@ -449,7 +449,7 @@ def main() -> int:
                 fail("layout binding %s is %r, expected %s" % (key, binds.get(key), command))
         if any(value.startswith("layouts.") for value in binds.values()):
             fail("legacy layouts.* commands still bound")
-        if binds.get("prefix+shift+i") != "iurysza.window-manager.set-identity":
+        if binds.get("prefix+shift+i") != "iurysza.mosaic.set-identity":
             fail("picker was not bound to prefix+shift+i")
 
         wm_state = json.loads((wm_state_dir / "state.json").read_text())
@@ -458,12 +458,12 @@ def main() -> int:
         print("wm_view_mode", wm_state.get("view_mode"))
         sources_after_install = snapshot_sources(env, root)
         print("sources_after_install", sources_after_install)
-        views_after = [s for s in sources_after_install if s in (CHROMATIC_ID, "plugin:" + CHROMATIC_ID, "iurysza.window-manager", "plugin:iurysza.window-manager")]
+        views_after = [s for s in sources_after_install if s in (CHROMATIC_ID, "plugin:" + CHROMATIC_ID, "iurysza.mosaic", "plugin:iurysza.mosaic")]
         print("view_sources_after_install", views_after)
         if CHROMATIC_ID in views_after or ("plugin:" + CHROMATIC_ID) in views_after:
-            fail("Chromatic agent-view source still present after Window Manager install")
+            fail("Chromatic agent-view source still present after Mosaic install")
         if len(wm_state.get("identities") or {}) < len(seeded.get("identities") or {}):
-            fail("window-manager identities fewer than seeded Chromatic identities")
+            fail("mosaic identities fewer than seeded Chromatic identities")
         if wm_state.get("tint_enabled") is not True:
             fail("tint setting was not enabled after tint-enable")
         if wm_state.get("view_mode") != "all":
@@ -474,8 +474,8 @@ def main() -> int:
             fail("chromatic was not disabled")
         if "layouts" in retired:
             fail("layouts remained registered after unlink")
-        if retired.get("iurysza.window-manager", {}).get("enabled") is not True:
-            fail("window-manager was not left enabled")
+        if retired.get("iurysza.mosaic", {}).get("enabled") is not True:
+            fail("mosaic was not left enabled")
 
         after_cutover = sha256(config_path)
         install2 = run(env, [PYTHON, str(WM_ROOT / "src" / "main.py"), "install"], WM_ROOT, timeout=60)
@@ -489,7 +489,7 @@ def main() -> int:
         print("uninstall_stdout", uninstall.stdout[-1500:])
         require_ok(uninstall, "uninstall")
         shutil.copy2(seed_dir / "config.toml", config_path)
-        require_ok(herdr(env, ["plugin", "disable", "iurysza.window-manager"], root), "disable window-manager after rollback")
+        require_ok(herdr(env, ["plugin", "disable", "iurysza.mosaic"], root), "disable mosaic after rollback")
         require_ok(herdr(env, ["plugin", "enable", "jackfrancisdalton.chromatic-spaces"], root), "re-enable chromatic")
         require_ok(herdr(env, ["plugin", "link", str(LAYOUTS_ROOT)], root), "relink layouts")
         rolled = plugin_map(env, root)
@@ -509,8 +509,8 @@ def main() -> int:
             fail("chromatic was not restored enabled")
         if rolled.get("layouts", {}).get("enabled") is not True:
             fail("layouts was not restored")
-        if rolled.get("iurysza.window-manager", {}).get("enabled") is not False:
-            fail("window-manager was not disabled after rollback")
+        if rolled.get("iurysza.mosaic", {}).get("enabled") is not False:
+            fail("mosaic was not disabled after rollback")
 
         live_unchanged(before_plugins, before_config, config_path)
         EVIDENCE.parent.mkdir(parents=True, exist_ok=True)

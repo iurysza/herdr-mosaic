@@ -157,12 +157,12 @@ class TestUnifiedSidebar(Base):
         doc = cp.load_doc()
         before = doc.dumps()
         status, bound = cp.install_keybind(
-            doc, 'prefix+i', 'iurysza.window-manager.set-identity',
-            'Window Manager: set Space colour')
+            doc, 'prefix+i', 'iurysza.mosaic.set-identity',
+            'Mosaic: set Space colour')
         self.assertEqual(status, 'occupied')
         self.assertEqual(bound, 'command.palette')
         self.assertEqual(doc.dumps(), before)
-        self.assertIsNone(cp.keybind_key(doc, 'iurysza.window-manager.set-identity'))
+        self.assertIsNone(cp.keybind_key(doc, 'iurysza.mosaic.set-identity'))
 
 
 class TestMigration(Base):
@@ -539,7 +539,7 @@ class TestLayoutDispatch(Base):
         self.assertEqual(moves[1]['split'], 'right')
         self.assertAlmostEqual(moves[1]['ratio'], 0.5)
 
-    def test_layout_error_prefix_is_window_manager(self):
+    def test_layout_error_prefix_is_mosaic(self):
         import io
         import layout_actions
         import rpc
@@ -556,7 +556,7 @@ class TestLayoutDispatch(Base):
             self.assertEqual(layout_actions.run(['resize-left']), 1)
         finally:
             sys.stderr = old
-        self.assertIn('window-manager:', captured.getvalue())
+        self.assertIn('mosaic:', captured.getvalue())
         self.assertNotIn('pane-layouts:', captured.getvalue())
 
 
@@ -640,7 +640,7 @@ class TestInstallLifecycle(Base):
             if method == 'server.reload_config':
                 return {'status': 'applied', 'diagnostics': []}
             if method == 'agent.view.set':
-                return {'active': True, 'source': 'iurysza.window-manager',
+                return {'active': True, 'source': 'iurysza.mosaic',
                         'label': 'Spaces'}
             if method == 'agent.view.clear':
                 return {'active': False}
@@ -717,7 +717,7 @@ class TestManifest(Base):
         path = os.path.join(ROOT, 'herdr-plugin.toml')
         with open(path, encoding='utf-8') as fh:
             text = fh.read()
-        self.assertIn('id = "iurysza.window-manager"', text)
+        self.assertIn('id = "iurysza.mosaic"', text)
         self.assertNotIn('jackfrancisdalton.chromatic-spaces', text)
         self.assertNotIn('[[build]]', text)
         self.assertIn('layout equalize', text)
@@ -734,7 +734,7 @@ class TestManifest(Base):
 
     def test_ctx_plugin_id(self):
         import ctx
-        self.assertEqual(ctx.PLUGIN_ID, 'iurysza.window-manager')
+        self.assertEqual(ctx.PLUGIN_ID, 'iurysza.mosaic')
 
     def test_version_files_match(self):
         import ctx
@@ -745,6 +745,15 @@ class TestManifest(Base):
         self.assertEqual(ctx.PLUGIN_VERSION, match.group(1))
         with open(os.path.join(ROOT, '.release-please-manifest.json'), encoding='utf-8') as fh:
             self.assertEqual(json.load(fh)['.'], ctx.PLUGIN_VERSION)
+        with open(os.path.join(ROOT, 'version.txt'), encoding='utf-8') as fh:
+            self.assertEqual(fh.read().strip(), ctx.PLUGIN_VERSION)
+        with open(os.path.join(ROOT, 'release-please-config.json'), encoding='utf-8') as fh:
+            package = json.load(fh)['packages']['.']
+        self.assertEqual(package['package-name'], 'herdr-mosaic')
+        self.assertEqual(package['extra-files'], [
+            {'type': 'generic', 'path': 'herdr-plugin.toml'},
+            {'type': 'generic', 'path': 'src/ctx.py'},
+        ])
 
 
 class TestArgvParse(unittest.TestCase):

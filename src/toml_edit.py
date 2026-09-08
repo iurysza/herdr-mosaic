@@ -519,6 +519,22 @@ class TomlDoc(object):
         raw = chunk[eq + 1:]
         return parse_value(raw[:scan_value_end(raw, 0)].strip())
 
+    def set_section_scalar(self, sec, key, value):
+        """Replace one scalar in an array-of-tables section, not its siblings."""
+        hit = self._scan_section_for_key(sec, (key,))
+        if not hit:
+            raise TomlEditError("section has no key %r" % key)
+        _, start, end, eq = hit
+        chunk = self._nl.join(self.lines[start:end])
+        raw = chunk[eq + 1:]
+        value_end = scan_value_end(raw, 0)
+        old = raw[:value_end]
+        leading = old[:len(old) - len(old.lstrip())]
+        trailing = old[len(old.rstrip()):]
+        self.lines[start:end] = [(chunk[:eq + 1] + leading + dump_value(value)
+                                 + trailing + raw[value_end:])]
+        self._reindex()
+
     def append_lines(self, lines):
         """Append raw lines at EOF (used for array-of-tables blocks)."""
         if self.lines and self.lines[-1].strip():

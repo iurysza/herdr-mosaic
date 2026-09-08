@@ -48,7 +48,7 @@ def dot_tokens():
 
 
 def title_tokens():
-    """Coloured title slots consumed from herdr-agent-elapsed. Blank at startup."""
+    """Coloured title slots published by Mosaic; unused slots remain blank."""
     import identity as ident
     return [{"token": "$title_" + name, "fg": hexv, "dim": False}
             for name, hexv in ident.PALETTE]
@@ -479,7 +479,7 @@ def remove_sidebar(doc, backup):
 # keybindings ([[keys.command]] array-of-tables)
 # --------------------------------------------------------------------------
 
-KEYBIND_MARKER = "# added by iurysza.window-manager"
+KEYBIND_MARKER = "# added by iurysza.mosaic"
 KEYS_COMMAND = ("keys", "command")
 
 
@@ -531,6 +531,48 @@ def install_keybind(doc, key, command, description):
         'description = %s' % dump_value(description),
     ])
     return ("added", key)
+
+
+def rename_plugin_actions(doc, old_id, new_id):
+    """Retarget only plugin_action commands; keep keys, comments, and descriptions."""
+    records = []
+    prefix = old_id + "."
+    for sec in reversed(doc.aot_sections(KEYS_COMMAND)):
+        command = doc.section_scalar(sec, "command")
+        if (doc.section_scalar(sec, "type") != "plugin_action"
+                or not isinstance(command, str) or not command.startswith(prefix)):
+            continue
+        key = doc.section_scalar(sec, "key")
+        replacement = new_id + command[len(old_id):]
+        before = list(doc.lines[sec.start:sec.end])
+        doc.set_section_scalar(sec, "command", replacement)
+        changed = [candidate for candidate in doc.aot_sections(KEYS_COMMAND)
+                   if doc.section_scalar(candidate, "command") == replacement
+                   and doc.section_scalar(candidate, "key") == key]
+        if len(changed) != 1:
+            raise ConfigError("ambiguous binding while migrating %s" % command)
+        records.append({"key": key, "command": replacement, "before": before,
+                        "after": list(doc.lines[changed[0].start:changed[0].end])})
+    return records
+
+
+def restore_action_renames(doc, records):
+    """Restore exact migrated bodies only if the user has not edited them."""
+    remaining = []
+    for record in records:
+        keyed = [sec for sec in doc.aot_sections(KEYS_COMMAND)
+                 if doc.section_scalar(sec, "key") == record["key"]]
+        if any(doc.lines[sec.start:sec.end] == record["before"] for sec in keyed):
+            continue  # The config write failed, or this binding was already restored.
+        matches = [sec for sec in keyed
+                   if doc.section_scalar(sec, "command") == record["command"]]
+        if len(matches) != 1 or doc.lines[matches[0].start:matches[0].end] != record["after"]:
+            remaining.append(record)
+            continue
+        sec = matches[0]
+        doc.lines[sec.start:sec.end] = record["before"]
+        doc._reindex()
+    return remaining
 
 
 def remove_keybind(doc, command):

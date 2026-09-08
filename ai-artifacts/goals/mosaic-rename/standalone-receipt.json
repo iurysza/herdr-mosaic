@@ -1,0 +1,23 @@
+{
+  "result": "passed",
+  "first_round": {
+    "agents": 1,
+    "duration_seconds": 0.19296975
+  },
+  "timer": {
+    "before": "1m",
+    "after": "2m",
+    "duration_seconds": 0.005698541000001001
+  },
+  "restart": {
+    "agents": 0,
+    "duration_seconds": 0.0009649159999999997
+  },
+  "disabled": {
+    "worker_exited": true,
+    "elapsed_expired": true,
+    "title_retained": true
+  },
+  "install_status": "succeeded",
+  "uninstall_status": "succeeded"
+}

@@ -1,68 +1,49 @@
-# Cutover and rollback
+# Replace Chromatic Spaces and Pane Layouts
 
-This plugin is implemented in the `herdr-window-manager` worktree. It is **not**
-linked, and this document does not apply live config. Agents-repo and chezmoi
-integration are prerequisites for a later parent-authorized cutover — they are
-not implemented here.
+This checklist is for the older Chromatic and Pane Layouts plugins. For `iurysza.window-manager`, use [Move to Mosaic](./migration.md) instead.
 
-## Ownership after cutover
+Mosaic takes over space colours, sidebar templates, title and elapsed publication, agent grouping, and pane layout actions. Optional model-tier metadata remains agent-provided.
 
-`iurysza.window-manager` owns:
+## Before changing the live installation
 
-- Space identity, picker, optional tint, grouped agent view
-- `ui.sidebar.spaces.rows` (state icon + `$sd_*` + workspace / branch / git_status)
-- `ui.sidebar.agents.rows` (`state_icon` + `$elapsed` + 12 `$title_*` + `$themed_model_tier`)
-- Pane layout actions
+Back up Herdr's config, plugin registry, Chromatic state and settings, label rules, and the elapsed refresh service. Keep those copies for rollback.
 
-It consumes, and does not replace:
+Rehearse the change with a separate HOME, config, plugin registry, state directory, and socket. A different Herdr session name is not enough because named sessions share config. If you cannot guarantee isolation, do not run a live rehearsal.
 
-- `$elapsed` and `$title_*` from LaunchAgent `com.iurysouza.herdr-agent-elapsed`
-- `$themed_model_tier` from themed Pi
+If chezmoi or another tool generates your sidebar and theme settings, update its source so it does not overwrite Mosaic's changes on the next apply. Do not apply a whole generated Herdr config without reviewing the diff.
 
-Chezmoi currently regenerates sidebar rows from
-`.chezmoitemplates/herdr-config-base.toml`. A later cutover must stop that, or
-the next `chezmoi apply` will drop `$themed_model_tier`. Do not run
-`./install.sh --apply` against `~/.config/herdr/config.toml` wholesale.
+## Cut over
 
-## Do not do this
+1. Link Mosaic with hooks disabled:
 
-- Do **not** run Chromatic `install` or `uninstall` against the live config.
-  Live `state.json` still thinks it owns the old `$sd_*` agent row, and
-  `sidebar_backup` records `ui.sidebar.agents.rows` as originally absent.
-  Uninstall would delete the elapsed/title row.
-- Do **not** trust Chromatic `theme_backup` / `sidebar_backup` / `last_written`
-  as the restore point for this plugin. `migrate` copies identities only and
-  snapshots the **current** config as the new baseline.
+   ```sh
+   herdr plugin link /path/to/herdr-mosaic --disabled
+   ```
 
-## Suggested cutover (later, after approval)
+2. Preview and import from the checkout:
 
-1. Snapshot live `config.toml`, Chromatic state/settings, identities JSON, and
-   the elapsed unit. Keep Chromatic's state directory in place.
-2. Isolate a disposable Herdr session (separate HOME, config, socket, plugin
-   registry). Rehearse `migrate` then `install` there first.
-3. Link this plugin. Run `migrate` then `install`. Confirm doctor, spaces dots,
-   blank-ok coloured titles, optional tint, and layout actions.
-4. Disable/unlink GitHub Chromatic `jackfrancisdalton.chromatic-spaces` **and**
-   unlink the `layouts` plugin. If both this plugin and `layouts` stay linked,
-   two reshapers can run with different locks. Leave `herdr-agent-elapsed`
-   running. Leave the old Chromatic state dir for rollback.
-5. Update keybindings from `layouts.*` and `jackfrancisdalton.chromatic-spaces.*`
-   to `iurysza.window-manager.*`. Live `prefix+i` is Command Palette; picker
-   default remains `prefix+i` only if that key is free.
-6. Stop chezmoi from writing plugin-owned sidebar/theme keys.
+   ```sh
+   /usr/bin/python3 /path/to/herdr-mosaic/src/main.py migrate --dry-run
+   /usr/bin/python3 /path/to/herdr-mosaic/src/main.py migrate
+   ```
 
-## Rollback
+   This copies compatible identities and settings, ignores stale Chromatic backups, and records the current sidebar rows as Mosaic's restore point.
+3. Disable or unlink Chromatic and unlink Pane Layouts before enabling Mosaic. Stop the external title/elapsed service as part of this approved live cutover, keeping its files for rollback. Do not invoke Chromatic's install or uninstall actions. Its old restore records can delete the elapsed/title row.
+4. Update your user-managed bindings from `layouts.*` and `jackfrancisdalton.chromatic-spaces.*` to the matching `iurysza.mosaic.*` actions. Keep occupied keys such as Command Palette's binding.
+5. Enable Mosaic and run setup:
 
-1. Relink Chromatic at `910c3daf`.
-2. Restore the **cutover snapshot** of `config.toml`, not Chromatic uninstall
-   against a file this plugin already owns.
-3. Keep the elapsed unit. Do not restore an older tracked
-   `herdr-agent-elapsed` over the live binary.
-4. This plugin's state dir can remain; it is unused once unlinked.
+   ```sh
+   herdr plugin enable iurysza.mosaic
+   herdr plugin action invoke iurysza.mosaic.install
+   herdr plugin action invoke iurysza.mosaic.doctor
+   ```
 
-## Isolation rule for rehearsal
+6. Check the space markers, agent titles, elapsed refresh, optional model-tier labels, and layout actions. Enable tint separately if you want it. Mosaic starts its own refresh worker during setup.
 
-A different `--session` name is not enough. Named sessions share `config.toml`.
-Rehearsal needs isolated config, plugin registry, state, and socket, with no
-fallback to live defaults. If that cannot be guaranteed, do not mutate live
-Herdr.
+## Roll back
+
+Disable Mosaic before restoring the cutover copies of Herdr's config and plugin data. Relink the unchanged Chromatic and Pane Layouts checkouts only after Mosaic stops writing.
+
+Use your cutover config snapshot, not Chromatic's uninstall action. Restart the saved external refresh service only after Mosaic has stopped publishing.
+
+Mosaic's data can remain while it is unlinked.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""iurysza.window-manager -- entry point for every manifest command.
+"""iurysza.mosaic -- entry point for every manifest command.
 
 Subcommands map 1:1 onto manifest startup hooks, event hooks, actions and pane
 entrypoints. Every mutating path runs under one exclusive lock (ctx.Lock) and
@@ -217,6 +217,8 @@ def cmd_event(argv):
         return _on_workspace_closed(data)
     if name in ("pane.created", "pane.moved", "pane.agent_detected"):
         return _on_pane_changed(name, data)
+    if name == "tab.renamed":
+        return 0  # Publication after dispatch reads the current tab label.
     if name == "pane.agent_status_changed":
         return _on_agent_status_changed(data)
     if name in ("pane.closed", "pane.exited"):
@@ -799,7 +801,7 @@ def cmd_keybind_install(argv):
         doc = cp.load_doc()
         cp.snapshot()
         status, bound = cp.install_keybind(
-            doc, key, PICKER_COMMAND, "Window Manager: set Space colour")
+            doc, key, PICKER_COMMAND, "Mosaic: set Space colour")
         if status == "exists":
             print("already bound to %s (leaving your choice alone); "
                   "edit config.toml to change it" % bound)
@@ -932,7 +934,7 @@ def cmd_doctor(argv):
     def row(k, v):
         out.append("  %-30s %s" % (k + ":", v))
 
-    out.append("iurysza.window-manager doctor")
+    out.append("iurysza.mosaic doctor")
     out.append("")
 
     pong, err = rpc.try_call("ping", {})
@@ -1109,6 +1111,16 @@ def cmd_doctor(argv):
                         "action to take them over, or leave them as yours."
                         % len(conflicts))
 
+    # Plugin-owned scheduling is independent of the old external service.
+    import refresh
+    import elapsed
+    heartbeat = refresh.status()
+    age = time.time() - heartbeat["published_at"] if heartbeat else None
+    row("sidebar refresh", "last round %.1fs ago" % age if age is not None else "not running")
+    if st.get("sidebar_installed") and (age is None or age > elapsed.TTL_MS / 1000.0):
+        problems.append("Mosaic sidebar refresh is missing or stale. Run reconcile "
+                        "and inspect refresh.log in the plugin state directory.")
+
     # sessions
     running = _running_sessions()
     row("herdr sessions running", "%d (%s)" % (len(running),
@@ -1149,6 +1161,12 @@ def cmd_uninstall(argv):
         cp.snapshot()
         doc = cp.load_doc()
         notes = []
+        action_renames = st.get("action_renames") or []
+        migrated_picker = any(record["command"] == PICKER_COMMAND for record in action_renames)
+        remaining_renames = cp.restore_action_renames(doc, action_renames)
+        if remaining_renames:
+            notes.append("action bindings skipped (user-modified): %s" %
+                         ", ".join(record["key"] for record in remaining_renames))
 
         restored, skipped = _restore_theme(st, doc, force=force)
         if restored:
@@ -1172,7 +1190,7 @@ def cmd_uninstall(argv):
                 doc, sb, skip=sskip, tidy_tables=cp.SIDEBAR_TIDY_TABLES)
             notes.append("sidebar: %d row sets" % len(sres))
 
-        if cp.remove_keybind(doc, PICKER_COMMAND):
+        if not migrated_picker and cp.remove_keybind(doc, PICKER_COMMAND):
             notes.append("keybinding removed")
         st["keybind_installed"] = False
         st["keybind_key"] = None
@@ -1193,8 +1211,11 @@ def cmd_uninstall(argv):
 
         for w in rpc.workspaces():
             metadata.clear_workspace(w["workspace_id"])
-        for a in rpc.agents():
+        agents = rpc.agents()
+        for a in agents:
             metadata.clear_pane(a["pane_id"])
+        import sidebar
+        sidebar.clear(agents)
         notes.append("metadata cleared")
 
         _clear_window_title(st)
@@ -1207,6 +1228,7 @@ def cmd_uninstall(argv):
         st["tint_enabled"] = False
         st["last_tint"] = None
         st["last_written"] = {}
+        st["action_renames"] = remaining_renames
         state_mod.save(st)
         ctx.log("uninstall complete: %s" % "; ".join(notes))
         print("restored. %s" % "; ".join(notes))
@@ -1216,12 +1238,12 @@ def cmd_uninstall(argv):
 
 
 def cmd_migrate(argv):
-    """Import Chromatic/layouts state without applying stale config backups."""
+    """Import Window Manager data or compatible parts of older plugins."""
     import migrate
     with ctx.Lock():
         try:
             return migrate.run(argv)
-        except migrate.MigrationError as exc:
+        except (migrate.MigrationError, OSError) as exc:
             ctx.warn(str(exc))
             print(str(exc), file=sys.stderr)
             return 1
@@ -1241,14 +1263,33 @@ def cmd_install(argv):
     rc = cmd_migrate(argv)
     if rc:
         return rc
-    rc = cmd_sidebar_install(argv)
-    cmd_keybind_install(argv)
+    for command in (cmd_sidebar_install, cmd_keybind_install):
+        rc = command(argv)
+        if rc:
+            return rc
+    with ctx.Lock():
+        import migrate
+        st = state_mod.load()
+        doc = cp.load_doc()
+        records = cp.rename_plugin_actions(doc, migrate.LEGACY_WINDOW_MANAGER_ID, ctx.PLUGIN_ID)
+        if records:
+            cp.snapshot()
+            saved = st.setdefault("action_renames", [])
+            for record in records:
+                previous = next((item for item in saved if item["key"] == record["key"]
+                                 and item["command"] == record["command"]), None)
+                if previous is None:
+                    saved.append(record)
+                elif previous != record:
+                    raise cp.ConfigError("binding %s changed since migration; not overwriting" % record["key"])
+            state_mod.save(st)  # Restore records must survive a failed config write.
+            cp.commit(doc)
+            _reload_config()
     mode = state_mod.load().get("view_mode") or "all"
     if mode not in ("all", "current"):
         mode = "all"
-    cmd_view([mode])
-    cmd_reconcile(argv)
-    return rc
+    rc = cmd_view([mode])
+    return rc if rc else cmd_reconcile(argv)
 
 
 def cmd_list(argv):
@@ -1282,6 +1323,13 @@ def cmd_list(argv):
 def cmd_elapsed_publish(argv):
     import elapsed
     return elapsed.publish()
+
+
+def cmd_refresh_worker(argv):
+    import refresh
+    if len(argv) != 1:
+        raise RuntimeError("refresh-worker requires the socket generation from startup")
+    return refresh.run(argv[0])
 
 
 def cmd_state(argv):
@@ -1321,6 +1369,7 @@ COMMANDS = {
     "list": cmd_list,
     "state": cmd_state,
     "elapsed-publish": cmd_elapsed_publish,
+    "refresh-worker": cmd_refresh_worker,
 }
 
 
@@ -1334,8 +1383,33 @@ def main(argv):
     if not fn:
         sys.stderr.write("unknown command %r\n" % cmd)
         return 2
+    # An old registry entry can still point at a checkout after a git update.
+    # Never run Mosaic hooks against Window Manager's environment or data paths.
+    registered_id = os.environ.get("HERDR_PLUGIN_ID")
+    if registered_id and registered_id != ctx.PLUGIN_ID:
+        sys.stderr.write("Mosaic cannot run as %s; follow docs/migration.md "
+                         "before relinking this checkout\n" % registered_id)
+        return 1
+    import migrate
+    if cmd not in ("migrate", "install") and migrate.window_manager_pending():
+        sys.stderr.write("Window Manager data awaits import; follow docs/migration.md "
+                         "and run Mosaic's migrate action before %s\n" % cmd)
+        return 1
     try:
-        return fn(argv[1:]) or 0
+        result = fn(argv[1:]) or 0
+        refresh_events = ("tab.renamed", "pane.agent_detected", "pane.moved",
+                          "pane.agent_status_changed")
+        refresh_needed = (cmd in ("install", "reconcile", "apply-identity", "repalette")
+                          or (cmd == "event" and len(argv) > 1 and argv[1] in refresh_events))
+        if result == 0 and refresh_needed and "--dry-run" not in argv:
+            import sidebar
+            import refresh
+            sidebar.publish_once()
+            refresh.start()
+        return result
+    except OSError as exc:
+        ctx.warn("I/O error in %s: %s" % (cmd, exc))
+        return 1
     except rpc.RpcError as exc:
         ctx.warn("herdr API error in %s: %s" % (cmd, exc))
         return 1

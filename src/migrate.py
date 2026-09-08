@@ -1,8 +1,8 @@
-"""Explicit import of legacy Chromatic Spaces and Pane Layouts state.
+"""Import Window Manager data or older Chromatic and Pane Layouts state.
 
-Safe operations only: copy identities and settings into this plugin's directories,
-leave the old files in place for rollback, and refuse Chromatic config backups.
-The current Herdr config is snapshotted as this plugin's ownership baseline.
+Window Manager has the same state format, including exact restore information.
+Chromatic backups are incompatible and must never become Mosaic's restore point.
+All imports run under ctx.Lock through main.cmd_migrate.
 """
 
 import json
@@ -15,6 +15,7 @@ import identity as ident
 import state as state_mod
 
 
+LEGACY_WINDOW_MANAGER_ID = "iurysza.window-manager"
 LEGACY_CHROMATIC_ID = "jackfrancisdalton.chromatic-spaces"
 LEGACY_LAYOUTS_ID = "layouts"
 
@@ -26,6 +27,83 @@ class MigrationError(Exception):
 def _env_path(name, default):
     v = os.environ.get(name)
     return v if v else default
+
+
+def window_manager_state_dir():
+    return _env_path(
+        "HERDR_LEGACY_WINDOW_MANAGER_STATE_DIR",
+        os.path.join(os.path.dirname(ctx.state_dir()), LEGACY_WINDOW_MANAGER_ID),
+    )
+
+
+def window_manager_config_dir():
+    return _env_path(
+        "HERDR_LEGACY_WINDOW_MANAGER_CONFIG_DIR",
+        os.path.join(os.path.dirname(ctx.config_dir()), LEGACY_WINDOW_MANAGER_ID),
+    )
+
+
+def window_manager_pending():
+    return (os.path.isfile(os.path.join(window_manager_state_dir(), "state.json"))
+            and not os.path.exists(os.path.join(ctx.state_dir(), "state.json")))
+
+
+def import_window_manager(dry_run=False):
+    """Copy data once, preserving restore records and leaving the source intact.
+
+    Preflight every destination before copying. Equal files allow a retry after
+    a partial copy; different files are a conflict even with --force. Commit the
+    state file last so startup cannot treat an incomplete import as complete.
+    Caller holds Mosaic's lock; also wait for any in-flight legacy hook.
+    """
+    old_dir = window_manager_state_dir()
+    old_path = os.path.join(old_dir, "state.json")
+    target = os.path.join(ctx.state_dir(), "state.json")
+    if os.path.exists(target):
+        return {"notes": ["kept existing Mosaic state; Window Manager not imported"],
+                "dry_run": bool(dry_run)}
+    with ctx.Lock(os.path.join(old_dir, "plugin.lock")):
+        old = _read_json(old_path)
+        if old is None or old.get("version", 1) != state_mod.SCHEMA_VERSION:
+            raise MigrationError("unsupported Window Manager state at %s" % old_path)
+        copies = []
+        old_config = window_manager_config_dir()
+        for name in ("settings.json", "identities.json", "legacy-layouts-settings.json"):
+            source = os.path.join(old_config, name)
+            if os.path.exists(source):
+                _read_json(source)
+                copies.append((source, os.path.join(ctx.config_dir(), name)))
+        for name in sorted(os.listdir(old_dir)):
+            if name.startswith("config.backup.") and name.endswith(".toml"):
+                copies.append((os.path.join(old_dir, name),
+                               os.path.join(ctx.state_dir(), name)))
+        pending = []
+        for source, dest in copies:
+            with open(source, "r", encoding="utf-8", newline="") as fh:
+                content = fh.read()
+            if os.path.exists(dest):
+                with open(dest, "r", encoding="utf-8", newline="") as fh:
+                    if fh.read() != content:
+                        raise MigrationError("Window Manager import conflicts with %s; "
+                                             "existing Mosaic files are never overwritten" % dest)
+            else:
+                pending.append((dest, content))
+        with open(old_path, "r", encoding="utf-8", newline="") as fh:
+            original_state = fh.read()
+        if not dry_run:
+            for dest, content in pending:
+                ctx.atomic_write(dest, content)
+            ctx.atomic_write(os.path.join(ctx.state_dir(), "window-manager-import.json"),
+                             json.dumps({"source": old_path}) + "\n")
+            ctx.atomic_write(target, original_state)
+        return {
+            "window_manager_state_dir": old_dir,
+            "window_manager_config_dir": old_config,
+            "files_copied": [dest for dest, _ in pending] + [target],
+            "dry_run": bool(dry_run),
+            "notes": ["preserved Window Manager state, including restore backups",
+                      "left original files in place; Chromatic state not imported"],
+        }
 
 
 def chromatic_state_dir():
@@ -219,10 +297,17 @@ def import_legacy(st, force=False, dry_run=False):
 def run(argv):
     force = "--force" in argv
     dry_run = "--dry-run" in argv
-    st = state_mod.load()
-    report = import_legacy(st, force=force, dry_run=dry_run)
-    if not dry_run:
-        state_mod.save(st)
+    imported = os.path.exists(os.path.join(ctx.state_dir(), "window-manager-import.json"))
+    if imported and os.path.exists(os.path.join(ctx.state_dir(), "state.json")):
+        report = {"notes": ["kept existing Mosaic state; Window Manager was already imported"],
+                  "dry_run": bool(dry_run)}
+    elif os.path.isfile(os.path.join(window_manager_state_dir(), "state.json")):
+        report = import_window_manager(dry_run=dry_run)
+    else:
+        st = state_mod.load()
+        report = import_legacy(st, force=force, dry_run=dry_run)
+        if not dry_run:
+            state_mod.save(st)
     print(json.dumps(report, indent=2, sort_keys=True))
     if report.get("ignored_stale_backups"):
         print(

@@ -13,9 +13,9 @@ import os
 import sys
 import time
 
-PLUGIN_ID = "iurysza.window-manager"
+PLUGIN_ID = "iurysza.mosaic"
 PLUGIN_VERSION = "0.1.0"  # x-release-please-version
-PLUGIN_NAME = "Window Manager"
+PLUGIN_NAME = "Mosaic"
 
 # Herdr runs plugin commands with a minimal PATH; never rely on PATH lookups.
 HOME = os.path.expanduser("~")

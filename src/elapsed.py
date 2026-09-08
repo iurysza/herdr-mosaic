@@ -1,6 +1,7 @@
 """Publish time since the last observed completion, never time since focus.
 
-The existing refresh service calls this command while Window Manager is enabled.
+Mosaic's sidebar worker uses this renderer. The elapsed-publish command remains
+available for compatibility and diagnostics; no external service is required.
 Cadence/expiry receipt: herdr-agent-elapsed measured 20-pane rounds at 602 ms
 median, 940 ms maximum on 2026-09-04; its 30-second refresh uses a 45-second TTL.
 Keep that expiry and its existing source during the publisher handover so old

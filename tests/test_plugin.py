@@ -121,11 +121,20 @@ class Base(unittest.TestCase):
         'HERDR_SOCKET_PATH', 'HERDR_LEGACY_CHROMATIC_STATE_DIR',
         'HERDR_LEGACY_CHROMATIC_CONFIG_DIR', 'HERDR_LEGACY_LAYOUTS_STATE_DIR',
         'HERDR_LEGACY_LAYOUTS_CONFIG_DIR', 'HERDR_LABEL_IDENTITIES_FILE',
+        'HERDR_PLUGIN_ID', 'HERDR_LEGACY_WINDOW_MANAGER_STATE_DIR',
+        'HERDR_LEGACY_WINDOW_MANAGER_CONFIG_DIR',
     )
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix='space-identity-test-')
         self._saved_env = {k: os.environ.get(k) for k in self.ENV_KEYS}
+        for key in ('HERDR_PLUGIN_ID', 'HERDR_LEGACY_WINDOW_MANAGER_STATE_DIR',
+                    'HERDR_LEGACY_WINDOW_MANAGER_CONFIG_DIR'):
+            os.environ.pop(key, None)
+        os.environ['HERDR_LEGACY_WINDOW_MANAGER_STATE_DIR'] = os.path.join(
+            self.tmp, 'legacy-window-manager-state')
+        os.environ['HERDR_LEGACY_WINDOW_MANAGER_CONFIG_DIR'] = os.path.join(
+            self.tmp, 'legacy-window-manager-config')
         os.environ['HERDR_PLUGIN_STATE_DIR'] = os.path.join(self.tmp, 'state')
         os.environ['HERDR_PLUGIN_CONFIG_DIR'] = os.path.join(self.tmp, 'config')
         os.environ['HERDR_CONFIG_PATH'] = os.path.join(self.tmp, 'config.toml')
@@ -145,7 +154,7 @@ class Base(unittest.TestCase):
         for mod in ('ctx', 'state', 'identity', 'theme', 'config_patch',
                     'metadata', 'agent_view', 'toml_edit', 'rpc', 'main',
                     'labels', 'migrate', 'layouts', 'layout_actions',
-                    'agent_tracker'):
+                    'agent_tracker', 'sidebar', 'refresh', 'elapsed'):
             sys.modules.pop(mod, None)
 
     def tearDown(self):

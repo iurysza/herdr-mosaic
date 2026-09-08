@@ -1,4 +1,4 @@
-# Contributing to this plugin
+# Contributing to Mosaic
 
 The README explains the plugin to a user; this explains it to whoever is changing
 it. Read `docs/herdr-api-findings.md` before touching anything that talks to Herdr
@@ -9,11 +9,15 @@ effort to discover.
 
 Personal Herdr window manager: Chromatic space colour identity, current spaces and
 agents sidebar templates, grouped agent view, optional chrome tint, and existing
-Pane Layouts actions. Plugin id `iurysza.window-manager`, version 0.1.0.
+Pane Layouts actions. Plugin id `iurysza.mosaic`, version 0.1.0.
 
-Last-focus is deferred. Title/elapsed tokens are consumed from
-`herdr-agent-elapsed`; `$themed_model_tier` is consumed from themed Pi. This
-plugin does not publish those tokens.
+Last-focus is deferred. Mosaic publishes titles and elapsed tokens itself using
+`sidebar.py` and a detached `refresh.py` worker. `$themed_model_tier` remains
+optional agent-provided metadata; Mosaic must never write or clear it.
+
+The worker uses the existing `agent-sidebar-title` and `agent-elapsed` sources.
+Titles have no TTL. Elapsed uses the measured 30-second refresh / 45-second TTL
+contract. Do not run an external publisher at the same time after cutover.
 
 ## Non-negotiables
 
@@ -29,6 +33,12 @@ plugin does not publish those tokens.
   of every key it touches (including "was absent"). Restoration must be byte-exact.
 - **Never apply Chromatic `sidebar_backup` / `theme_backup` / `last_written`.** Those
   backups pre-date the elapsed/title agent row and would destroy it.
+- **Window Manager is different from Chromatic.** Its `iurysza.window-manager`
+  state uses the same schema as Mosaic. Import its complete state and restore
+  records without rewriting them, then skip older Chromatic imports. Keep source
+  files for rollback and never overwrite existing Mosaic data.
+- **Do not edit a live-linked checkout during a rename.** Use a separate worktree.
+  Follow `docs/migration.md` before changing the live registration.
 
 ## Things that will bite you
 
@@ -60,6 +70,7 @@ Each of these was a real bug, not a hypothetical:
 
 ```sh
 python3 -m unittest discover -s tests -t tests     # stdlib only
+python3 scripts/check-standalone.py                # isolated real Herdr lifecycle
 ```
 
 Config fixtures are validated by the real `herdr config check` binary. The suite
@@ -76,15 +87,15 @@ Use a fully isolated disposable Herdr HOME/config/socket/registry, or skip.
 
 ```sh
 python3 src/main.py doctor
-herdr plugin action invoke iurysza.window-manager.doctor
+herdr plugin action invoke iurysza.mosaic.doctor
 ```
 
 ## Working in a live session
 
-- **`~/.config/herdr/plugins/config/iurysza.window-manager/settings.json`
+- **`~/.config/herdr/plugins/config/iurysza.mosaic/settings.json`
   is the user's config.** Read it before assuming anything about state; do not
   delete it without asking.
-- State lives at `~/.local/state/herdr/plugins/iurysza.window-manager/`.
+- State lives at `~/.local/state/herdr/plugins/iurysza.mosaic/`.
   Chromatic state at `jackfrancisdalton.chromatic-spaces` is retained for rollback.
 - Run `uninstall` before unlinking when testing the full lifecycle — unlinking
   without it leaves sidebar tokens and theme overrides in `config.toml`.
@@ -99,5 +110,7 @@ the durable identity map, `identity.py` owns the palette and allocation,
 `metadata.py` publishes workspace/pane metadata, `agent_view.py` manages the native
 agent projection, `picker.py` and `board.py` are the two popup panes,
 `layouts.py` is the pure layout core, `layout_actions.py` reshapes/resizes under
-the plugin lock, `migrate.py` imports Chromatic/layouts state without applying
-stale config backups.
+the plugin lock, `migrate.py` imports Window Manager data intact, or Chromatic/layouts state
+without applying stale Chromatic config backups. `sidebar.py` renders title/clock
+metadata and `refresh.py` owns per-socket scheduling. `scripts/check-standalone.py`
+proves install, timer refresh, restart, and cleanup without live setup.

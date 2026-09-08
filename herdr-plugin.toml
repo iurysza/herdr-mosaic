@@ -1,5 +1,5 @@
-id = "iurysza.window-manager"
-name = "Window Manager"
+id = "iurysza.mosaic"
+name = "Mosaic"
 version = "0.1.0"  # x-release-please-version
 # 0.8.0 (protocol 19) is the version whose API schema was verified for every call
 # this plugin makes. `agent.view.set/clear`, `client.window_title.set/clear`,
@@ -7,7 +7,7 @@ version = "0.1.0"  # x-release-please-version
 # against 0.8.0; earlier versions were not tested. Pane layouts require 0.7.0+.
 min_herdr_version = "0.8.0"
 platforms = ["macos", "linux"]
-description = "Per-space colour identity, current spaces/agents sidebar templates, grouped agent view, optional tint, and tmux-style pane layouts."
+description = "Space colours, agent grouping, and pane layouts for Herdr."
 
 # Every command is invoked through /bin/sh so $HERDR_PLUGIN_ROOT expands: pane
 # entrypoints run with the pane's cwd, not the plugin root. Herdr also gives
@@ -44,6 +44,10 @@ on = "workspace.closed"
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event workspace.closed"]
 
 [[events]]
+on = "tab.renamed"
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event tab.renamed"]
+
+[[events]]
 on = "pane.moved"
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.moved"]
 
@@ -67,7 +71,7 @@ command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main
 
 [[panes]]
 id = "picker"
-title = "Window Manager"
+title = "Mosaic"
 placement = "popup"
 width = 62
 height = 20
@@ -89,112 +93,112 @@ command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main
 
 [[actions]]
 id = "set-identity"
-title = "Window Manager: Set Space Colour"
+title = "Mosaic: Set Space Colour"
 contexts = ["workspace", "pane"]
 description = "Open the colour picker for the current space."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" set-identity"]
 
 [[actions]]
 id = "auto-assign"
-title = "Window Manager: Auto Assign Identity"
+title = "Mosaic: Auto Assign Identity"
 contexts = ["global", "workspace"]
 description = "Give every space without an identity a default colour."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" auto-assign"]
 
 [[actions]]
 id = "tint-enable"
-title = "Window Manager: Enable Workspace Tint"
+title = "Mosaic: Enable Workspace Tint"
 contexts = ["global", "workspace"]
 description = "Tint Herdr's chrome with the focused space's colour on every switch."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" tint-enable"]
 
 [[actions]]
 id = "tint-disable"
-title = "Window Manager: Disable Workspace Tint"
+title = "Mosaic: Disable Workspace Tint"
 contexts = ["global", "workspace"]
 description = "Stop tinting and restore the original theme values."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" tint-disable"]
 
 [[actions]]
 id = "theme-restore"
-title = "Window Manager: Restore Original Theme"
+title = "Mosaic: Restore Original Theme"
 contexts = ["global", "workspace"]
 description = "Restore the exact theme values that were present before tinting."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" theme-restore"]
 
 [[actions]]
 id = "show-all-agents"
-title = "Window Manager: Show All Agents"
+title = "Mosaic: Show All Agents"
 contexts = ["global", "workspace"]
 description = "Agent view: all spaces, grouped and ordered by space."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" view all"]
 
 [[actions]]
 id = "show-current-space-agents"
-title = "Window Manager: Show Current Space Agents"
+title = "Mosaic: Show Current Space Agents"
 contexts = ["global", "workspace"]
 description = "Agent view: only agents in the focused space."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" view current"]
 
 [[actions]]
 id = "open-agent-board"
-title = "Window Manager: Open Agent Board"
+title = "Mosaic: Open Agent Board"
 contexts = ["global", "workspace"]
 description = "Open the collapsible Workspace Agent Board."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" board-open"]
 
 [[actions]]
 id = "install"
-title = "Window Manager: Install Sidebar Templates + Agent View"
+title = "Mosaic: Install Sidebar Templates + Agent View"
 contexts = ["global", "workspace"]
 description = "Import legacy state, write owned sidebar templates, and install the agent view."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" install"]
 
 [[actions]]
 id = "migrate"
-title = "Window Manager: Import Legacy State"
+title = "Mosaic: Import Legacy State"
 contexts = ["global", "workspace"]
-description = "Copy Chromatic/layouts identities and settings. Never applies stale Chromatic config backups."
+description = "Import Window Manager data or Chromatic/layouts identities and settings. Never applies stale Chromatic backups."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" migrate"]
 
 [[actions]]
 id = "equalize"
-title = "Window Manager: Equalize Panes"
+title = "Mosaic: Equalize Panes"
 description = "Arrange the current tab as equal-width vertical columns."
 contexts = ["tab", "pane"]
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout equalize"]
 
 [[actions]]
 id = "cycle"
-title = "Window Manager: Cycle Pane Layout"
+title = "Mosaic: Cycle Pane Layout"
 description = "Cycle the current tab through useful layout presets."
 contexts = ["tab", "pane"]
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout cycle"]
 
 [[actions]]
 id = "resize-left"
-title = "Window Manager: Resize Left"
+title = "Mosaic: Resize Left"
 description = "Resize the current pane left by two percent."
 contexts = ["pane"]
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-left"]
 
 [[actions]]
 id = "resize-down"
-title = "Window Manager: Resize Down"
+title = "Mosaic: Resize Down"
 description = "Resize the current pane down by two percent."
 contexts = ["pane"]
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-down"]
 
 [[actions]]
 id = "resize-up"
-title = "Window Manager: Resize Up"
+title = "Mosaic: Resize Up"
 description = "Resize the current pane up by two percent."
 contexts = ["pane"]
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-up"]
 
 [[actions]]
 id = "resize-right"
-title = "Window Manager: Resize Right"
+title = "Mosaic: Resize Right"
 description = "Resize the current pane right by two percent."
 contexts = ["pane"]
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-right"]
@@ -222,35 +226,35 @@ command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main
 
 [[actions]]
 id = "preview-tint"
-title = "Window Manager: Preview Tint Intensities"
+title = "Mosaic: Preview Tint Intensities"
 contexts = ["global", "workspace"]
 description = "Print the generated surface colours for each intensity as swatches."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" preview"]
 
 [[actions]]
 id = "bind-picker-key"
-title = "Window Manager: Bind Picker Key (prefix+i)"
+title = "Mosaic: Bind Picker Key (prefix+i)"
 contexts = ["global", "workspace"]
 description = "Add a [[keys.command]] binding for the identity picker (default prefix+i)."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" keybind-install"]
 
 [[actions]]
 id = "unbind-picker-key"
-title = "Window Manager: Unbind Picker Key"
+title = "Mosaic: Unbind Picker Key"
 contexts = ["global", "workspace"]
 description = "Remove the keybinding this plugin added for the picker."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" keybind-remove"]
 
 [[actions]]
 id = "doctor"
-title = "Window Manager: Doctor"
+title = "Mosaic: Doctor"
 contexts = ["global", "workspace"]
 description = "Diagnose plugin, config, metadata, view and theme state."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" doctor"]
 
 [[actions]]
 id = "uninstall"
-title = "Window Manager: Restore Config (pre-unlink cleanup)"
+title = "Mosaic: Restore Config (pre-unlink cleanup)"
 contexts = ["global", "workspace"]
 description = "Restore theme + sidebar config, clear the agent view, metadata and window title."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" uninstall"]

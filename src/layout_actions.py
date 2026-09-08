@@ -29,7 +29,7 @@ class LayoutError(RuntimeError):
 def _notify(message):
     rpc.try_call(
         "notification.show",
-        {"title": "Window Manager layouts failed", "body": message, "sound": "none"},
+        {"title": "Mosaic layouts failed", "body": message, "sound": "none"},
     )
 
 
@@ -140,7 +140,7 @@ def reshape(layout, target):
                 recover(staging_tab, tab_id, current[focused])
             except Exception as error:
                 sys.stderr.write(
-                    "window-manager: recovery failed; panes remain in %s: %s\n"
+                    "mosaic: recovery failed; panes remain in %s: %s\n"
                     % (staging_tab, error)
                 )
         raise
@@ -185,5 +185,5 @@ def run(argv):
     except (LayoutError, rpc.RpcError, OSError, KeyError, ValueError) as error:
         ctx.warn("layouts: %s" % error)
         _notify(str(error))
-        print("window-manager: %s" % error, file=sys.stderr)
+        print("mosaic: %s" % error, file=sys.stderr)
         return 1
