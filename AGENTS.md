@@ -7,9 +7,13 @@ effort to discover.
 
 ## What it is
 
-Personal Herdr window manager: Chromatic space colour identity, current spaces and
-agents sidebar templates, grouped agent view, optional chrome tint, and existing
-Pane Layouts actions. Plugin id `iurysza.mosaic`, version 0.1.0.
+Mosaic is an experimental Herdr plugin for space colours, agent grouping,
+sidebar titles and elapsed labels, optional chrome tint, and pane layouts.
+Plugin id `iurysza.mosaic`, version 0.1.0.
+
+Public docs present the product, not its migration or personal rollout history.
+Compatibility and provenance notes stay under `ai-artifacts/goals/mosaic-rename/`.
+Keep runtime compatibility, regression tests, and licence notices intact.
 
 Last-focus is deferred. Mosaic publishes titles and elapsed tokens itself using
 `sidebar.py` and a detached `refresh.py` worker. `$themed_model_tier` remains
@@ -17,7 +21,7 @@ optional agent-provided metadata; Mosaic must never write or clear it.
 
 The worker uses the existing `agent-sidebar-title` and `agent-elapsed` sources.
 Titles have no TTL. Elapsed uses the measured 30-second refresh / 45-second TTL
-contract. Do not run an external publisher at the same time after cutover.
+contract. Do not run another publisher for those tokens at the same time.
 
 ## Non-negotiables
 
@@ -38,7 +42,8 @@ contract. Do not run an external publisher at the same time after cutover.
   records without rewriting them, then skip older Chromatic imports. Keep source
   files for rollback and never overwrite existing Mosaic data.
 - **Do not edit a live-linked checkout during a rename.** Use a separate worktree.
-  Follow `docs/migration.md` before changing the live registration.
+  Read `ai-artifacts/goals/mosaic-rename/compatibility-migration.md` before
+  changing a live registration.
 
 ## Things that will bite you
 

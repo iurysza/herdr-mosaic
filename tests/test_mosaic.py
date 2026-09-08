@@ -345,6 +345,16 @@ class TestMosaicDocs(unittest.TestCase):
                 with self.subTest(document=path.name, link=link):
                     self.assertTrue((path.parent / target).exists())
 
+    def test_public_product_docs_do_not_advertise_internal_rollout(self):
+        paths = ['README.md', 'docs/actions.md', 'docs/settings.md',
+                 'docs/config-safety.md', 'docs/releases.md']
+        for name in paths:
+            with self.subTest(document=name):
+                text = (self.ROOT / name).read_text()
+                self.assertNotRegex(text, r'(?i)Window Manager|Chromatic|migration guide|ai-artifacts|dotfiles|toolbox')
+                self.assertNotRegex(text, r'(?i)colour|recognise')
+        self.assertIn('experimental', (self.ROOT / 'README.md').read_text())
+
     def test_documented_mosaic_invocations_exist_in_manifest(self):
         manifest = (self.ROOT / 'herdr-plugin.toml').read_text()
         actions = set(re.findall(r'^id = "([^"]+)"', manifest, re.M))

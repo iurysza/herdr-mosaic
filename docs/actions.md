@@ -10,10 +10,10 @@ Herdr uses the focused workspace for action context, which may differ from the c
 
 | Action | Purpose |
 |---|---|
-| `install` | Import legacy data, install sidebar templates, bind the picker if free, set the agent view, and reconcile |
-| `migrate` | Import Window Manager data, or identities and settings from Chromatic and Pane Layouts |
-| `set-identity` | Open the colour picker for the current space |
-| `auto-assign` | Assign colours to spaces without an identity |
+| `install` | Set up sidebar templates, title and elapsed refresh, the picker key, and the agent view |
+| `migrate` | Import compatible saved state without replacing existing Mosaic data |
+| `set-identity` | Open the color picker for the current space |
+| `auto-assign` | Assign colors to spaces without an identity |
 | `tint-enable`, `tint-disable` | Enable tint, or disable it and restore the previous theme values |
 | `intensity-subtle`, `intensity-medium`, `intensity-bold` | Set tint strength |
 | `preview-tint` | Print swatches for all three intensities |
@@ -64,4 +64,4 @@ Some commands are available through `src/main.py` rather than named Herdr action
 /usr/bin/python3 /path/to/herdr-mosaic/src/main.py install --dry-run
 ```
 
-`repalette` reassigns colours. `install --dry-run` previews only migration. It does not preview or write sidebar templates, keybindings, or the agent view.
+`repalette` reassigns colors. `install --dry-run` previews only saved-state import. It does not preview or write sidebar templates, keybindings, or the agent view, and it does not start a refresh worker.

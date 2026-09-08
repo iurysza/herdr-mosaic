@@ -1387,12 +1387,12 @@ def main(argv):
     # Never run Mosaic hooks against Window Manager's environment or data paths.
     registered_id = os.environ.get("HERDR_PLUGIN_ID")
     if registered_id and registered_id != ctx.PLUGIN_ID:
-        sys.stderr.write("Mosaic cannot run as %s; follow docs/migration.md "
-                         "before relinking this checkout\n" % registered_id)
+        sys.stderr.write("Mosaic cannot run as %s; restore and remove that registration "
+                         "before registering this checkout as iurysza.mosaic\n" % registered_id)
         return 1
     import migrate
     if cmd not in ("migrate", "install") and migrate.window_manager_pending():
-        sys.stderr.write("Window Manager data awaits import; follow docs/migration.md "
+        sys.stderr.write("Compatible saved data awaits import; review it before setup "
                          "and run Mosaic's migrate action before %s\n" % cmd)
         return 1
     try:

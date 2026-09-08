@@ -104,3 +104,40 @@ Auth owner checked that no old login process remained, then started one official
 expired without authorization. No logout, token copying, secret change, or
 credential deletion occurred. Remote rename/push/release remain blocked on user
 browser authorization. Do not pin an unpublished candidate as a released Mosaic.
+
+## Release gate and public presentation
+
+GitHub authentication completed through the parent's official browser flow.
+The repository is now `iurysza/herdr-mosaic`. Candidate `35f949c` was pushed
+normally and passed Verify (run 34239244606). Release Please created PR #1
+for 0.1.0. Repository workflow defaults remain read-only; PR creation is enabled.
+
+Verify on release head `b9a539a` failed (run 34239342869): Linux reused the Unix
+socket inode on restart. Generation now includes `st_ctime_ns`, not just path,
+device, and inode. A regression test covers identical inodes with changed
+creation metadata. The real lifecycle check remains unchanged in scope and now
+prints its receipt and socket identities to CI logs. This is a runtime fix,
+not a rerun or weakened assertion.
+
+The user changed the public presentation scope before release: Mosaic is a new
+experimental product. README and user docs no longer advertise migration,
+ancestry, personal rollout steps, or internal coordination receipts. Compatibility
+and cutover guides and provenance are retained here; runtime compatibility,
+regression coverage, and LICENSE notices remain intact. Release-owner bootstrap
+notes are retained in `release-owner-notes.md`. A separately supplied wordmark
+will be integrated before the final exact-SHA gates and release merge.
+
+The runtime fix is published as `2814cb0749bde1b6fb3f5b9701bec4974192c7d1`.
+Linux Verify run 34240742861 passed. Its receipt proves the exact reuse case:
+the socket inode remained 8936337, while `st_ctime_ns` changed and a new worker
+started successfully. Local full lifecycle also passed; the current local suite
+has 225 tests including the public-presentation regression.
+
+The parent reviewed the minimal README and 2172×724 wordmark. They are integrated
+with the full restore command and US spelling in public copy. Banner generation
+prompts/process are not part of the public README. Final candidate and release-PR
+verification still precede release merge; no live setup has been activated.
+
+Separate auth note: the official gh flow warned that credentials were saved in
+plain text. No credential file was read, rewritten, deleted, or copied by this
+publisher; this warning was reported separately rather than blocking release.

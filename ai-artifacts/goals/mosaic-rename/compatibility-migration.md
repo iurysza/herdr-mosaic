@@ -65,7 +65,7 @@ Startup and event commands refuse to create new Mosaic state while Window Manage
 
 ## From Chromatic Spaces or Pane Layouts
 
-Use the [cutover checklist](./cutover.md). Mosaic imports Chromatic identities and settings but ignores its old `sidebar_backup`, `theme_backup`, and `last_written` records. It records the current Herdr config as the new restore point.
+Use the [cutover checklist](./chromatic-cutover.md). Mosaic imports Chromatic identities and settings but ignores its old `sidebar_backup`, `theme_backup`, and `last_written` records. It records the current Herdr config as the new restore point.
 
 Do not run Chromatic's install or uninstall actions against a config with the elapsed/title agents row. Its old backups can remove that row.
 

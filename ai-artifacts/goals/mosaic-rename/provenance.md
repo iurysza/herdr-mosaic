@@ -7,7 +7,7 @@ typed Python or uv.
 
 - Upstream: `jackfrancisdalton/herdr-chromatic-spaces`
 - Imported commit: `910c3daf04124c91afe4c0f01a09c0442658ead5`
-- Licence: MIT, Copyright (c) 2026 Jack Dalton — see [LICENSE](../LICENSE)
+- Licence: MIT, Copyright (c) 2026 Jack Dalton — see [LICENSE](../../../LICENSE)
 - What was kept: identity/palette, picker, tint, grouped `agent.view`, surgical
   `config.toml` edits, conflict detection, byte-exact restore, startup reconcile
 - What changed: plugin id `iurysza.mosaic`; agents sidebar no longer

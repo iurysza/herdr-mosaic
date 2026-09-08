@@ -1,6 +1,6 @@
 # Replace Chromatic Spaces and Pane Layouts
 
-This checklist is for the older Chromatic and Pane Layouts plugins. For `iurysza.window-manager`, use [Move to Mosaic](./migration.md) instead.
+This checklist is for the older Chromatic and Pane Layouts plugins. For `iurysza.window-manager`, use [Move to Mosaic](./compatibility-migration.md) instead.
 
 Mosaic takes over space colours, sidebar templates, title and elapsed publication, agent grouping, and pane layout actions. Optional model-tier metadata remains agent-provided.
 

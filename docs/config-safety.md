@@ -12,21 +12,27 @@ Mosaic detects manual changes to tracked theme and sidebar values. It leaves con
 
 ## What Mosaic changes
 
-Mosaic owns the shared spaces and agents row templates, its picker binding, its agent view, and its metadata. Setup also retargets old Window Manager action bindings and records their original text for restoration. When tint is enabled, it writes the accent and selected surface colours. Depending on intensity, it also tints borders and separators.
+Mosaic owns the shared spaces and agents row templates, its picker binding, its agent view, and its metadata. Any compatible action bindings changed during setup have their original text recorded for restoration. When tint is enabled, it writes the accent and selected surface colors. Depending on intensity, it also tints borders and separators.
 
-It does not write Herdr's semantic status colours or the `text` and `subtext0` slots. Space colour does not change agent status colour.
+It does not write Herdr's semantic status colors or the `text` and `subtext0` slots. Space color does not change agent status color.
 
-Uninstall restores Mosaic's recorded values, not old Chromatic backups. Run the restore action before unlinking or removing the plugin.
+Uninstall restores Mosaic's recorded values. Run the restore action before unlinking or removing the plugin.
+
+## Existing data
+
+Setup preserves existing Mosaic data. It can import compatible saved data without removing the originals. Conflicting destination files stop the import, even with `--force`; inspect the conflict instead of deleting data to get past it.
+
+A checkout registered under a different plugin ID cannot run as Mosaic. Restore and remove that registration before registering the checkout as `iurysza.mosaic`.
 
 ## Limitations
 
 - Herdr has no native collapsible group headers in the Agents panel. Mosaic's Agent Board provides them in a separate read-only popup.
-- Sidebar token colours are static config. Mosaic uses pre-styled palette slots for space markers.
+- Sidebar token colors are static config. Mosaic uses pre-styled palette slots for space markers.
 - Herdr sessions share `config.toml`. Use tint with one active session.
-- Herdr has no theme introspection API. Set `theme_base` if Mosaic does not recognise your theme. Tint assumes a dark base.
+- Herdr has no theme introspection API. Set `theme_base` if Mosaic does not recognize your theme. Tint assumes a dark base.
 - Model-tier labels need optional agent-provided metadata. Mosaic owns the [title and elapsed refresh](./settings.md#sidebar-refresh).
 - Last-settled tracking records an observed agent completion. It is not last-focus tracking, which Mosaic does not provide.
 - Mosaic runs on macOS and Linux. It uses `fcntl`, a Unix socket, and `/usr/bin/python3`.
-- Window Manager, Chromatic, and Pane Layouts must not remain enabled alongside their Mosaic replacements.
+- Other plugins or services must not write the same sidebar tokens, templates, or theme values while Mosaic owns them.
 
 State persists in `state.json`. Herdr metadata does not survive a server restart, so Mosaic republishes it during startup reconciliation.

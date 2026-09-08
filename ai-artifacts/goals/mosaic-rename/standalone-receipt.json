@@ -1,17 +1,21 @@
 {
   "result": "passed",
+  "socket_generations": {
+    "before": "/private/tmp/mosaic-proof-u9abu_np/.config/herdr/herdr.sock:16777230:326265687:1788878790853661543",
+    "after": "/private/tmp/mosaic-proof-u9abu_np/.config/herdr/herdr.sock:16777230:326266013:1788878822201793834"
+  },
   "first_round": {
     "agents": 1,
-    "duration_seconds": 0.19296975
+    "duration_seconds": 0.111942667
   },
   "timer": {
     "before": "1m",
     "after": "2m",
-    "duration_seconds": 0.005698541000001001
+    "duration_seconds": 0.0017175419999979624
   },
   "restart": {
     "agents": 0,
-    "duration_seconds": 0.0009649159999999997
+    "duration_seconds": 0.10444791700000002
   },
   "disabled": {
     "worker_exited": true,
