@@ -12,7 +12,6 @@ sidebar titles and elapsed labels, optional chrome tint, and pane layouts.
 Plugin id `iurysza.mosaic`, version 0.1.0.
 
 Public docs present the product, not its migration or personal rollout history.
-Compatibility and provenance notes stay under `ai-artifacts/goals/mosaic-rename/`.
 Keep runtime compatibility, regression tests, and licence notices intact.
 
 Last-focus is deferred. Mosaic publishes titles and elapsed tokens itself using
@@ -42,8 +41,8 @@ contract. Do not run another publisher for those tokens at the same time.
   records without rewriting them, then skip older Chromatic imports. Keep source
   files for rollback and never overwrite existing Mosaic data.
 - **Do not edit a live-linked checkout during a rename.** Use a separate worktree.
-  Read `ai-artifacts/goals/mosaic-rename/compatibility-migration.md` before
-  changing a live registration.
+  Preserve original config and state before changing a live registration.
+  Restore its ownership before importing post-restore data into Mosaic.
 
 ## Things that will bite you
 
