@@ -12,6 +12,8 @@ Window Manager uses the same loop as Clockwork: Conventional Commits, a Release 
 
 Let Release Please create tags and GitHub Releases. It tracks the current version in [`.release-please-manifest.json`](../.release-please-manifest.json).
 
+If the workflow fails with *GitHub Actions is not permitted to create or approve pull requests*, turn on **Allow GitHub Actions to create and approve pull requests** under **Settings → Actions → General → Workflow permissions**, then re-run the job. Clockwork uses a `RELEASE_PLEASE_TOKEN` PAT instead; this repo can do the same later.
+
 ## Versioning
 
 - `feat:` creates a minor release while the version is below 1.0.
