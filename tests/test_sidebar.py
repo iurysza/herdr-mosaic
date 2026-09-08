@@ -92,6 +92,17 @@ class TestRefresh(Base):
         self.assertNotEqual(refresh.paths('socket-A:1:2'), refresh.paths('socket-B:1:2'))
         self.assertNotEqual(refresh.paths('socket-A:1:2'), refresh.paths('socket-A:1:3'))
 
+    def test_reused_socket_inode_has_a_new_generation(self):
+        import refresh
+        info = mock.Mock(st_dev=1, st_ino=2, st_ctime_ns=100)
+        with mock.patch('refresh.os.stat', return_value=info):
+            before = refresh.generation()
+            self.assertEqual(refresh.generation(), before)
+            info.st_ctime_ns = 101
+            after = refresh.generation()
+        self.assertNotEqual(before, after)
+        self.assertNotEqual(refresh.paths(before), refresh.paths(after))
+
     def test_worker_exits_without_publishing_after_disable(self):
         import refresh
         with mock.patch('refresh.generation', return_value='generation'), \

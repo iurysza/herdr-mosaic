@@ -185,7 +185,9 @@ try:
     old_pid = heartbeat()["pid"]
     stop_server()
     start_server()
-    assert refresh.generation() != old_generation
+    new_generation = refresh.generation()
+    receipts["socket_generations"] = {"before": old_generation, "after": new_generation}
+    assert new_generation != old_generation, receipts["socket_generations"]
     new = wait("restart refresh worker", heartbeat)
     assert new["pid"] != old_pid
     assert state.load()["identities"] == identities
@@ -227,4 +229,5 @@ try:
 finally:
     stop_server()
     (HOME / "receipt.json").write_text(json.dumps(receipts, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(receipts, indent=2), flush=True)
     print("Standalone evidence: %s" % (HOME / "receipt.json"), flush=True)

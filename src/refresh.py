@@ -25,7 +25,8 @@ INTERVAL_SECONDS = 30
 def generation():
     path = os.path.realpath(ctx.socket_path())
     info = os.stat(path)
-    return "%s:%s:%s" % (path, info.st_dev, info.st_ino)
+    # Linux can reuse an unlinked socket's inode immediately after restart.
+    return "%s:%s:%s:%s" % (path, info.st_dev, info.st_ino, info.st_ctime_ns)
 
 
 def paths(key):
