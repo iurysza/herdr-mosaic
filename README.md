@@ -2,7 +2,7 @@
 
 ![Mosaic](./assets/mosaic-wordmark.png)
 
-Give each Herdr space a colour, keep agents grouped by space, and arrange the panes in the current tab.
+Give each Herdr space a color, keep agents grouped by space, and arrange the panes in the current tab.
 
 Mosaic is experimental. Back up `config.toml` before setup. Do not run another plugin or service that writes the same sidebar rows, sidebar tokens, or theme values.
 
@@ -17,16 +17,16 @@ herdr plugin action invoke iurysza.mosaic.install
 
 The setup action is Mosaic's consent boundary. It records the values it must restore, then configures these defaults:
 
-- assigns each current space a palette colour
-- adds coloured space markers and coloured agent titles to the sidebar
+- assigns each current space a palette color
+- adds colored space markers and colored agent titles to the sidebar
 - shows every agent, ordered by space, tab, and pane
 - starts title and elapsed-label refresh
-- binds `prefix+i` to the colour picker when the key is free
+- binds `prefix+i` to the color picker when the key is free
 - leaves window tint off
 
 You do not need to configure individual agents.
 
-## Change the current space colour
+## Change the current space color
 
 Focus the space, then open the picker:
 
@@ -34,25 +34,25 @@ Focus the space, then open the picker:
 herdr plugin action invoke iurysza.mosaic.set-identity
 ```
 
-Select a palette colour with the arrow keys and press Enter to save it. If setup added the picker binding, press `prefix+i` instead.
+Select a palette color with the arrow keys and press Enter to save it. If setup added the picker binding, press `prefix+i` instead.
 
-Mosaic shows the space as a coloured marker and uses the same colour for agent titles in that space. A space keeps its colour when you rename it.
+Mosaic shows the space as a colored marker and uses the same color for agent titles in that space. A space keeps its color when you rename it.
 
-## Set an exact colour
+## Set an exact color
 
-The picker accepts a named palette colour and a custom hex colour.
+The picker accepts a named palette color and a custom hex color.
 
 1. Focus the space and open the picker.
 2. Select **custom hex...**.
 3. Enter `#rrggbb` or `#rgb`, then press Enter.
 
-For scripts or a colour you already know, run this from a Mosaic checkout:
+For scripts or a color you already know, run this from a Mosaic checkout:
 
 ```sh
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py apply-identity --workspace <id> --colour <name|hex>
+/usr/bin/python3 /path/to/herdr-mosaic/src/main.py apply-identity --workspace <id> --color <name|hex>
 ```
 
-Mosaic saves the exact hex value. If window tint is on, it uses that value for the tint accent. Herdr sidebar styles are static, so the space marker and agent title use the nearest Mosaic palette colour instead. This is a Herdr limit, not a colour conversion error.
+Mosaic saves the exact hex value. If window tint is on, it uses that value for the tint accent. Herdr sidebar styles are static, so the space marker and agent title use the nearest Mosaic palette color instead. This is a Herdr limit, not a color conversion error.
 
 ## Arrange panes
 
@@ -102,7 +102,7 @@ herdr plugin action invoke iurysza.mosaic.uninstall
 herdr plugin uninstall iurysza.mosaic
 ```
 
-The restore action removes Mosaic's sidebar templates, picker binding, agent view, metadata, and theme overrides. It keeps saved space colours so a later relink can restore them.
+The restore action removes Mosaic's sidebar templates, picker binding, agent view, metadata, and theme overrides. It keeps saved space colors so a later relink can restore them.
 
 ## Optionally focus the agent list
 
@@ -145,7 +145,7 @@ Run Doctor to inspect sidebar ownership, refresh health, config conflicts, and t
 herdr plugin action invoke iurysza.mosaic.doctor
 ```
 
-See [settings](./docs/settings.md) for palette colours, window tint intensity, markers, label rules, and refresh behaviour.
+See [settings](./docs/settings.md) for palette colors, window tint intensity, markers, label rules, and refresh behaviour.
 
 ## Documentation
 
