@@ -26,8 +26,9 @@ A checkout registered under a different plugin ID cannot run as Mosaic. Restore 
 
 ## Limitations
 
-- Herdr has no native collapsible group headers in the Agents panel. Mosaic's Agent Board provides them in a separate read-only popup.
-- Sidebar token colors are static config. Mosaic uses pre-styled palette slots for space markers.
+- Herdr has no native collapsible group headers in the Agents panel. Mosaic's Agent Board provides them in a separate popup. It reads Herdr's agent state; selecting an agent focuses it.
+- In Herdr 0.9, native workspace, tab, and pane navigation suppresses the focused plugin events that Mosaic needs. Public `herdr` CLI focus commands emit them. An agents-owned keyboard-only workaround sits outside Mosaic and does not repair mouse navigation.
+- Sidebar token colors are static config. Mosaic uses pre-styled palette slots for space markers and agent titles. A custom hex value still tints the window exactly when tint is enabled.
 - Herdr sessions share `config.toml`. Use tint with one active session.
 - Herdr has no theme introspection API. Set `theme_base` if Mosaic does not recognize your theme. Tint assumes a dark base.
 - Model-tier labels need optional agent-provided metadata. Mosaic owns the [title and elapsed refresh](./settings.md#sidebar-refresh).

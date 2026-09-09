@@ -2,101 +2,150 @@
 
 ![Mosaic](./assets/mosaic-wordmark.png)
 
-Color-coded spaces and pane arrangements for Herdr.
+Give each Herdr space a colour, keep agents grouped by space, and arrange the panes in the current tab.
 
-Give each space a recognizable color, carry it into agent titles, and arrange existing panes without restarting them. Herdr handles workspace creation, navigation, and splits.
+Mosaic is experimental. Back up `config.toml` before setup. Do not run another plugin or service that writes the same sidebar rows, sidebar tokens, or theme values.
 
-Mosaic is experimental. Back up Herdr's config before you install it. Do not run another plugin or service that writes the same sidebar templates or theme values.
+## Set up Mosaic
 
-## Install
-
-You need Herdr 0.8.0 or newer and Python 3.6 or newer at `/usr/bin/python3`. Mosaic runs on macOS and Linux with the Python standard library only. It publishes agent titles and elapsed labels without an extra service. Model-tier labels are optional.
-
-Install from GitHub, then run setup:
+You need Herdr 0.8.0 or newer and Python 3.6 or newer at `/usr/bin/python3`. Mosaic runs on macOS and Linux with the Python standard library only.
 
 ```sh
 herdr plugin install iurysza/herdr-mosaic
 herdr plugin action invoke iurysza.mosaic.install
 ```
 
-Setup assigns space colors, groups agents by space, and starts title and elapsed refresh. It binds the color picker to `prefix+i` if that key is free. Window tint starts off.
+The setup action is Mosaic's consent boundary. It records the values it must restore, then configures these defaults:
 
-## First steps
+- assigns each current space a palette colour
+- adds coloured space markers and coloured agent titles to the sidebar
+- shows every agent, ordered by space, tab, and pane
+- starts title and elapsed-label refresh
+- binds `prefix+i` to the colour picker when the key is free
+- leaves window tint off
 
-### Pick a space color
+You do not need to configure individual agents.
 
-Focus a space in Herdr, then open the picker:
+## Change the current space colour
+
+Focus the space, then open the picker:
 
 ```sh
 herdr plugin action invoke iurysza.mosaic.set-identity
 ```
 
-The action appears as **Mosaic: Choose space color**. Choose a palette color or enter a custom hex value. Use `prefix+i` to reopen the picker if setup added that binding.
+Select a palette colour with the arrow keys and press Enter to save it. If setup added the picker binding, press `prefix+i` instead.
 
-Palette colors match the space marker and agent titles. Custom hex colors use the nearest palette slot there; optional tint uses the exact hex for its accent. For scripts, see [set an exact color](./docs/actions.md#set-an-exact-color).
+Mosaic shows the space as a coloured marker and uses the same colour for agent titles in that space. A space keeps its colour when you rename it.
 
-### Tint the window
+## Set an exact colour
 
-To tint the window as you switch spaces:
+The picker accepts a named palette colour and a custom hex colour.
 
-```sh
-herdr plugin action invoke iurysza.mosaic.tint-enable
-```
+1. Focus the space and open the picker.
+2. Select **custom hex...**.
+3. Enter `#rrggbb` or `#rgb`, then press Enter.
 
-Use tint with one active Herdr session because sessions share the config file. To turn it off and restore the previous theme values, run `herdr plugin action invoke iurysza.mosaic.tint-disable`.
-
-### Choose the agent view
-
-Show only agents in the current space:
+For scripts or a colour you already know, run this from a Mosaic checkout:
 
 ```sh
-herdr plugin action invoke iurysza.mosaic.show-current-space-agents
+/usr/bin/python3 /path/to/herdr-mosaic/src/main.py apply-identity --workspace <id> --colour <name|hex>
 ```
 
-To show all spaces again:
+Mosaic saves the exact hex value. If window tint is on, it uses that value for the tint accent. Herdr sidebar styles are static, so the space marker and agent title use the nearest Mosaic palette colour instead. This is a Herdr limit, not a colour conversion error.
 
-```sh
-herdr plugin action invoke iurysza.mosaic.show-all-agents
-```
+## Arrange panes
 
-Agent titles use tab labels. Elapsed labels appear after Mosaic observes an agent finish work; switching focus does not reset them.
+Mosaic changes only the current tab. Unzoom the tab before you arrange it.
 
-### Arrange panes
-
-Focus a tab with several panes and unzoom it. To give the panes equal-width columns:
+To make equal-width vertical columns:
 
 ```sh
 herdr plugin action invoke iurysza.mosaic.equalize
 ```
 
-The menu calls this **Mosaic: Arrange even columns**. It replaces the arrangement with columns rather than balancing the existing layout.
-
-To try the next layout preset:
+To move through equal columns, equal rows, a main pane on the left, a main pane at the top, and a tiled layout:
 
 ```sh
 herdr plugin action invoke iurysza.mosaic.cycle
 ```
 
-See [actions and keybindings](./docs/actions.md) for resizing, direct CLI commands, and bindings. Mosaic uses a flat action list and keeps existing action IDs stable.
+Mosaic temporarily stages panes in another tab while it rebuilds a layout. If a reshape fails, it attempts to move the panes back and reports any panes left in the staging tab.
 
-## Advanced setup checks
+## Resize a pane
 
-Inspect sidebar ownership, refresh health, and config conflicts:
+Focus the pane, then use one directional action. Each action adjusts the focused pane by 2%.
 
 ```sh
-herdr plugin action invoke iurysza.mosaic.doctor
+herdr plugin action invoke iurysza.mosaic.resize-left
+herdr plugin action invoke iurysza.mosaic.resize-down
+herdr plugin action invoke iurysza.mosaic.resize-up
+herdr plugin action invoke iurysza.mosaic.resize-right
 ```
 
-For palette choices, tint intensity, and label rules, see [settings](./docs/settings.md).
+See [actions and keybindings](./docs/actions.md) to add keybindings for actions you use often.
 
-## Remove Mosaic
+## Restore Mosaic safely
 
-Restore your config before removing the plugin:
+To stop window tint and restore the theme values that existed before tinting:
+
+```sh
+herdr plugin action invoke iurysza.mosaic.theme-restore
+```
+
+`iurysza.mosaic.tint-disable` does the same job. Mosaic keeps it for compatibility with existing commands and scripts.
+
+To remove Mosaic completely, restore its config before you remove the plugin:
 
 ```sh
 herdr plugin action invoke iurysza.mosaic.uninstall
 herdr plugin uninstall iurysza.mosaic
 ```
+
+The restore action removes Mosaic's sidebar templates, picker binding, agent view, metadata, and theme overrides. It keeps saved space colours so a later relink can restore them.
+
+## Optionally focus the agent list
+
+By default, setup shows every agent, ordered by space. To temporarily show only agents in the focused space:
+
+```sh
+herdr plugin action invoke iurysza.mosaic.show-current-space-agents
+```
+
+To return to the default all-space list:
+
+```sh
+herdr plugin action invoke iurysza.mosaic.show-all-agents
+```
+
+Herdr has no collapsible group headers in its native Agents panel. Open Mosaic's separate Agent Board for collapsible space groups:
+
+```sh
+herdr plugin action invoke iurysza.mosaic.open-agent-board
+```
+
+The board reads Herdr's agent state. Selecting an agent focuses it.
+
+## Limits in Herdr
+
+- In Herdr 0.9, native workspace, tab, and pane navigation suppresses the focused plugin events that Mosaic needs. Public `herdr` CLI focus commands emit them. An agents-owned keyboard-only workaround sits outside Mosaic and does not repair mouse navigation.
+- Herdr sidebar token styles are static. Custom hex values tint chrome exactly, but sidebar markers and titles use the nearest pre-styled palette slot.
+- Herdr sessions share one `config.toml`. Use dynamic window tint with one active session.
+- Herdr has no theme-introspection API. Set `theme_base` if Mosaic cannot identify your dark theme.
+- A `rows_by_agent` config entry replaces the shared agent row for that agent. Mosaic preserves these entries, so affected agents may not show Mosaic's title and elapsed labels.
+- Elapsed labels begin only after Mosaic observes an agent move directly from `working` to `idle` or `done`. Changing focus never resets them.
+
+See [config safety and limitations](./docs/config-safety.md) for config ownership and recovery details.
+
+## Check setup and change options
+
+Run Doctor to inspect sidebar ownership, refresh health, config conflicts, and theme state:
+
+```sh
+herdr plugin action invoke iurysza.mosaic.doctor
+```
+
+See [settings](./docs/settings.md) for palette colours, window tint intensity, markers, label rules, and refresh behaviour.
 
 ## Documentation
 
