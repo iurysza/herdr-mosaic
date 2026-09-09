@@ -2,7 +2,9 @@
 
 ![Mosaic](./assets/mosaic-wordmark.png)
 
-Color your Herdr spaces, group agents, and arrange panes.
+Color-coded spaces and pane arrangements for Herdr.
+
+Give each space a recognizable color, carry it into agent titles, and arrange existing panes without restarting them. Herdr handles workspace creation, navigation, and splits.
 
 Mosaic is experimental. Back up Herdr's config before you install it. Do not run another plugin or service that writes the same sidebar templates or theme values.
 
@@ -29,7 +31,11 @@ Focus a space in Herdr, then open the picker:
 herdr plugin action invoke iurysza.mosaic.set-identity
 ```
 
-Choose a color for the space marker and its agent titles. Use `prefix+i` to reopen the picker if setup added that binding.
+The action appears as **Mosaic: Choose space color**. Choose a palette color or enter a custom hex value. Use `prefix+i` to reopen the picker if setup added that binding.
+
+Palette colors match the space marker and agent titles. Custom hex colors use the nearest palette slot there; optional tint uses the exact hex for its accent. For scripts, see [set an exact color](./docs/actions.md#set-an-exact-color).
+
+### Tint the window
 
 To tint the window as you switch spaces:
 
@@ -39,7 +45,7 @@ herdr plugin action invoke iurysza.mosaic.tint-enable
 
 Use tint with one active Herdr session because sessions share the config file. To turn it off and restore the previous theme values, run `herdr plugin action invoke iurysza.mosaic.tint-disable`.
 
-### Focus the agent list
+### Choose the agent view
 
 Show only agents in the current space:
 
@@ -63,15 +69,17 @@ Focus a tab with several panes and unzoom it. To give the panes equal-width colu
 herdr plugin action invoke iurysza.mosaic.equalize
 ```
 
+The menu calls this **Mosaic: Arrange even columns**. It replaces the arrangement with columns rather than balancing the existing layout.
+
 To try the next layout preset:
 
 ```sh
 herdr plugin action invoke iurysza.mosaic.cycle
 ```
 
-See [actions and keybindings](./docs/actions.md) for resize commands and bindings you can add to your Herdr config.
+See [actions and keybindings](./docs/actions.md) for resizing, direct CLI commands, and bindings. Mosaic uses a flat action list and keeps existing action IDs stable.
 
-## Check your setup
+## Advanced setup checks
 
 Inspect sidebar ownership, refresh health, and config conflicts:
 

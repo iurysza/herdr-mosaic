@@ -82,7 +82,7 @@ class Picker(object):
     def draw(self, scr):
         scr.erase()
         h, w = scr.getmaxyx()
-        scr.addnstr(0, 1, "Space Colour — %s  (%s)" % (self.label, self.wid),
+        scr.addnstr(0, 1, "Space color: %s (%s)" % (self.label, self.wid),
                     max(0, w - 2), curses.A_BOLD)
         scr.addnstr(1, 1, "─" * max(0, w - 2), max(0, w - 2))
         top = 2
@@ -195,13 +195,13 @@ def run(argv):
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         sys.stderr.write(
             "picker needs a terminal; run it as the plugin popup, or use:\n"
-            "  main.py apply-identity --workspace %s --colour blue\n" % wid)
+            "  main.py set-color --workspace %s --color azure\n" % wid)
         return 1
     try:
         ok = curses.wrapper(picker.loop)
     except curses.error as exc:
         sys.stderr.write("picker could not start (%s). Use:\n"
-                         "  main.py apply-identity --workspace %s --colour blue\n"
+                         "  main.py set-color --workspace %s --color azure\n"
                          % (exc, wid))
         return 1
     if not ok:

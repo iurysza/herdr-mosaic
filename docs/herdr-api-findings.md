@@ -177,6 +177,32 @@ one-agent fixture, a normal round took 5.7 ms; the clock advanced from `1m` to
 CI pins Herdr 0.9.0 on Linux and runs the same isolated check. Local success does
 not substitute for a successful CI run on the release candidate's exact SHA.
 
+## Public action design on installed Herdr 0.9.0
+
+Read-only inspection of `herdr --version`, CLI help, and `herdr api schema --json`
+reported Herdr 0.9.0, protocol 22. No registration or server mutation was needed.
+
+- `PluginManifestAction` exposes `id`, `title`, `description`, `command`,
+  `contexts`, and `platforms`. `PluginActionInfo` has no hidden-action, group,
+  nested-menu, or alias field. Mosaic therefore preserves its existing action
+  IDs and improves labels without adding duplicate menu entries.
+- `plugin action invoke --help` accepts an action ID and optional `--plugin`,
+  not arbitrary command arguments. `PluginActionInvokeParams` exposes
+  `action_id`, `plugin_id`, and `context`. Exact colors and flags belong in the
+  direct CLI or the existing popup, not invented action parameters.
+- `plugin.pane.open` supports popup placement and environment values. Mosaic's
+  existing picker can collect custom hex input without native forms.
+- `workspace --help` lists `list`, `create`, `get`, `focus`, `rename`,
+  `report-metadata`, and `close`. `tab --help` lists `list`, `create`, `get`,
+  `focus`, `rename`, and `close`. Mosaic does not wrap these operations.
+- `pane split --help` permits `right` and `down`, with target, ratio, and focus
+  flags. `pane move --help` supports existing tabs, new tabs, and new workspaces.
+  `pane resize --help` permits `left`, `right`, `up`, and `down` plus `--amount`.
+  Mosaic keeps its existing layout implementation and 2% resize step.
+
+These checks establish the installed command and schema contracts, not a new
+live lifecycle proof or a reason to raise the minimum supported version.
+
 ## Version notes
 
 `min_herdr_version = "0.8.0"` is claimed because 0.8.0 is what was actually

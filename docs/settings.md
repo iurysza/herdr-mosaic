@@ -38,9 +38,9 @@ The palette draws from Catppuccin, Tokyo Night, One Dark, Rosé Pine, Everforest
 | `lavender` | `#b4befe` | `mauve` | `#cba6f7` |
 | `orchid` | `#e0a3e8` | `blush` | `#f5c2e7` |
 
-Automatic allocation chooses colors far from those already in use. `doctor` warns about live color pairs with a distance below 80 in the plugin's color metric. The direct `repalette` command reassigns colors.
+Automatic allocation chooses colors far from those already in use. `doctor` warns about live color pairs with a distance below 80 in the plugin's color metric. The advanced `repalette --dry-run` command previews snapping non-palette colors to the current palette. Without `--dry-run`, it applies those changes and resolves close pairs, which can change manual colors. The dry run does not preview the close-pair reallocations.
 
-Colors accept palette names, `#rrggbb`, or `#rgb`. Tint uses a custom hex value exactly for the accent. Its sidebar marker uses the nearest palette slot because Herdr's sidebar colors are static config.
+Colors accept palette names, `#rrggbb`, or `#rgb`. Tint uses a custom hex value exactly for the accent. Its sidebar marker and agent titles use the nearest palette slot because Herdr's sidebar colors are static config. Use the [direct `set-color` command](./actions.md#set-an-exact-color) to set a color without opening the picker.
 
 | Intensity | Surface blend | Borders and separators |
 |---|---|---|
@@ -51,9 +51,11 @@ Colors accept palette names, `#rrggbb`, or `#rgb`. Tint uses a custom hex value 
 `medium` is the default. Surfaces blend the theme's dark base toward the space color, subject to luminance ceilings. `theme_base` defaults to `auto`; set a hex value if Mosaic does not recognize your theme. `blend` overrides individual blend fractions. `tint_overlays` overrides the intensity preset's border setting when set to `true` or `false`.
 
 ```sh
-herdr plugin action invoke iurysza.mosaic.intensity-subtle
-herdr plugin action invoke iurysza.mosaic.preview-tint
+/usr/bin/python3 /path/to/herdr-mosaic/src/main.py tint-intensity subtle
+/usr/bin/python3 /path/to/herdr-mosaic/src/main.py tint-preview
 ```
+
+Setting an intensity does not enable tint. The existing `intensity-subtle`, `intensity-medium`, `intensity-bold`, and `preview-tint` action IDs remain available. Use the direct CLI to see swatches in your terminal.
 
 ## Label rules
 

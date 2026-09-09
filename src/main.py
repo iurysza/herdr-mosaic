@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """iurysza.mosaic -- entry point for every manifest command.
 
-Subcommands map 1:1 onto manifest startup hooks, event hooks, actions and pane
-entrypoints. Every mutating path runs under one exclusive lock (ctx.Lock) and
-commits config through config_patch.commit(), which validates with
+Manifest startup hooks, event hooks, actions and pane entrypoints share this
+CLI. Public aliases resolve to the original commands before dispatch.
+Every mutating path runs under one exclusive lock (ctx.Lock) and commits config
+through config_patch.commit(), which validates with
 `herdr config check` before an atomic rename.
 """
 
@@ -407,7 +408,7 @@ def cmd_set_identity(argv):
     })
     if err:
         ctx.warn("could not open picker popup: %s. "
-                 "Use `apply-identity --workspace %s --colour blue` instead."
+                 "Use `set-color --workspace %s --color azure` instead."
                  % (err, wid))
         return 1
     return 0
@@ -982,7 +983,7 @@ def cmd_doctor(argv):
             if info else "NONE ASSIGNED")
         if not info:
             problems.append("Focused workspace %s has no identity. Run the "
-                            "'Auto Assign Identity' action." % fid)
+                            "'Mosaic: Assign missing space colors' action." % fid)
     else:
         row("focused workspace", "(none)")
 
@@ -997,8 +998,8 @@ def cmd_doctor(argv):
     known = {w.get("workspace_id") for w in workspaces}
     missing = sorted(known - set(idents))
     if missing:
-        problems.append("Workspaces without an identity: %s. Run 'Auto Assign "
-                        "Identity'." % ", ".join(missing))
+        problems.append("Workspaces without an identity: %s. Run "
+                        "'Mosaic: Assign missing space colors'." % ", ".join(missing))
 
     # metadata publication status
     published = 0
@@ -1010,8 +1011,8 @@ def cmd_doctor(argv):
     if workspaces and published < len(workspaces):
         problems.append("Only %d of %d workspaces carry a space dot. "
                         "Metadata is dropped on server restart -- run the "
-                        "'Reconcile' action (or restart Herdr, which triggers the "
-                        "startup hook)." % (published, len(workspaces)))
+                        "`src/main.py reconcile` recovery command."
+                        % (published, len(workspaces)))
 
     pane_published = 0
     if agents:
@@ -1070,7 +1071,7 @@ def cmd_doctor(argv):
 
     bound = cp.keybind_key(doc, PICKER_COMMAND)
     row("picker keybinding", bound if bound else "not bound "
-        "(run the 'Bind Picker Key' action)")
+        "(run the 'Mosaic: Bind color picker key' action)")
 
     # agent view
     row("agent view owned", st.get("view_installed") and
@@ -1315,8 +1316,8 @@ def cmd_list(argv):
     print("pre-styled in config, so only they have a real colour of their own).")
     print("\nSet with:")
     print("  prefix+i                                    # picker popup")
-    print("  /usr/bin/python3 %s/src/main.py apply-identity "
-          "--workspace <id> --colour <name|hex>" % ctx.plugin_root())
+    print("  /usr/bin/python3 %s/src/main.py set-color "
+          "--workspace <id> --color <name|hex>" % ctx.plugin_root())
     return 0
 
 
@@ -1373,11 +1374,69 @@ COMMANDS = {
 }
 
 
+# CLI aliases only: Herdr's flat action menu keeps its existing IDs.
+# Normalize before dispatch so aliases retain migration guards and refresh work.
+CLI_ALIASES = {
+    "pick-color": ("set-identity",),
+    "set-color": ("apply-identity",),
+    "list-colors": ("list",),
+    "assign-colors": ("auto-assign",),
+    "tint-intensity": ("intensity",),
+    "tint-preview": ("preview",),
+    "agents": ("view",),
+    "agent-board": ("board-open",),
+    "arrange-columns": ("layout", "equalize"),
+    "next-layout": ("layout", "cycle"),
+}
+
+HELP = """usage: main.py <command> [args]
+
+Space color:
+  pick-color                         Open the current space's color picker
+  set-color --workspace ID --color NAME_OR_HEX
+                                     Set a color without opening a popup
+  list-colors                        List space colors and the palette
+  assign-colors                      Color spaces without an assignment
+
+Tint:
+  tint-enable | tint-disable         Enable tint, or stop and restore the theme
+  tint-intensity subtle|medium|bold   Set strength; no argument shows the setting
+  tint-preview                       Print swatches for the current space
+
+Agent view:
+  agents all|current                 Show agents in all spaces or the current one
+  agent-board                        Open collapsible agent groups
+
+Pane layouts:
+  arrange-columns                    Arrange existing panes as equal-width columns
+  next-layout                        Cycle existing pane arrangements
+  layout resize-left|resize-right|resize-up|resize-down
+                                     Resize the current pane split by 2%
+  Unzoom before arranging. Use herdr pane split/move for new splits and moves.
+
+Advanced setup and maintenance:
+  install [--dry-run], uninstall [--force], doctor, migrate [--dry-run]
+  keybind-install [--key KEY], keybind-remove, theme-restore [--force]
+  repalette [--dry-run], marker [GLYPH], announce on|off, view-clear, state
+  install --dry-run previews saved-state import only.
+
+Internal hooks and recovery:
+  reconcile, event, sidebar-install, sidebar-remove, picker, board,
+  elapsed-publish, refresh-worker
+
+Existing command names and action IDs remain supported. See docs/actions.md.
+CLI aliases do not add Herdr menu entries. Action invocation accepts no CLI args.
+"""
+
+
 def main(argv):
-    if not argv or argv[0] in ("-h", "--help"):
-        sys.stdout.write("usage: main.py <%s> [args]\n"
-                         % "|".join(sorted(COMMANDS)))
+    if not argv or any(arg in ("-h", "--help") for arg in argv):
+        sys.stdout.write(HELP)
+        sys.stdout.write("\nCLI aliases (preferred -> existing):\n")
+        for alias, command in sorted(CLI_ALIASES.items()):
+            sys.stdout.write("  %s -> %s\n" % (alias, " ".join(command)))
         return 0
+    argv = list(CLI_ALIASES.get(argv[0], (argv[0],))) + list(argv[1:])
     cmd = argv[0]
     fn = COMMANDS.get(cmd)
     if not fn:
