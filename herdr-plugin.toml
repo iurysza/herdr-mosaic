@@ -1,6 +1,6 @@
 id = "iurysza.mosaic"
 name = "Mosaic"
-version = "0.1.0"  # x-release-please-version
+version = "0.2.0"  # x-release-please-version
 # 0.8.0 (protocol 19) is the version whose API schema was verified for every call
 # this plugin makes. `agent.view.set/clear`, `client.window_title.set/clear`,
 # `workspace.report_metadata` and `pane.report_metadata` were all confirmed live
