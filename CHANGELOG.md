@@ -6,6 +6,13 @@
 - Clarify menu labels while preserving every existing action ID and binding. No new menu entries or binding migration.
 - Make `-h` and `--help` print help without running a command, including after the command name.
 
+## [0.3.0](https://github.com/iurysza/herdr-mosaic/compare/v0.2.0...v0.3.0) (2026-09-11)
+
+
+### Features
+
+* **agent-view:** add focus and sort controls ([f8b56fa](https://github.com/iurysza/herdr-mosaic/commit/f8b56fab2d0c1a3aee58d1435e2b2932489aaa1a))
+
 ## [0.2.0](https://github.com/iurysza/herdr-mosaic/compare/v0.1.0...v0.2.0) (2026-09-09)
 
 
