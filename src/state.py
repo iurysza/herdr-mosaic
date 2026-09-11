@@ -26,6 +26,7 @@ def default_state():
         "alloc_cursor": 0,
         "tint_enabled": False,
         "view_mode": "all",            # "all" | "current"
+        "sort_mode": "spaces",         # "activity" | "spaces"
         "view_installed": False,
         "sidebar_installed": False,
         # exact restore information, distinguishing absent from present-with-value
@@ -37,6 +38,8 @@ def default_state():
         "window_title_set": False,
         "keybind_installed": False,
         "keybind_key": None,
+        "sort_keybind_installed": False,
+        "sort_keybind_key": None,
         # pane_id -> {"status", "last_settled_at"}; occupancy only, not last viewed
         "agent_settled": {},
     }
@@ -87,6 +90,9 @@ def _migrate(data):
             continue
         if info.get("origin") not in ("manual", "label") and colour not in palette:
             data["identities"].pop(wid, None)
+    import agent_view
+    data["view_mode"] = agent_view.normalize_scope(data.get("view_mode"))
+    data["sort_mode"] = agent_view.normalize_sort(data.get("sort_mode"))
 
 
 def save(data):

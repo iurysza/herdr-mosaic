@@ -57,13 +57,17 @@ Use tint with one active Herdr session because sessions share the config file. F
 
 | Action suffix | Effect |
 |---|---|
-| `show-current-space-agents` | Show agents in the focused space; follow space changes |
-| `show-all-agents` | Show all agents, ordered by space, tab, and pane |
+| `toggle-agent-focus` | Toggle all spaces and the focused space. The filter follows space changes |
+| `toggle-agent-sort` | Toggle Activity and Spaces. Focus is unchanged |
+| `show-current-space-agents` | Set focus on. Kept for existing bindings and callers |
+| `show-all-agents` | Set focus off. Kept for existing bindings and callers |
 | `open-agent-board` | Open collapsible space groups; select an agent to focus it |
 
-These actions change the view, not agent status. The board is a separate popup, not native sidebar group headers.
+Setup binds `toggle-agent-sort` to `prefix+shift+s` when the key is free. On this machine, press Ctrl+A, then Shift+S. It never replaces an occupied key.
 
-Direct equivalents are `main.py agents current`, `main.py agents all`, and `main.py agent-board`.
+These actions change the view, not agent status. The board is a separate popup, not native sidebar group headers. Herdr 0.8.2 cannot hide actions, so retained maintenance and compatibility actions remain in the flat action list.
+
+Use `main.py agents current`, `main.py agents all`, or `main.py agent-board` directly. Use `main.py sort activity` or `main.py sort spaces` to set a sort. The focus and sort settings persist independently. There is no third sort.
 
 ## Arrange panes
 
@@ -132,6 +136,8 @@ These existing actions remain callable and visible in Herdr's flat list. They ar
 | `theme-restore` | `theme-restore` | Same as `tint-disable`, including stopping tint |
 | `bind-picker-key` | `keybind-install` | Bind `prefix+i` if free, or retain the existing picker binding |
 | `unbind-picker-key` | `keybind-remove` | Remove the picker action binding |
+| — | `sort-keybind-install` | Bind `prefix+shift+s` if free |
+| — | `sort-keybind-remove` | Remove Mosaic's sorting shortcut |
 
 Text printed by actions is available in Herdr's plugin command logs. For diagnostics and swatches in your terminal, use the direct CLI.
 

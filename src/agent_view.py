@@ -1,30 +1,53 @@
-"""Install a plugin-owned Agent projection so same-space agents are contiguous.
+"""Install a plugin-owned Agent projection.
 
-This uses Herdr's native declarative agent view (`agent.view.set`) rather than
-any local agent database, so detection, status, notifications and attention
-counts are entirely untouched -- only ordering (and optionally scope) changes.
+Scope (all spaces vs current workspace) and sort (activity vs spaces) are
+independent. Filter uses Herdr's live `current_workspace_id` context. Sort is
+always sent: any plugin view disables Herdr's native Agents sort button, even
+when the label is omitted.
 """
 
 import ctx
 import rpc
 
 SOURCE = ctx.PLUGIN_ID
-LABEL_ALL = "Spaces"
-LABEL_CURRENT = "This Space"
+SCOPES = ("all", "current")
+SORTS = ("activity", "spaces")
+LABELS = {"activity": "Activity", "spaces": "Spaces"}
 
-SORT_BY_SPACE = [
+# Stable tails keep equal-attention rows from shuffling across republish.
+SORT_ACTIVITY = [
+    {"field": "attention", "order": "desc"},
+    {"field": "state_change_seq", "order": "desc"},
     {"field": "workspace_order", "order": "asc"},
     {"field": "tab_order", "order": "asc"},
     {"field": "pane_order", "order": "asc"},
 ]
 
+SORT_SPACES = [
+    {"field": "workspace_order", "order": "asc"},
+    {"field": "attention", "order": "desc"},
+    {"field": "tab_order", "order": "asc"},
+    {"field": "pane_order", "order": "asc"},
+]
 
-def definition(mode="all"):
-    """Build the agent.view.set params for a mode."""
+
+def normalize_scope(mode):
+    return "current" if mode == "current" else "all"
+
+
+def normalize_sort(sort):
+    return "activity" if sort == "activity" else "spaces"
+
+
+def definition(mode="all", sort="spaces"):
+    """Build the agent.view.set params for a scope and sort."""
+    mode = normalize_scope(mode)
+    sort = normalize_sort(sort)
     params = {
         "source": SOURCE,
-        "label": LABEL_CURRENT if mode == "current" else LABEL_ALL,
-        "sort": [dict(s) for s in SORT_BY_SPACE],
+        "label": LABELS[sort],
+        "sort": [dict(s) for s in (
+            SORT_ACTIVITY if sort == "activity" else SORT_SPACES)],
     }
     if mode == "current":
         # Herdr resolves this against the live focused workspace.
@@ -36,8 +59,8 @@ def definition(mode="all"):
     return params
 
 
-def install(mode="all"):
-    return rpc.try_call("agent.view.set", definition(mode))
+def install(mode="all", sort="spaces"):
+    return rpc.try_call("agent.view.set", definition(mode, sort))
 
 
 def clear():

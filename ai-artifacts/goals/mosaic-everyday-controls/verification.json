@@ -1,0 +1,75 @@
+{
+  "herdr": "herdr 0.8.2",
+  "unit_tests": {
+    "command": "python3 -m unittest discover -s tests -t tests",
+    "count": 248,
+    "result": "passed",
+    "log": "/tmp/mosaic-rebased-tests.log"
+  },
+  "lifecycle": {
+    "command": "python3 scripts/check-standalone.py",
+    "result": "passed",
+    "receipt": "/tmp/mosaic-proof-zw_12sa0/receipt.json",
+    "timer": {
+      "before": "1m⠀",
+      "after": "2m⠀"
+    },
+    "disabled": {
+      "worker_exited": true,
+      "elapsed_expired": true,
+      "title_retained": true
+    }
+  },
+  "elapsed_render": {
+    "command": "TERMCTRL_BIN=\"$(volta which termctrl)\" python3 scripts/check-elapsed-column.py",
+    "receipt": "/tmp/mosaic-elapsed-col-j0ltg33i/elapsed-column.json",
+    "result": "passed",
+    "columns": {
+      "M-BLANK": 9,
+      "M-2M": 9,
+      "M-NOW": 9,
+      "M-10M": 9,
+      "M-99D": 9
+    },
+    "transitions": [
+      {
+        "elapsed": "'⠀⠀⠀'",
+        "column": 9
+      },
+      {
+        "elapsed": "'2m⠀'",
+        "column": 9
+      },
+      {
+        "elapsed": "'now'",
+        "column": 9
+      },
+      {
+        "elapsed": "'10m'",
+        "column": 9
+      },
+      {
+        "elapsed": "'99d'",
+        "column": 9
+      },
+      {
+        "elapsed": "'99d'",
+        "column": 9
+      }
+    ],
+    "cleared_column": 3
+  },
+  "residual_limits": [
+    "Legacy menu entries remain callable and visible",
+    "Native Activity/Spaces button integration unavailable",
+    "Elapsed column disappears after metadata expiry or clear",
+    "Sort payloads and acceptance verified; rendered sorting not measured"
+  ],
+  "sort_shortcut": {
+    "manifest_action": "toggle-agent-sort",
+    "default_key": "prefix+shift+s",
+    "lifecycle_receipt": "/tmp/mosaic-proof-q2va2206/receipt.json",
+    "setup_and_uninstall": "passed",
+    "existing_binding_ownership": "preserved"
+  }
+}

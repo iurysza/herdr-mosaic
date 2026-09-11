@@ -26,7 +26,7 @@ ALIASES = {
 
 
 class TestPublicManifest(unittest.TestCase):
-    def test_existing_ids_contexts_and_commands_are_preserved_without_alias_actions(self):
+    def test_existing_ids_and_new_controls_are_supported_without_alias_actions(self):
         # Frozen public action contract, including advanced and recovery actions.
         workspace = ['global', 'workspace']
         expected = {
@@ -35,6 +35,8 @@ class TestPublicManifest(unittest.TestCase):
             'tint-enable': ('tint-enable', workspace),
             'tint-disable': ('tint-disable', workspace),
             'theme-restore': ('theme-restore', workspace),
+            'toggle-agent-focus': ('toggle-agent-focus', workspace),
+            'toggle-agent-sort': ('toggle-agent-sort', workspace),
             'show-all-agents': ('view all', workspace),
             'show-current-space-agents': ('view current', workspace),
             'open-agent-board': ('board-open', workspace),
@@ -53,7 +55,7 @@ class TestPublicManifest(unittest.TestCase):
             expected[name] = ('layout ' + name, ['pane'])
         for intensity in ('subtle', 'medium', 'bold'):
             expected['intensity-' + intensity] = ('intensity ' + intensity, workspace)
-        # The manifest has 24 actions. Derive the count from this contract,
+        # The manifest has 26 actions. Derive the count from this contract,
         # rather than treating prose counts as a source of truth.
         text = (Path(__file__).resolve().parents[1] / 'herdr-plugin.toml').read_text()
         blocks = text.split('[[actions]]')[1:]

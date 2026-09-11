@@ -33,6 +33,7 @@ class TestSidebar(Base):
     def test_publish_preserves_durable_titles_and_external_model_tier(self):
         import sidebar
         import ctx
+        import elapsed
         import state
         calls = []
 
@@ -51,10 +52,37 @@ class TestSidebar(Base):
         self.assertEqual(title['source'], 'agent-sidebar-title')
         self.assertNotIn('ttl_ms', title)
         self.assertEqual(clock['source'], 'agent-elapsed')
-        self.assertEqual(clock['tokens'], {'elapsed': '2m'})
+        self.assertEqual(clock['tokens'], {'elapsed': elapsed.fit_width('2m')})
         self.assertEqual(clock['ttl_ms'], 45000)
+        self.assertEqual(len(clock['tokens']['elapsed']), elapsed.WIDTH)
         self.assertNotIn('themed_model_tier', title['tokens'])
         self.assertNotIn('themed_model_tier', clock['tokens'])
+
+    def test_publish_keeps_three_cells_when_clock_is_missing(self):
+        import sidebar
+        import ctx
+        import elapsed
+        import state
+        calls = []
+
+        def call(method, params):
+            if method == 'tab.list':
+                return {'tabs': []}
+            calls.append((method, params))
+            return {}
+
+        with ctx.Lock(), mock.patch('rpc.call', side_effect=call), \
+                mock.patch('time.time', return_value=220):
+            sidebar.publish(state.default_state(), [
+                {'pane_id': 'p1'}, {'pane_id': 'p2'},
+            ])
+        clocks = [params['tokens']['elapsed'] for _, params in calls
+                  if params.get('source') == 'agent-elapsed']
+        self.assertEqual(clocks, [elapsed.BLANK, elapsed.BLANK])
+        self.assertTrue(all(len(label) == elapsed.WIDTH for label in clocks))
+        self.assertTrue(all(params.get('ttl_ms') == elapsed.TTL_MS
+                            for _, params in calls
+                            if params.get('source') == 'agent-elapsed'))
 
     def test_uninstalled_sidebar_does_not_publish(self):
         import sidebar

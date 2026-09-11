@@ -39,6 +39,7 @@ ENV = {
 os.environ.clear()
 os.environ.update(ENV)
 sys.path.insert(0, str(ROOT / "src"))
+import config_patch as cp
 import ctx
 import elapsed
 import refresh
@@ -153,11 +154,35 @@ try:
     report = {"pane_id": pane_id, "source": "mosaic-proof", "agent": "pi", "state": "working"}
     rpc.call("pane.report_agent", report)
     receipts["install"] = action("install")
+    assert cp.keybind_key(cp.load_doc(), "iurysza.mosaic.toggle-agent-sort") == "prefix+shift+s"
+    receipts["view_toggle"] = action("toggle-agent-focus")
+    st = state.load()
+    assert st["view_mode"] == "current", st.get("view_mode")
+    assert st.get("sort_mode", "spaces") == "spaces", st.get("sort_mode")
+    receipts["sort_toggle"] = action("toggle-agent-sort")
+    st = state.load()
+    assert st["view_mode"] == "current", st.get("view_mode")
+    assert st["sort_mode"] == "activity", st.get("sort_mode")
+    receipts["view_all"] = action("show-all-agents")
+    st = state.load()
+    assert st["view_mode"] == "all", st.get("view_mode")
+    assert st["sort_mode"] == "activity", st.get("sort_mode")
+    bad = subprocess.call(["/usr/bin/python3", str(ROOT / "src" / "main.py"), "sort", "grouped"],
+                          env=ENV, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    assert bad == 1, bad
+    assert state.load()["sort_mode"] == "activity"
+    receipts["view_current"] = action("show-current-space-agents")
+    st = state.load()
+    assert st["view_mode"] == "current"
+    assert st["sort_mode"] == "activity"
     wait("durable coloured title", lambda: "Standalone title" in titles(pane_id).values())
     first = wait("refresh worker", heartbeat)
     receipts["first_round"] = first
     assert len(titles(pane_id)) == 1, titles(pane_id)
-    assert not current_agent(pane_id).get("tokens", {}).get("elapsed"), "invented initial completion"
+    wait("placeholder before completion",
+         lambda: current_agent(pane_id).get("tokens", {}).get("elapsed") == elapsed.BLANK)
+    assert current_agent(pane_id).get("tokens", {}).get("elapsed") == elapsed.BLANK, (
+        "invented initial completion: %r" % current_agent(pane_id).get("tokens", {}).get("elapsed"))
     # Agent-provided tier metadata remains outside the plugin's ownership.
     rpc.call("pane.report_metadata", {"pane_id": pane_id, "source": "themed-proof",
                                       "tokens": {"themed_model_tier": "fixture-tier"}})
@@ -166,6 +191,7 @@ try:
     rpc.call("pane.report_agent", report)
     wait("completion event", lambda: state.load()["agent_settled"].get(pane_id, {}).get("last_settled_at"))
     wait("completion clock", lambda: current_agent(pane_id).get("tokens", {}).get("elapsed") == "now")
+    assert len(current_agent(pane_id)["tokens"]["elapsed"]) == elapsed.WIDTH
     with ctx.Lock():
         st = state.load()
         # Controlled fixture near the next displayed-minute boundary, not a
@@ -175,7 +201,10 @@ try:
     subprocess.check_call(["/usr/bin/python3", str(ROOT / "src" / "main.py"), "elapsed-publish"], env=ENV)
     before_clock = current_agent(pane_id)["tokens"]["elapsed"]
     wait("timer advances elapsed without an event", lambda: current_agent(pane_id).get("tokens", {}).get("elapsed") not in (None, before_clock))
-    receipts["timer"] = {"before": before_clock, "after": current_agent(pane_id)["tokens"]["elapsed"],
+    after_clock = current_agent(pane_id)["tokens"]["elapsed"]
+    assert len(before_clock) == elapsed.WIDTH, before_clock
+    assert len(after_clock) == elapsed.WIDTH, after_clock
+    receipts["timer"] = {"before": before_clock, "after": after_clock,
                          "round": heartbeat()}
     assert current_agent(pane_id)["tokens"]["themed_model_tier"] == "fixture-tier"
     rpc.call("tab.rename", {"tab_id": tab_id, "label": "Renamed title"})
@@ -190,7 +219,10 @@ try:
     assert new_generation != old_generation, receipts["socket_generations"]
     new = wait("restart refresh worker", heartbeat)
     assert new["pid"] != old_pid
-    assert state.load()["identities"] == identities
+    restored = state.load()
+    assert restored["identities"] == identities
+    assert restored["view_mode"] == "current", restored.get("view_mode")
+    assert restored["sort_mode"] == "activity", restored.get("sort_mode")
     receipts["restart"] = new
     snapshot = rpc.call("session.snapshot", {})["snapshot"]
     # Restored shells are not agents until an integration reports them again.

@@ -252,6 +252,8 @@ class TestMosaicMigration(Base):
             self.assertEqual(main.main(['install']), 0)
             self.assertEqual(cp.keybind_key(cp.load_doc(), 'iurysza.mosaic.set-identity'),
                              'prefix+i')
+            self.assertEqual(cp.keybind_key(cp.load_doc(), 'iurysza.mosaic.toggle-agent-sort'),
+                             'prefix+shift+s')
             self.assertEqual(main.main(['uninstall']), 0)
         self.assertEqual(self.read(ctx.herdr_config_path()), original)
         self.assertIsNone(state.load()['sidebar_backup'])

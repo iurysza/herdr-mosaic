@@ -182,11 +182,13 @@ def cmd_reconcile(argv):
             # rows live in config.toml and persist on their own; nothing to redo.
             pass
         if st.get("view_installed"):
-            _, err = agent_view.install(st.get("view_mode") or "all")
+            mode = agent_view.normalize_scope(st.get("view_mode"))
+            sort = agent_view.normalize_sort(st.get("sort_mode"))
+            _, err = agent_view.install(mode, sort)
             if err:
                 ctx.warn("agent view reinstall failed: %s" % err)
             else:
-                ctx.log("agent view reapplied (%s)" % (st.get("view_mode") or "all"))
+                ctx.log("agent view reapplied (%s, %s)" % (mode, sort))
 
         if st.get("tint_enabled"):
             w = rpc.focused_workspace()
@@ -610,7 +612,9 @@ def cmd_sidebar_remove(argv):
 
 
 DEFAULT_KEYBIND = "prefix+i"
+DEFAULT_SORT_KEYBIND = "prefix+shift+s"
 PICKER_COMMAND = "%s.set-identity" % ctx.PLUGIN_ID
+SORT_TOGGLE_COMMAND = "%s.toggle-agent-sort" % ctx.PLUGIN_ID
 
 
 MARKER_PRESETS = {
@@ -854,19 +858,159 @@ def cmd_keybind_remove(argv):
     return 0
 
 
+def cmd_sort_keybind_install(argv):
+    """Bind Toggle Agent Sort without replacing an occupied user key."""
+    args = _parse_kv(argv)
+    key = args.get("key") or DEFAULT_SORT_KEYBIND
+    with ctx.Lock():
+        st = state_mod.load()
+        doc = cp.load_doc()
+        cp.snapshot()
+        status, bound = cp.install_keybind(
+            doc, key, SORT_TOGGLE_COMMAND, "Mosaic: toggle agent sort")
+        if status == "exists":
+            # Without a saved record this can be the user's binding.
+            if st.get("sort_keybind_installed"):
+                st["sort_keybind_key"] = bound
+                state_mod.save(st)
+            print("already bound to %s (leaving your choice alone)" % bound)
+            return 0
+        if status == "occupied":
+            print("key %s is already bound to %s; not adding a second binding. "
+                  "Use sort-keybind-install --key <other>." % (key, bound))
+            state_mod.save(st)
+            return 0
+        try:
+            cp.commit(doc)
+        except cp.ConfigError as exc:
+            ctx.warn(str(exc))
+            return 1
+        st["sort_keybind_installed"] = True
+        st["sort_keybind_key"] = key
+        state_mod.save(st)
+        _reload_config()
+        ctx.log("keybinding installed: %s -> %s" % (key, SORT_TOGGLE_COMMAND))
+        print("bound %s to Toggle Agent Sort" % key)
+    return 0
+
+
+def cmd_sort_keybind_remove(argv):
+    with ctx.Lock():
+        st = state_mod.load()
+        doc = cp.load_doc()
+        if not cp.remove_keybind(doc, SORT_TOGGLE_COMMAND):
+            print("no sort keybinding found")
+            st["sort_keybind_installed"] = False
+            st["sort_keybind_key"] = None
+            state_mod.save(st)
+            return 0
+        try:
+            cp.commit(doc)
+        except cp.ConfigError as exc:
+            ctx.warn(str(exc))
+            return 1
+        st["sort_keybind_installed"] = False
+        st["sort_keybind_key"] = None
+        state_mod.save(st)
+        _reload_config()
+        ctx.log("sort keybinding removed")
+        print("sort keybinding removed")
+    return 0
+
+
+def _install_view(st, mode, sort):
+    mode = agent_view.normalize_scope(mode)
+    sort = agent_view.normalize_sort(sort)
+    res, err = agent_view.install(mode, sort)
+    if err:
+        return None, err
+    st["view_installed"] = True
+    st["view_mode"] = mode
+    st["sort_mode"] = sort
+    return res, None
+
+
 def cmd_view(argv):
+    """Set agent focus on (current) or off (all). Not a toggle."""
     mode = "current" if (argv and argv[0] == "current") else "all"
     with ctx.Lock():
         st = state_mod.load()
-        res, err = agent_view.install(mode)
+        sort = agent_view.normalize_sort(st.get("sort_mode"))
+        res, err = _install_view(st, mode, sort)
         if err:
             ctx.warn("agent view failed: %s" % err)
             return 1
-        st["view_installed"] = True
-        st["view_mode"] = mode
         state_mod.save(st)
-        ctx.log("agent view installed (%s)" % mode)
-        print("agent view: %s (%s)" % (mode, (res or {}).get("label")))
+        ctx.log("agent view installed (%s, %s)" % (mode, sort))
+        print("agent focus: %s; sort: %s (%s)"
+              % (mode, sort, (res or {}).get("label")))
+    return 0
+
+
+def cmd_toggle_agent_focus(argv):
+    """Flip all-spaces vs current-workspace filter; keep the current sort."""
+    if argv:
+        ctx.warn("usage: toggle-agent-focus")
+        return 1
+    with ctx.Lock():
+        st = state_mod.load()
+        focused = st.get("view_installed") and st.get("view_mode") == "current"
+        mode = "all" if focused else "current"
+        sort = agent_view.normalize_sort(st.get("sort_mode"))
+        res, err = _install_view(st, mode, sort)
+        if err:
+            ctx.warn("agent view failed: %s" % err)
+            return 1
+        state_mod.save(st)
+        ctx.log("agent focus toggled (%s, %s)" % (mode, sort))
+        print("agent focus: %s; sort: %s (%s)"
+              % (mode, sort, (res or {}).get("label")))
+    return 0
+
+
+def cmd_toggle_agent_sort(argv):
+    """Flip Activity and Spaces sorting; keep the current focus scope."""
+    if argv:
+        ctx.warn("usage: toggle-agent-sort")
+        return 1
+    with ctx.Lock():
+        st = state_mod.load()
+        mode = agent_view.normalize_scope(st.get("view_mode"))
+        current = agent_view.normalize_sort(st.get("sort_mode"))
+        sort = "spaces" if current == "activity" else "activity"
+        res, err = _install_view(st, mode, sort)
+        if err:
+            ctx.warn("agent view failed: %s" % err)
+            return 1
+        state_mod.save(st)
+        ctx.log("agent sort toggled (%s, %s)" % (mode, sort))
+        print("agent focus: %s; sort: %s (%s)"
+              % (mode, sort, (res or {}).get("label")))
+    return 0
+
+
+def cmd_sort(argv):
+    """Set Mosaic agent sort. Does not change focus scope."""
+    if not argv:
+        st = state_mod.load()
+        print("sort: %s (activity or spaces); focus: %s"
+              % (agent_view.normalize_sort(st.get("sort_mode")),
+                 agent_view.normalize_scope(st.get("view_mode"))))
+        return 0
+    if len(argv) != 1 or argv[0] not in agent_view.SORTS:
+        ctx.warn("usage: sort [activity|spaces]")
+        return 1
+    with ctx.Lock():
+        st = state_mod.load()
+        mode = agent_view.normalize_scope(st.get("view_mode"))
+        res, err = _install_view(st, mode, argv[0])
+        if err:
+            ctx.warn("agent view failed: %s" % err)
+            return 1
+        state_mod.save(st)
+        ctx.log("agent sort set (%s, %s)" % (mode, argv[0]))
+        print("agent focus: %s; sort: %s (%s)"
+              % (mode, argv[0], (res or {}).get("label")))
     return 0
 
 
@@ -1064,20 +1208,24 @@ def cmd_doctor(argv):
             row("  " + label, "%s  %s" % (
                 "OK" if cp.has_dots(cur) else "NO DOT",
                 " ".join(n for n in names if n)))
-    if doc.get(("ui", "agent_panel_sort")) == "priority":
-        problems.append("ui.agent_panel_sort is \"priority\". The plugin's agent "
-                        "view sorts by space; if the Agents panel still shows an "
-                        "attention queue, set ui.agent_panel_sort = \"spaces\".")
-
     bound = cp.keybind_key(doc, PICKER_COMMAND)
     row("picker keybinding", bound if bound else "not bound "
-        "(run the 'Mosaic: Bind color picker key' action)")
+        "(run keybind-install)")
+    sort_bound = cp.keybind_key(doc, SORT_TOGGLE_COMMAND)
+    row("sort keybinding", sort_bound if sort_bound else "not bound "
+        "(run sort-keybind-install)")
 
     # agent view
-    row("agent view owned", st.get("view_installed") and
-        ("yes (%s)" % st.get("view_mode")) or "no")
+    row("agent view owned", st.get("view_installed") and "yes" or "no")
+    row("agent focus", agent_view.normalize_scope(st.get("view_mode"))
+        if st.get("view_installed") else "(none)")
+    row("agent sort", agent_view.normalize_sort(st.get("sort_mode"))
+        if st.get("view_installed") else "(none)")
+    if st.get("view_installed"):
+        out.append("  %-30s %s" % ("native sort button:",
+                                   "disabled while Mosaic's view is active"))
     out.append("  %-30s %s" % ("agent view readback:",
-                               "unavailable -- herdr 0.8.0 has no agent.view.get"))
+                               "unavailable -- herdr 0.8.2 has no agent.view.get"))
 
     # tint
     row("tint enabled", st.get("tint_enabled") and "yes" or "no")
@@ -1192,9 +1340,13 @@ def cmd_uninstall(argv):
             notes.append("sidebar: %d row sets" % len(sres))
 
         if not migrated_picker and cp.remove_keybind(doc, PICKER_COMMAND):
-            notes.append("keybinding removed")
+            notes.append("picker keybinding removed")
+        if st.get("sort_keybind_installed") and cp.remove_keybind(doc, SORT_TOGGLE_COMMAND):
+            notes.append("sort keybinding removed")
         st["keybind_installed"] = False
         st["keybind_key"] = None
+        st["sort_keybind_installed"] = False
+        st["sort_keybind_key"] = None
 
         try:
             cp.commit(doc)
@@ -1264,7 +1416,7 @@ def cmd_install(argv):
     rc = cmd_migrate(argv)
     if rc:
         return rc
-    for command in (cmd_sidebar_install, cmd_keybind_install):
+    for command in (cmd_sidebar_install, cmd_keybind_install, cmd_sort_keybind_install):
         rc = command(argv)
         if rc:
             return rc
@@ -1360,7 +1512,12 @@ COMMANDS = {
     "preview": cmd_preview,
     "keybind-install": cmd_keybind_install,
     "keybind-remove": cmd_keybind_remove,
+    "sort-keybind-install": cmd_sort_keybind_install,
+    "sort-keybind-remove": cmd_sort_keybind_remove,
     "view": cmd_view,
+    "toggle-agent-focus": cmd_toggle_agent_focus,
+    "toggle-agent-sort": cmd_toggle_agent_sort,
+    "sort": cmd_sort,
     "view-clear": cmd_view_clear,
     "picker": cmd_picker,
     "board": cmd_board,
@@ -1405,6 +1562,9 @@ Tint:
 
 Agent view:
   agents all|current                 Show agents in all spaces or the current one
+  toggle-agent-focus                 Toggle current-space focus
+  toggle-agent-sort                  Toggle Activity and Spaces sorting
+  sort [activity|spaces]             Set or show the sort without changing focus
   agent-board                        Open collapsible agent groups
 
 Pane layouts:

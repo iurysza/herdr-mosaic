@@ -19,9 +19,9 @@ The setup action is Mosaic's consent boundary. It records the values it must res
 
 - assigns each current space a palette color
 - adds colored space markers and colored agent titles to the sidebar
-- shows every agent, ordered by space, tab, and pane
+- shows every agent grouped by space, with attention inside each group
 - starts title and elapsed-label refresh
-- binds `prefix+i` to the color picker when the key is free
+- binds `prefix+i` to the color picker and `prefix+shift+s` to sorting when the keys are free
 - leaves window tint off
 
 You do not need to configure individual agents.
@@ -104,19 +104,24 @@ herdr plugin uninstall iurysza.mosaic
 
 The restore action removes Mosaic's sidebar templates, picker binding, agent view, metadata, and theme overrides. It keeps saved space colors so a later relink can restore them.
 
-## Optionally focus the agent list
+## Focus and sort the agent list
 
-By default, setup shows every agent, ordered by space. To temporarily show only agents in the focused space:
-
-```sh
-herdr plugin action invoke iurysza.mosaic.show-current-space-agents
-```
-
-To return to the default all-space list:
+By default, setup shows every agent. **Toggle Agent Focus** switches between every space and the focused space. The filter follows space switches.
 
 ```sh
-herdr plugin action invoke iurysza.mosaic.show-all-agents
+herdr plugin action invoke iurysza.mosaic.toggle-agent-focus
 ```
+
+**Toggle Agent Sort** switches between Activity and Spaces and keeps the focus filter. Setup binds it to `prefix+shift+s`. On this machine, press Ctrl+A, then Shift+S.
+
+```sh
+herdr plugin action invoke iurysza.mosaic.toggle-agent-sort
+```
+
+- **Activity** prioritizes attention, then recent state changes.
+- **Spaces** groups agents by space, then prioritizes attention inside each group.
+
+`show-current-space-agents` and `show-all-agents` remain as set-on and set-off compatibility actions. Herdr 0.8.2 cannot hide them while preserving existing bindings and callers.
 
 Herdr has no collapsible group headers in its native Agents panel. Open Mosaic's separate Agent Board for collapsible space groups:
 
@@ -133,7 +138,7 @@ The board reads Herdr's agent state. Selecting an agent focuses it.
 - Herdr sessions share one `config.toml`. Use dynamic window tint with one active session.
 - Herdr has no theme-introspection API. Set `theme_base` if Mosaic cannot identify your dark theme.
 - A `rows_by_agent` config entry replaces the shared agent row for that agent. Mosaic preserves these entries, so affected agents may not show Mosaic's title and elapsed labels.
-- Elapsed labels begin only after Mosaic observes an agent move directly from `working` to `idle` or `done`. Changing focus never resets them.
+- Elapsed ages begin after Mosaic observes an agent move directly from `working` to `idle` or `done`. Changing focus never resets them. Published labels use three cells, including a blank placeholder before completion. Ages cap at `99d`. Herdr drops the column if metadata expires. See [elapsed column](./docs/elapsed-column.md).
 
 See [config safety and limitations](./docs/config-safety.md) for config ownership and recovery details.
 
@@ -151,6 +156,7 @@ See [settings](./docs/settings.md) for palette colors, window tint intensity, ma
 
 - [Actions and keybindings](./docs/actions.md)
 - [Settings](./docs/settings.md)
+- [Elapsed column](./docs/elapsed-column.md)
 - [Config safety and limitations](./docs/config-safety.md)
 - [Releases](./docs/releases.md)
 

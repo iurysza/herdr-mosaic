@@ -90,6 +90,9 @@ description = "Collapsible per-space agent groups (read-only, real Herdr agent s
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" board"]
 
 # --- actions --------------------------------------------------------------
+# Herdr 0.8.2 cannot hide actions. Existing IDs stay listed so invocation and
+# keybindings keep working. Everyday controls are color, tint, agent focus and
+# sorting, plus equalize and cycle. Setup adds prefix+shift+s when it is free.
 
 [[actions]]
 id = "set-identity"
@@ -127,17 +130,31 @@ description = "Recovery: same as Disable space tint. Stops tinting and restores 
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" theme-restore"]
 
 [[actions]]
+id = "toggle-agent-focus"
+title = "Mosaic: Toggle Agent Focus"
+contexts = ["global", "workspace"]
+description = "Toggle all spaces and the current workspace. Follows space switches."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" toggle-agent-focus"]
+
+[[actions]]
+id = "toggle-agent-sort"
+title = "Mosaic: Toggle Agent Sort"
+contexts = ["global", "workspace"]
+description = "Toggle Activity and Spaces sorting. Agent focus is unchanged."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" toggle-agent-sort"]
+
+[[actions]]
 id = "show-all-agents"
 title = "Mosaic: Show all agents"
 contexts = ["global", "workspace"]
-description = "Show agents from all spaces, ordered by space, tab, and pane."
+description = "Set agent focus off. Kept for existing bindings and callers."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" view all"]
 
 [[actions]]
 id = "show-current-space-agents"
 title = "Mosaic: Show current space agents"
 contexts = ["global", "workspace"]
-description = "Show only agents in the focused space; the filter follows space changes."
+description = "Set agent focus on and follow space switches. Kept for existing callers."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" view current"]
 
 [[actions]]

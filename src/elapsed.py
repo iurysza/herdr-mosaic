@@ -6,26 +6,48 @@ Cadence/expiry receipt: herdr-agent-elapsed measured 20-pane rounds at 602 ms
 median, 940 ms maximum on 2026-09-04; its 30-second refresh uses a 45-second TTL.
 Keep that expiry and its existing source during the publisher handover so old
 clock values are replaced rather than competing with a second metadata source.
+
+Column receipt: the Agents elapsed token is always published as exactly 3
+terminal cells. That width is the product requirement, not a measured sidebar
+average. Short labels take U+2800 only for the remaining cells. A missing clock
+is three U+2800 cells, not an invented age and not ASCII spaces. Herdr 0.8.2
+trims ASCII spaces, NBSP, and figure spaces to a token clear. Ages that would
+need a fourth cell stay `99d`.
 """
 
 SOURCE = "agent-elapsed"
 TTL_MS = 45000
+WIDTH = 3
 PAD = "\u2800"
+BLANK = PAD * WIDTH
+
+
+def fit_width(label):
+    """Right-pad with U+2800 so a published clock occupies WIDTH cells."""
+    width = len(label)
+    if width >= WIDTH:
+        return label
+    return label + PAD * (WIDTH - width)
 
 
 def format_elapsed(seconds):
-    """Keep the existing sidebar's rounding and units."""
+    """Keep the existing sidebar's rounding and units, then fit WIDTH cells."""
     if seconds < 30:
-        return "now"
-    if seconds < 3600:
-        return "%dm" % ((seconds + 30) // 60)
-    if seconds < 86400:
-        return "%dh" % ((seconds + 1800) // 3600)
-    return "%dd" % ((seconds + 43200) // 86400)
+        label = "now"
+    elif seconds < 3600:
+        label = "%dm" % ((seconds + 30) // 60)
+    elif seconds < 86400:
+        label = "%dh" % ((seconds + 1800) // 3600)
+    else:
+        days = (seconds + 43200) // 86400
+        if days > 99:
+            days = 99
+        label = "%dd" % days
+    return fit_width(label)
 
 
 def labels(records, pane_ids, now):
-    """Return labels or null clears. No completion means no invented age."""
+    """Return 3-cell labels. No completion means BLANK, not an invented age."""
     result = {}
     for pane_id in pane_ids:
         record = records.get(pane_id)
@@ -33,11 +55,7 @@ def labels(records, pane_ids, now):
         if isinstance(at, int) and not isinstance(at, bool) and at >= 0:
             result[pane_id] = format_elapsed(max(0, now - at))
         else:
-            result[pane_id] = None
-    width = max((len(label) for label in result.values() if label), default=0)
-    if width > 2:
-        result = {pane: label + PAD * (width - len(label)) if label else None
-                  for pane, label in result.items()}
+            result[pane_id] = BLANK
     return result
 
 

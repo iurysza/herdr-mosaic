@@ -836,33 +836,284 @@ class TestConfigPatch(Base):
 
 
 class TestAgentView(Base):
-    def test_definition_sorts_by_space(self):
+    def test_two_sorts_times_two_filters(self):
+        # Host panel order is unverified: Herdr 0.8.2 has no agent.view.get
+        # and session.snapshot does not include the projection.
         import agent_view as av
-        d = av.definition('all')
-        self.assertEqual([s['field'] for s in d['sort']],
-                         ['workspace_order', 'tab_order', 'pane_order'])
-        self.assertTrue(all(s['order'] == 'asc' for s in d['sort']))
+        cases = []
+        for scope in ('all', 'current'):
+            for sort in ('activity', 'spaces'):
+                d = av.definition(scope, sort)
+                cases.append((scope, sort, d))
+                self.assertEqual(d['source'], 'iurysza.mosaic')
+                self.assertEqual(d['label'], av.LABELS[sort])
+                if scope == 'current':
+                    self.assertEqual(d['filter'], {
+                        'op': 'eq', 'field': 'workspace_id',
+                        'value': {'context': 'current_workspace_id'}})
+                else:
+                    self.assertNotIn('filter', d)
+        self.assertEqual(len(cases), 4)
+        activity = av.definition('all', 'activity')['sort']
+        self.assertEqual(
+            [(s['field'], s['order']) for s in activity],
+            [('attention', 'desc'), ('state_change_seq', 'desc'),
+             ('workspace_order', 'asc'), ('tab_order', 'asc'),
+             ('pane_order', 'asc')])
+        spaces = av.definition('current', 'spaces')['sort']
+        self.assertEqual(
+            [(s['field'], s['order']) for s in spaces],
+            [('workspace_order', 'asc'), ('attention', 'desc'),
+             ('tab_order', 'asc'), ('pane_order', 'asc')])
+
+    def test_unknown_scope_and_sort_fall_back(self):
+        import agent_view as av
+        d = av.definition('nope', 'grouped')
         self.assertNotIn('filter', d)
+        self.assertEqual(d['label'], 'Spaces')
+        self.assertEqual(d['sort'][0]['field'], 'workspace_order')
 
-    def test_definition_is_plugin_owned(self):
+    def test_filter_does_not_use_status(self):
         import agent_view as av
-        import ctx
-        self.assertEqual(av.definition('all')['source'], ctx.PLUGIN_ID)
+        for scope in ('all', 'current'):
+            for sort in ('activity', 'spaces'):
+                filt = json.dumps(av.definition(scope, sort).get('filter'))
+                for word in ('status', 'blocked', 'working', 'idle'):
+                    self.assertNotIn(word, filt, '%s leaked into %s/%s filter'
+                                     % (word, scope, sort))
 
-    def test_current_mode_filters_on_live_context(self):
-        import agent_view as av
-        d = av.definition('current')
-        self.assertEqual(d['filter'], {
-            'op': 'eq', 'field': 'workspace_id',
-            'value': {'context': 'current_workspace_id'}})
+    def test_legacy_state_defaults_sort_to_spaces(self):
+        import state as st_mod
+        path = os.path.join(os.environ['HERDR_PLUGIN_STATE_DIR'], 'state.json')
+        with open(path, 'w', encoding='utf-8') as fh:
+            json.dump({'version': 1, 'view_mode': 'current', 'identities': {}}, fh)
+        st = st_mod.load()
+        self.assertEqual(st['view_mode'], 'current')
+        self.assertEqual(st['sort_mode'], 'spaces')
 
-    def test_definition_does_not_touch_status(self):
-        """The view must not filter or reorder by agent state."""
-        import agent_view as av
-        for mode in ('all', 'current'):
-            blob = json.dumps(av.definition(mode))
-            for word in ('status', 'attention', 'blocked', 'working', 'idle'):
-                self.assertNotIn(word, blob, '%s leaked into %s view' % (word, mode))
+
+class TestAgentViewCommands(Base):
+    def _stub_view(self, err=None):
+        import rpc
+        self.calls = []
+
+        class FakeErr(Exception):
+            def __str__(self):
+                return err or 'failed'
+
+        def fake_try_call(method, params=None, **kw):
+            self.calls.append((method, params))
+            if err:
+                return None, FakeErr()
+            return {'active': True, 'source': 'iurysza.mosaic',
+                    'label': (params or {}).get('label')}, None
+
+        rpc.try_call = fake_try_call
+
+    def _seed(self, **changes):
+        import state as st_mod
+        st = st_mod.default_state()
+        st.update(changes)
+        st_mod.save(st)
+        return st
+
+    def test_focus_preserves_sort_and_sort_preserves_scope(self):
+        import io
+        import main as main_mod
+        self._stub_view()
+        self._seed(view_mode='current', sort_mode='activity', view_installed=True)
+        buf = io.StringIO()
+        old = sys.stdout
+        sys.stdout = buf
+        try:
+            self.assertEqual(main_mod.cmd_view(['all']), 0)
+            self.assertEqual(main_mod.cmd_sort(['spaces']), 0)
+            self.assertEqual(main_mod.cmd_view(['current']), 0)
+            self.assertEqual(main_mod.cmd_view(['current']), 0)
+        finally:
+            sys.stdout = old
+        import state as st_mod
+        st = st_mod.load()
+        self.assertEqual(st['view_mode'], 'current')
+        self.assertEqual(st['sort_mode'], 'spaces')
+        payloads = [p for method, p in self.calls if method == 'agent.view.set']
+        self.assertEqual(
+            [(p.get('filter') is not None, p['label']) for p in payloads],
+            [(False, 'Activity'), (False, 'Spaces'), (True, 'Spaces'), (True, 'Spaces')])
+
+    def test_toggle_flips_scope_and_old_ids_are_set_not_toggle(self):
+        import io
+        import main as main_mod
+        self._stub_view()
+        self._seed(view_mode='all', sort_mode='activity')
+        buf = io.StringIO()
+        old = sys.stdout
+        sys.stdout = buf
+        try:
+            self.assertEqual(main_mod.cmd_toggle_agent_focus([]), 0)
+            self.assertEqual(main_mod.cmd_toggle_agent_focus([]), 0)
+            self.assertEqual(main_mod.cmd_view(['current']), 0)
+            self.assertEqual(main_mod.cmd_view(['current']), 0)
+        finally:
+            sys.stdout = old
+        import state as st_mod
+        st = st_mod.load()
+        self.assertEqual(st['view_mode'], 'current')
+        self.assertEqual(st['sort_mode'], 'activity')
+        scopes = []
+        for method, params in self.calls:
+            if method == 'agent.view.set':
+                scopes.append('current' if params.get('filter') else 'all')
+                self.assertEqual(params['label'], 'Activity')
+        self.assertEqual(scopes, ['current', 'all', 'current', 'current'])
+
+    def test_toggle_after_view_clear_enables_current_space(self):
+        import main as main_mod
+        import state as st_mod
+        self._stub_view()
+        self._seed(view_mode='current', sort_mode='activity', view_installed=True)
+        self.assertEqual(main_mod.cmd_view_clear([]), 0)
+        self.assertEqual(main_mod.cmd_toggle_agent_focus([]), 0)
+        st = st_mod.load()
+        self.assertTrue(st['view_installed'])
+        self.assertEqual(st['view_mode'], 'current')
+        self.assertEqual(st['sort_mode'], 'activity')
+        self.assertIn('filter', self.calls[-1][1])
+
+    def test_toggle_rejects_arguments_without_writing(self):
+        import main as main_mod
+        import state as st_mod
+        self._stub_view()
+        before = self._seed(view_mode='all', sort_mode='activity')
+        for args in (['--help'], ['current'], ['--bogus']):
+            self.assertEqual(main_mod.cmd_toggle_agent_focus(args), 1)
+        self.assertEqual(st_mod.load(), before)
+        self.assertEqual(self.calls, [])
+
+    def test_sort_shortcut_install_and_remove_are_reversible(self):
+        from unittest import mock
+        import config_patch as cp
+        import main as main_mod
+        import state as st_mod
+        self.write_config('no_sidebar')
+        with mock.patch.object(main_mod, '_reload_config'):
+            self.assertEqual(main_mod.cmd_sort_keybind_install([]), 0)
+            self.assertEqual(cp.keybind_key(cp.load_doc(), main_mod.SORT_TOGGLE_COMMAND),
+                             main_mod.DEFAULT_SORT_KEYBIND)
+            self.assertTrue(st_mod.load()['sort_keybind_installed'])
+            self.assertEqual(main_mod.cmd_sort_keybind_remove([]), 0)
+        self.assertIsNone(cp.keybind_key(cp.load_doc(), main_mod.SORT_TOGGLE_COMMAND))
+        self.assertFalse(st_mod.load()['sort_keybind_installed'])
+
+    def test_existing_sort_shortcut_is_not_claimed(self):
+        from unittest import mock
+        import main as main_mod
+        import state as st_mod
+        self.write_config('no_sidebar')
+        with open(os.environ['HERDR_CONFIG_PATH'], 'a', encoding='utf-8') as fh:
+            fh.write('\n[[keys.command]]\nkey = "prefix+shift+s"\n'
+                     'type = "plugin_action"\n'
+                     'command = "iurysza.mosaic.toggle-agent-sort"\n')
+        with mock.patch.object(main_mod, '_reload_config'):
+            self.assertEqual(main_mod.cmd_sort_keybind_install([]), 0)
+        self.assertFalse(st_mod.load()['sort_keybind_installed'])
+
+    def test_sort_toggle_flips_sort_and_preserves_focus(self):
+        import main as main_mod
+        import state as st_mod
+        self._stub_view()
+        self._seed(view_mode='current', sort_mode='spaces', view_installed=True)
+        self.assertEqual(main_mod.cmd_toggle_agent_sort([]), 0)
+        self.assertEqual(main_mod.cmd_toggle_agent_sort([]), 0)
+        self.assertEqual(st_mod.load()['view_mode'], 'current')
+        self.assertEqual(st_mod.load()['sort_mode'], 'spaces')
+        payloads = [p for method, p in self.calls if method == 'agent.view.set']
+        self.assertEqual([p['label'] for p in payloads], ['Activity', 'Spaces'])
+        self.assertTrue(all('filter' in p for p in payloads))
+
+    def test_sort_toggle_rejects_arguments_without_writing(self):
+        import main as main_mod
+        import state as st_mod
+        self._stub_view()
+        before = self._seed(view_mode='all', sort_mode='activity')
+        for args in (['--help'], ['spaces'], ['--bogus']):
+            self.assertEqual(main_mod.cmd_toggle_agent_sort(args), 1)
+        self.assertEqual(st_mod.load(), before)
+        self.assertEqual(self.calls, [])
+
+    def test_unknown_sort_does_not_write_state(self):
+        import main as main_mod
+        self._stub_view()
+        self._seed(view_mode='current', sort_mode='spaces', view_installed=True)
+        self.assertEqual(main_mod.cmd_sort(['grouped']), 1)
+        import state as st_mod
+        st = st_mod.load()
+        self.assertEqual(st['sort_mode'], 'spaces')
+        self.assertEqual(st['view_mode'], 'current')
+        self.assertEqual(self.calls, [])
+
+    def test_sort_rejects_extra_and_dashed_args(self):
+        import main as main_mod
+        self._stub_view()
+        self._seed(view_mode='current', sort_mode='spaces', view_installed=True)
+        for argv in (['activity', 'junk'], ['--bogus'], ['activity', '--flag'],
+                     ['spaces', 'activity']):
+            self.assertEqual(main_mod.cmd_sort(argv), 1, argv)
+        import state as st_mod
+        st = st_mod.load()
+        self.assertEqual(st['sort_mode'], 'spaces')
+        self.assertEqual(st['view_mode'], 'current')
+        self.assertEqual(self.calls, [])
+
+    def test_view_install_failure_does_not_persist(self):
+        import main as main_mod
+        self._stub_view(err='invalid_agent_view')
+        self._seed(view_mode='all', sort_mode='spaces')
+        self.assertEqual(main_mod.cmd_toggle_agent_focus([]), 1)
+        self.assertEqual(main_mod.cmd_sort(['activity']), 1)
+        import state as st_mod
+        st = st_mod.load()
+        self.assertNotEqual(st.get('view_mode'), 'current')
+        self.assertEqual(st.get('sort_mode'), 'spaces')
+        self.assertFalse(st.get('view_installed'))
+
+    def test_reconcile_reapplies_both_axes(self):
+        import main as main_mod
+        self._stub_view()
+        self._seed(view_mode='current', sort_mode='activity', view_installed=True)
+        import rpc
+
+        def fake_call(method, params=None, **kw):
+            if method == 'workspace.list':
+                return {'workspaces': []}
+            if method == 'agent.list':
+                return {'agents': []}
+            if method == 'agent.view.set':
+                self.calls.append((method, params))
+                return {'active': True, 'source': 'iurysza.mosaic',
+                        'label': params.get('label')}
+            return {'type': 'ok'}
+
+        rpc.call = fake_call
+        rpc.try_call = lambda method, params=None, **kw: (fake_call(method, params), None)
+        self.assertEqual(main_mod.cmd_reconcile([]), 0)
+        view = [p for method, p in self.calls if method == 'agent.view.set']
+        self.assertEqual(len(view), 1)
+        self.assertEqual(view[0]['label'], 'Activity')
+        self.assertIn('filter', view[0])
+
+    def test_manifest_keeps_legacy_ids_and_adds_toggle(self):
+        path = os.path.join(HERE, '..', 'herdr-plugin.toml')
+        with open(path, encoding='utf-8') as fh:
+            text = fh.read()
+        for action_id in (
+                'toggle-agent-focus', 'toggle-agent-sort', 'show-all-agents', 'show-current-space-agents',
+                'install', 'migrate', 'doctor', 'uninstall', 'theme-restore',
+                'bind-picker-key', 'unbind-picker-key',
+                'resize-left', 'resize-down', 'resize-up', 'resize-right',
+                'equalize', 'cycle', 'set-identity'):
+            self.assertIn('id = "%s"' % action_id, text)
+        self.assertNotIn('id = "sort"', text)
 
 
 class TestMetadata(Base):

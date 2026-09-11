@@ -46,6 +46,17 @@ regardless of an active view.
 
 There is **no** `agent.view.get` and **no** theme-introspection call.
 
+An active plugin view disables Herdr's native Agents sort button. That is true
+even when `label` is omitted. Isolated 0.8.2 `agent.view.set` accepts filter-only
+and sort+label payloads; it does not keep the native button clickable. v0.9.0
+source (`src/client/shell/agent_sidebar.rs`) replaces the native label with the
+plugin label and clears the click hit-target whenever `agent_view_label` is set.
+Do not document filter-only/no-label as a way to preserve that button.
+
+`PluginManifestAction` has no `hidden` or `alias` field. Isolated 0.8.2 `plugin
+link` dropped `hidden = true` and `aliases` and still listed every action in
+`plugin.action.list`. Empty or omitted `contexts` does not hide an action.
+
 ## Manifest
 
 `[[events]] on` uses **dotted** names (`workspace.focused`), while socket event
