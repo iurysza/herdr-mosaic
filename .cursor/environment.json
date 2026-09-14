@@ -1,4 +1,0 @@
-{
-  "name": "iurysza multi-repo workspace",
-  "install": "bash /agent/repos/herdr-mosaic/.cursor/install.sh"
-}
