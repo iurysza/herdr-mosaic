@@ -1,4 +1,4 @@
 {
-  "name": "Mosaic (herdr-mosaic)",
-  "install": "cd /agent/repos/herdr-mosaic && bash scripts/ci/install-herdr.sh \"$HOME/.local/bin/herdr\" && sudo ln -sf \"$HOME/.local/bin/herdr\" /usr/local/bin/herdr && herdr --version"
+  "name": "iurysza multi-repo workspace",
+  "install": "bash /agent/repos/herdr-mosaic/.cursor/install.sh"
 }
