@@ -44,6 +44,10 @@ contract. Do not run another publisher for those tokens at the same time.
   Preserve original config and state before changing a live registration.
   Restore its ownership before importing post-restore data into Mosaic.
 
+## Git commits
+
+Never include Cursor (or any Cursor agent/bot) as git author, committer, or in a Co-authored-by / similar trailer.
+
 ## Things that will bite you
 
 Each of these was a real bug, not a hypothetical:
