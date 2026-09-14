@@ -1,0 +1,4 @@
+{
+  "name": "Mosaic (herdr-mosaic)",
+  "install": "bash scripts/ci/install-herdr.sh \"$HOME/.local/bin/herdr\" && sudo ln -sf \"$HOME/.local/bin/herdr\" /usr/local/bin/herdr && herdr --version"
+}
