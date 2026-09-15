@@ -29,6 +29,8 @@ Calls this plugin relies on:
 | `pane.report_metadata` | same plus `title`, `display_agent`, `state_labels`, and `clear_*` flags |
 | `agent.view.set` | `{source, label, sort[], filter?}` → `{active, source, label}` |
 | `agent.view.clear` | `{source}` → `{active: false}` |
+| `agent.focus` | `{target}`; accepts the live agent pane ID used by Mosaic's idle-agent cycle |
+| `pane.close` | `{pane_id}`; closes the pane and its foreground agent process, so Mosaic calls it only after explicit prune confirmation and a fresh eligibility read |
 | `server.reload_config` | → `{status: "applied", diagnostics: []}`; logged `changes_ui=true` |
 | `client.window_title.set` / `.clear` | `{title}` |
 | `plugin.pane.open` | `{plugin_id, entrypoint, placement?, focus?, env?}` |

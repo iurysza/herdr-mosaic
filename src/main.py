@@ -334,7 +334,11 @@ def _on_pane_gone(data):
         return 0
     with ctx.Lock():
         st = state_mod.load()
-        if agent_tracker.forget_pane(st, pane_id):
+        changed = agent_tracker.forget_pane(st, pane_id)
+        if st.get("idle_cycle_last_pane_id") == pane_id:
+            st["idle_cycle_last_pane_id"] = None
+            changed = True
+        if changed:
             state_mod.save(st)
     return 0
 
@@ -613,8 +617,12 @@ def cmd_sidebar_remove(argv):
 
 DEFAULT_KEYBIND = "prefix+i"
 DEFAULT_SORT_KEYBIND = "prefix+shift+s"
+DEFAULT_IDLE_KEYBIND = "prefix+."
+DEFAULT_PRUNE_KEYBIND = "prefix+alt+x"
 PICKER_COMMAND = "%s.set-identity" % ctx.PLUGIN_ID
 SORT_TOGGLE_COMMAND = "%s.toggle-agent-sort" % ctx.PLUGIN_ID
+IDLE_NEXT_COMMAND = "%s.next-idle-agent" % ctx.PLUGIN_ID
+PRUNE_COMMAND = "%s.prune-stale-agents" % ctx.PLUGIN_ID
 
 
 MARKER_PRESETS = {
@@ -918,6 +926,89 @@ def cmd_sort_keybind_remove(argv):
     return 0
 
 
+def _managed_keybind_install(argv, command, default_key, installed_field, key_field,
+                             description, label):
+    args = _parse_kv(argv)
+    key = args.get("key") or default_key
+    with ctx.Lock():
+        st = state_mod.load()
+        doc = cp.load_doc()
+        cp.snapshot()
+        status, bound = cp.install_keybind(doc, key, command, description)
+        if status == "exists":
+            print("already bound to %s (leaving your choice alone)" % bound)
+            return 0
+        if status == "occupied":
+            print("key %s is already bound to %s; not adding a second binding. "
+                  "Use the direct keybind installer with --key <other>." % (key, bound))
+            return 0
+        try:
+            cp.commit(doc)
+        except cp.ConfigError as exc:
+            ctx.warn(str(exc))
+            return 1
+        st[installed_field] = True
+        st[key_field] = key
+        state_mod.save(st)
+        _reload_config()
+        ctx.log("keybinding installed: %s -> %s" % (key, command))
+        print("bound %s to %s" % (key, label))
+    return 0
+
+
+def _managed_keybind_remove(command, installed_field, key_field, label):
+    with ctx.Lock():
+        st = state_mod.load()
+        if not st.get(installed_field):
+            print("no Mosaic-managed %s keybinding found" % label)
+            return 0
+        doc = cp.load_doc()
+        if not cp.remove_keybind(doc, command):
+            st[installed_field] = False
+            st[key_field] = None
+            state_mod.save(st)
+            print("no %s keybinding found" % label)
+            return 0
+        try:
+            cp.commit(doc)
+        except cp.ConfigError as exc:
+            ctx.warn(str(exc))
+            return 1
+        st[installed_field] = False
+        st[key_field] = None
+        state_mod.save(st)
+        _reload_config()
+        ctx.log("keybinding removed: %s" % command)
+        print("%s keybinding removed" % label)
+    return 0
+
+
+def cmd_idle_keybind_install(argv):
+    return _managed_keybind_install(
+        argv, IDLE_NEXT_COMMAND, DEFAULT_IDLE_KEYBIND,
+        "idle_keybind_installed", "idle_keybind_key",
+        "Mosaic: next idle agent", "Next idle agent")
+
+
+def cmd_idle_keybind_remove(argv):
+    return _managed_keybind_remove(
+        IDLE_NEXT_COMMAND, "idle_keybind_installed", "idle_keybind_key",
+        "Next idle agent")
+
+
+def cmd_prune_keybind_install(argv):
+    return _managed_keybind_install(
+        argv, PRUNE_COMMAND, DEFAULT_PRUNE_KEYBIND,
+        "prune_keybind_installed", "prune_keybind_key",
+        "Mosaic: prune stale agents", "Prune stale agents")
+
+
+def cmd_prune_keybind_remove(argv):
+    return _managed_keybind_remove(
+        PRUNE_COMMAND, "prune_keybind_installed", "prune_keybind_key",
+        "Prune stale agents")
+
+
 def _install_view(st, mode, sort):
     mode = agent_view.normalize_scope(mode)
     sort = agent_view.normalize_sort(sort)
@@ -1012,6 +1103,59 @@ def cmd_sort(argv):
         print("agent focus: %s; sort: %s (%s)"
               % (mode, argv[0], (res or {}).get("label")))
     return 0
+
+
+def cmd_next_idle_agent(argv):
+    """Focus the next settled agent, cycling newest observed completion first."""
+    if argv:
+        ctx.warn("usage: next-idle-agent")
+        return 1
+    import agent_triage
+    with ctx.Lock():
+        st = state_mod.load()
+        agent = agent_triage.next_idle_agent(
+            rpc.agents(), st, st.get("idle_cycle_last_pane_id"))
+        if not agent:
+            print("no other idle agent is available")
+            return 0
+        _result, error = rpc.try_call("agent.focus", {"target": agent["pane_id"]})
+        if error:
+            ctx.warn("could not focus idle agent %s: %s" % (agent["pane_id"], error))
+            return 1
+        st["idle_cycle_last_pane_id"] = agent["pane_id"]
+        state_mod.save(st)
+        print("focused idle agent: %s" % (
+            agent.get("terminal_title_stripped") or agent["pane_id"]))
+    return 0
+
+
+def cmd_prune_stale_agents(argv):
+    """Open the explicit confirmation UI for stale idle and done agents."""
+    if argv:
+        ctx.warn("usage: prune-stale-agents")
+        return 1
+    with ctx.Lock():
+        focused = next((agent.get("pane_id") for agent in rpc.agents()
+                        if agent.get("focused")), None)
+        env = {}
+        if focused:
+            env["MOSAIC_PRUNE_PROTECTED_PANE"] = focused
+        _result, error = rpc.try_call("plugin.pane.open", {
+            "plugin_id": ctx.PLUGIN_ID,
+            "entrypoint": "prune",
+            "focus": True,
+            "placement": "popup",
+            "env": env,
+        })
+        if error:
+            ctx.warn("could not open stale-agent pruner: %s" % error)
+            return 1
+    return 0
+
+
+def cmd_prune(argv):
+    import prune
+    return prune.run(argv)
 
 
 def cmd_view_clear(argv):
@@ -1343,10 +1487,19 @@ def cmd_uninstall(argv):
             notes.append("picker keybinding removed")
         if st.get("sort_keybind_installed") and cp.remove_keybind(doc, SORT_TOGGLE_COMMAND):
             notes.append("sort keybinding removed")
+        if st.get("idle_keybind_installed") and cp.remove_keybind(doc, IDLE_NEXT_COMMAND):
+            notes.append("idle-agent keybinding removed")
+        if st.get("prune_keybind_installed") and cp.remove_keybind(doc, PRUNE_COMMAND):
+            notes.append("prune keybinding removed")
         st["keybind_installed"] = False
         st["keybind_key"] = None
         st["sort_keybind_installed"] = False
         st["sort_keybind_key"] = None
+        st["idle_keybind_installed"] = False
+        st["idle_keybind_key"] = None
+        st["prune_keybind_installed"] = False
+        st["prune_keybind_key"] = None
+        st["idle_cycle_last_pane_id"] = None
 
         try:
             cp.commit(doc)
@@ -1416,7 +1569,8 @@ def cmd_install(argv):
     rc = cmd_migrate(argv)
     if rc:
         return rc
-    for command in (cmd_sidebar_install, cmd_keybind_install, cmd_sort_keybind_install):
+    for command in (cmd_sidebar_install, cmd_keybind_install, cmd_sort_keybind_install,
+                    cmd_idle_keybind_install, cmd_prune_keybind_install):
         rc = command(argv)
         if rc:
             return rc
@@ -1514,9 +1668,16 @@ COMMANDS = {
     "keybind-remove": cmd_keybind_remove,
     "sort-keybind-install": cmd_sort_keybind_install,
     "sort-keybind-remove": cmd_sort_keybind_remove,
+    "idle-keybind-install": cmd_idle_keybind_install,
+    "idle-keybind-remove": cmd_idle_keybind_remove,
+    "prune-keybind-install": cmd_prune_keybind_install,
+    "prune-keybind-remove": cmd_prune_keybind_remove,
     "view": cmd_view,
     "toggle-agent-focus": cmd_toggle_agent_focus,
     "toggle-agent-sort": cmd_toggle_agent_sort,
+    "next-idle-agent": cmd_next_idle_agent,
+    "prune-stale-agents": cmd_prune_stale_agents,
+    "prune": cmd_prune,
     "sort": cmd_sort,
     "view-clear": cmd_view_clear,
     "picker": cmd_picker,
@@ -1566,6 +1727,8 @@ Agent view:
   toggle-agent-sort                  Toggle Activity and Spaces sorting
   sort [activity|spaces]             Set or show the sort without changing focus
   agent-board                        Open collapsible agent groups
+  next-idle-agent                    Focus the next idle/done agent and wrap
+  prune-stale-agents                 Open confirmed stale-agent termination UI
 
 Pane layouts:
   arrange-columns                    Arrange existing panes as equal-width columns
@@ -1577,6 +1740,7 @@ Pane layouts:
 Advanced setup and maintenance:
   install [--dry-run], uninstall [--force], doctor, migrate [--dry-run]
   keybind-install [--key KEY], keybind-remove, theme-restore [--force]
+  idle-keybind-install [--key KEY], prune-keybind-install [--key KEY]
   repalette [--dry-run], marker [GLYPH], announce on|off, view-clear, state
   install --dry-run previews saved-state import only.
 

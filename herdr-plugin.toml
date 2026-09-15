@@ -89,6 +89,15 @@ height = "80%"
 description = "Collapsible per-space agent groups (read-only, real Herdr agent state)."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" board"]
 
+[[panes]]
+id = "prune"
+title = "Prune stale agent sessions"
+placement = "popup"
+width = "80%"
+height = "80%"
+description = "Review and confirm closure of stale idle and done agent sessions."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" prune"]
+
 # --- actions --------------------------------------------------------------
 # Herdr 0.8.2 cannot hide actions. Existing IDs stay listed so invocation and
 # keybindings keep working. Everyday controls are color, tint, agent focus and
@@ -163,6 +172,20 @@ title = "Mosaic: Open agent board"
 contexts = ["global", "workspace"]
 description = "Open collapsible space groups. Select an agent to focus it; no agent state is changed."
 command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" board-open"]
+
+[[actions]]
+id = "next-idle-agent"
+title = "Mosaic: Next idle agent"
+contexts = ["global", "workspace", "pane"]
+description = "Focus the next idle or done agent, newest observed completion first, and wrap around."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" next-idle-agent"]
+
+[[actions]]
+id = "prune-stale-agents"
+title = "Mosaic: Prune stale agents"
+contexts = ["global", "workspace", "pane"]
+description = "Review stale idle and done agents, select sessions, then explicitly confirm closing their panes."
+command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" prune-stale-agents"]
 
 [[actions]]
 id = "install"
