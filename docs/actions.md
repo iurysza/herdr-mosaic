@@ -69,6 +69,19 @@ These actions change the view, not agent status. The board is a separate popup, 
 
 Use `main.py agents current`, `main.py agents all`, or `main.py agent-board` directly. Use `main.py sort activity` or `main.py sort spaces` to set a sort. The focus and sort settings persist independently. There is no third sort.
 
+## Cycle idle agents and prune stale sessions
+
+| Action suffix | Effect |
+|---|---|
+| `next-idle-agent` | Focus the next idle or done agent, ordered by most recent observed completion and wrapping after the oldest. |
+| `prune-stale-agents` | Open the popup for reviewing and confirming closure of stale idle and done agent panes. |
+
+Setup binds `next-idle-agent` to `prefix+.` and `prune-stale-agents` to `prefix+alt+x` when each key is free. Neither binding replaces an occupied key.
+
+The pruner lists settled agents oldest first. Use `t` to set its file-backed stale threshold, Space to select eligible rows, then `x` to review and `x` again to confirm. It protects the focused agent that opened the popup, excludes working, blocked, unknown, and untracked agents, and rereads live state before every close. A close ends the agent process and pane. It does not delete agent session history.
+
+Use `main.py next-idle-agent` or `main.py prune-stale-agents` directly. The popup command itself is internal.
+
 ## Arrange panes
 
 | Action suffix | Menu title | Effect |
@@ -138,6 +151,10 @@ These existing actions remain callable and visible in Herdr's flat list. They ar
 | `unbind-picker-key` | `keybind-remove` | Remove the picker action binding |
 | — | `sort-keybind-install` | Bind `prefix+shift+s` if free |
 | — | `sort-keybind-remove` | Remove Mosaic's sorting shortcut |
+| — | `idle-keybind-install` | Bind `prefix+.` if free |
+| — | `idle-keybind-remove` | Remove Mosaic's idle-agent shortcut |
+| — | `prune-keybind-install` | Bind `prefix+alt+x` if free |
+| — | `prune-keybind-remove` | Remove Mosaic's stale-agent shortcut |
 
 Text printed by actions is available in Herdr's plugin command logs. For diagnostics and swatches in your terminal, use the direct CLI.
 

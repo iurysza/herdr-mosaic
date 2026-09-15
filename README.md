@@ -29,7 +29,7 @@ The setup action is Mosaic's consent boundary. It records the values it must res
 - adds colored space markers and colored agent titles to the sidebar
 - shows every agent grouped by space, with attention inside each group
 - starts title and elapsed-label refresh
-- binds `prefix+i` to the color picker and `prefix+shift+s` to sorting when the keys are free
+- binds `prefix+i` to the color picker, `prefix+shift+s` to sorting, `prefix+.` to the next idle agent, and `prefix+alt+x` to the stale-agent pruner when those keys are free
 - leaves window tint off
 
 You do not need to configure individual agents.
@@ -138,6 +138,14 @@ herdr plugin action invoke iurysza.mosaic.open-agent-board
 ```
 
 The board reads Herdr's agent state. Selecting an agent focuses it.
+
+## Cycle idle agents and prune stale sessions
+
+Press `prefix+.` to focus the most recently settled idle or done agent. Press it again to move through the remaining settled agents and wrap around. Mosaic uses observed `working` to `idle` or `done` transitions, so opening or focusing a tab never makes it look newly idle.
+
+Press `prefix+alt+x` to open **Prune stale agent sessions**. The popup lists idle and done agents oldest first. Set the stale threshold with `t`, move with the arrow keys or `j`/`k`, and use Space to select eligible agents. Press `x` to review the selection, then press `x` again to confirm closure.
+
+The pruner never selects working, blocked, unknown, currently focused, or untracked agents. It rereads live state immediately before it closes a pane, and skips an agent that became ineligible. Closing a pane stops its agent process; Mosaic does not delete Pi or other agent session-history files.
 
 ## Limits in Herdr
 
