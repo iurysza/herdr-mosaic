@@ -6,6 +6,13 @@
 - Clarify menu labels while preserving every existing action ID and binding. No new menu entries or binding migration.
 - Make `-h` and `--help` print help without running a command, including after the command name.
 
+## [0.4.0](https://github.com/iurysza/herdr-mosaic/compare/v0.3.0...v0.4.0) (2026-09-16)
+
+
+### Features
+
+* **elapsed:** start the clock when an agent launches ([4173672](https://github.com/iurysza/herdr-mosaic/commit/41736722a1809b7cccc4ebb7836a9b63ee5efb2b))
+
 ## [0.3.0](https://github.com/iurysza/herdr-mosaic/compare/v0.2.0...v0.3.0) (2026-09-11)
 
 
