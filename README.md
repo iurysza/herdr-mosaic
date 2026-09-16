@@ -6,6 +6,14 @@ Give each Herdr space a color, keep agents grouped by space, and arrange the pan
 
 Mosaic is experimental. Back up `config.toml` before setup. Do not run another plugin or service that writes the same sidebar rows, sidebar tokens, or theme values.
 
+## Who this is for
+
+Mosaic is for people who already use Herdr and keep several spaces of agents.
+
+Use it when you want each space to keep a color, the agent list grouped by space, sidebar titles and elapsed labels, and layouts for the current tab. You do not configure agents one by one.
+
+Mosaic does not replace Herdr, run on Windows, track last-focus, or keep the elapsed column after metadata expires.
+
 ## Set up Mosaic
 
 You need Herdr 0.8.0 or newer and Python 3.6 or newer at `/usr/bin/python3`. Mosaic runs on macOS and Linux with the Python standard library only.
