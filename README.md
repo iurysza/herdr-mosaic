@@ -8,11 +8,11 @@ Mosaic is experimental. Back up `config.toml` before setup. Do not run another p
 
 ## Who this is for
 
-Mosaic is for people who already use Herdr and keep several spaces of agents.
+Mosaic is for the crowded Herdr session.
 
-Use it when you want each space to keep a color, the agent list grouped by space, sidebar titles and elapsed labels, and layouts for the current tab. You do not configure agents one by one.
+You keep several spaces, each with its own agents. The native list is a pile of similar rows. You lose which piece of work a row belongs to, and how long since that agent launched or last finished a turn.
 
-Mosaic does not replace Herdr, run on Windows, track last-focus, or keep the elapsed column after metadata expires.
+That session is what Mosaic is for. If you run one agent in one space, Herdr already does the job.
 
 ## Set up Mosaic
 
