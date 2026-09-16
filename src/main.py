@@ -340,17 +340,26 @@ def _on_pane_gone(data):
 
 
 def _on_pane_changed(name, data):
-    pane = data.get("pane") or {}
-    pane_id = pane.get("pane_id") or data.get("pane_id")
+    import agent_tracker
+    pane_id = agent_tracker.parse_pane_id(data)
     if not pane_id:
         return 0
     with ctx.Lock():
         st = state_mod.load()
+        dirty = False
+        if name == "pane.agent_detected":
+            launch_id = agent_tracker.parse_launch_event(data)
+            if launch_id:
+                dirty = agent_tracker.apply_launch_to_state(
+                    st, launch_id, int(time.time()))
         agents = rpc.agents()
         is_agent = any(a.get("pane_id") == pane_id for a in agents)
         if not is_agent:
             # pane.created fires before an agent is detected; pane.agent_detected
-            # will follow if one appears.
+            # will follow if one appears. Launch occupancy is still saved so a
+            # later status event keeps the receipt-time clock.
+            if dirty:
+                state_mod.save(st)
             return 0
         if metadata.republish_pane(st, pane_id):
             if name == "pane.moved":

@@ -25,7 +25,8 @@ command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main
 # Only events with real work attached are hooked, so Herdr does not spawn a
 # process for churn it cannot act on. pane.created is deliberately absent (no
 # agent exists yet -- pane.agent_detected covers it). pane.closed / pane.exited
-# drop last-settled occupancy so a reused pane id cannot inherit it.
+# drop last-settled occupancy so a reused pane id cannot inherit a previous
+# agent's clock. pane.agent_detected initialises a new clock at receipt time.
 
 [[events]]
 on = "workspace.focused"

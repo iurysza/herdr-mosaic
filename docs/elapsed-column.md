@@ -10,7 +10,7 @@ The agents row still has one `$elapsed` token. Herdr draws ` · ` between that t
 
 | Age | Published value | Cells |
 |---|---|---|
-| No observed completion | U+2800 three times | 3 |
+| Missing or invalid timestamp | U+2800 three times | 3 |
 | Under 30 seconds | `now` | 3 |
 | 1 to 9 minutes | `Nm` plus one U+2800 | 3 |
 | 10 to 60 minutes | `NNm` | 3 |
@@ -22,7 +22,7 @@ The agents row still has one `$elapsed` token. Herdr draws ` · ` between that t
 
 Short labels take U+2800 only for the cells they lack. Rounding is unchanged: nearest minute, hour, or day, with `now` below 30 seconds. Days stop at `99d` so the unit stays visible.
 
-A missing clock is three blank cells, not `now`, and not a JSON null, while the worker is publishing.
+A missing clock is three blank cells, not `now`, and not a JSON null, while the worker is publishing. A new agent gets a timestamp at launch, so it publishes `now` before the first completion.
 
 ## Why the blank is U+2800
 
@@ -56,7 +56,7 @@ The worker still refreshes every 30 seconds and still sets `ttl_ms` to 45000 on 
 
 Those two missing cases are not the same:
 
-- **Missing while publishing.** The pane has no `last_settled_at`. Mosaic publishes the 3-cell blank. The `$elapsed` key stays present, so Herdr keeps the token and the ` · ` after it. Titles stay put for `now`, `2m`, `10m`, `99d`, and the blank.
+- **Missing while publishing.** The pane has no `last_settled_at`. Mosaic publishes the 3-cell blank. The `$elapsed` key stays present, so Herdr keeps the token and the ` · ` after it. Titles stay put for `now`, `2m`, `10m`, `99d`, and the blank. Launch initialisation does not fill this case for an occupancy record that already exists without a timestamp.
 - **Expired or cleared metadata.** Herdr drops the key. A missing custom token is omitted from the row, and its separator goes with it. The title moves left. That is host behaviour. Mosaic cannot hold the column after TTL expiry without dropping the 45-second TTL or changing Herdr.
 
 Do not read the 3-cell publish contract as a guarantee after a failed refresh, a disabled worker, or uninstall. Those paths still collapse the column.
@@ -71,4 +71,4 @@ The Herdr 0.8.2 rendering check passed: blank, `2m`, `now`, `10m`, and `99d` all
 
 If `termctrl` is a package-manager shim that cannot run inside the disposable HOME, set `TERMCTRL_BIN` to its native executable. A missing or unlaunchable renderer is reported as unverified, not as a rendering pass.
 
-`scripts/check-standalone.py` proves the placeholder is published before the first completion, `now` still appears after a completion, the timer still advances a 3-cell clock, and a disabled worker still lets the token expire.
+`scripts/check-standalone.py` proves `now` is published at launch before the first completion, `now` still appears after a completion, the timer still advances a 3-cell clock, and a disabled worker still lets the token expire.

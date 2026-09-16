@@ -138,7 +138,7 @@ The board reads Herdr's agent state. Selecting an agent focuses it.
 - Herdr sessions share one `config.toml`. Use dynamic window tint with one active session.
 - Herdr has no theme-introspection API. Set `theme_base` if Mosaic cannot identify your dark theme.
 - A `rows_by_agent` config entry replaces the shared agent row for that agent. Mosaic preserves these entries, so affected agents may not show Mosaic's title and elapsed labels.
-- Elapsed ages begin after Mosaic observes an agent move directly from `working` to `idle` or `done`. Changing focus never resets them. Published labels use three cells, including a blank placeholder before completion. Ages cap at `99d`. Herdr drops the column if metadata expires. See [elapsed column](./docs/elapsed-column.md).
+- Elapsed ages begin when Mosaic sees an agent launch, then reset on a direct `working` to `idle` or `done` transition. Changing focus never resets them. Published labels use three cells. A blank placeholder remains for panes without a timestamp. Ages cap at `99d`. Herdr drops the column if metadata expires. See [elapsed column](./docs/elapsed-column.md).
 
 See [config safety and limitations](./docs/config-safety.md) for config ownership and recovery details.
 

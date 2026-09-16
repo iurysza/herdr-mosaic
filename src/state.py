@@ -40,7 +40,7 @@ def default_state():
         "keybind_key": None,
         "sort_keybind_installed": False,
         "sort_keybind_key": None,
-        # pane_id -> {"status", "last_settled_at"}; occupancy only, not last viewed
+        # pane_id -> {"status", "last_settled_at"}; launch or completion, not last viewed
         "agent_settled": {},
     }
 

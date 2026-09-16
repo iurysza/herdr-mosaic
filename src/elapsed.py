@@ -1,4 +1,4 @@
-"""Publish time since the last observed completion, never time since focus.
+"""Publish time since launch or the last observed completion, never focus.
 
 Mosaic's sidebar worker uses this renderer. The elapsed-publish command remains
 available for compatibility and diagnostics; no external service is required.
@@ -9,10 +9,11 @@ clock values are replaced rather than competing with a second metadata source.
 
 Column receipt: the Agents elapsed token is always published as exactly 3
 terminal cells. That width is the product requirement, not a measured sidebar
-average. Short labels take U+2800 only for the remaining cells. A missing clock
-is three U+2800 cells, not an invented age and not ASCII spaces. Herdr 0.8.2
-trims ASCII spaces, NBSP, and figure spaces to a token clear. Ages that would
-need a fourth cell stay `99d`.
+average. Short labels take U+2800 only for the remaining cells. A missing or
+invalid timestamp is three U+2800 cells, not an invented age and not ASCII
+spaces. Launch initialises a timestamp so a new agent shows `now` before its
+first completion. Herdr 0.8.2 trims ASCII spaces, NBSP, and figure spaces to a
+token clear. Ages that would need a fourth cell stay `99d`.
 """
 
 SOURCE = "agent-elapsed"
@@ -47,7 +48,7 @@ def format_elapsed(seconds):
 
 
 def labels(records, pane_ids, now):
-    """Return 3-cell labels. No completion means BLANK, not an invented age."""
+    """Return 3-cell labels. No timestamp means BLANK, not an invented age."""
     result = {}
     for pane_id in pane_ids:
         record = records.get(pane_id)

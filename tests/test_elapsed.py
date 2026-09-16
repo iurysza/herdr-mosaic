@@ -81,6 +81,15 @@ class TestElapsed(Base):
         self.assertEqual(elapsed.labels({"p": rec}, ["p"], 200), {"p": cell("3m")})
         self.assertEqual(rec["last_settled_at"], 20)
 
+    def test_launch_timestamp_renders_now_before_completion(self):
+        import agent_tracker
+        import elapsed
+        rec = agent_tracker.launch(None, 100)
+        self.assertEqual(elapsed.labels({"p": rec}, ["p"], 100), {"p": "now"})
+        rec = agent_tracker.transition(None, "working", 100)
+        self.assertEqual(elapsed.labels({"p": rec}, ["p"], 129), {"p": "now"})
+        self.assertEqual(elapsed.labels({}, ["p"], 100), {"p": elapsed.BLANK})
+
     def test_command_publishes_blank_for_missing_and_does_not_write_state(self):
         import main
         import ctx

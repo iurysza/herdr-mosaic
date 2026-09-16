@@ -1,4 +1,4 @@
-"""Publish coloured tab titles and the last-observed-completion clock.
+"""Publish coloured tab titles and the launch-or-completion clock.
 
 Keep the existing metadata sources during migration. Titles have no TTL, so a
 failed refresh cannot erase a working agent's name. Only elapsed values expire.

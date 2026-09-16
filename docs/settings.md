@@ -79,7 +79,7 @@ Rules apply during reconciliation. A color chosen manually in the picker takes p
 
 Mosaic publishes tab titles in the space's color. If a tab has no label, it uses the stripped terminal title, agent name, display name, agent kind, or pane ID, in that order. Each update clears the other color slots. Titles have no expiry, so a failed refresh does not erase the last published name.
 
-Elapsed labels show time since an observed `working` to `idle` or `done` transition. Focus changes do not reset them. There is no elapsed label until Mosaic observes a completion.
+Elapsed labels show time since launch or the latest observed `working` to `idle` or `done` transition. Focus changes do not reset them. Mosaic uses receipt time for launch because Herdr's detect and status events have no timestamp.
 
 Setup starts a detached Python worker. Herdr's startup hook starts it again after a server restart. A file lock permits one worker per socket generation. It refreshes every 30 seconds and expires elapsed labels after 45 seconds without a successful update. Relevant tab and agent events also refresh labels and restart a missing worker.
 

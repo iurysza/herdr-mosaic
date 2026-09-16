@@ -179,17 +179,17 @@ try:
     first = wait("refresh worker", heartbeat)
     receipts["first_round"] = first
     assert len(titles(pane_id)) == 1, titles(pane_id)
-    wait("placeholder before completion",
-         lambda: current_agent(pane_id).get("tokens", {}).get("elapsed") == elapsed.BLANK)
-    assert current_agent(pane_id).get("tokens", {}).get("elapsed") == elapsed.BLANK, (
-        "invented initial completion: %r" % current_agent(pane_id).get("tokens", {}).get("elapsed"))
+    wait("launch clock before completion",
+         lambda: current_agent(pane_id).get("tokens", {}).get("elapsed") == "now")
+    assert current_agent(pane_id).get("tokens", {}).get("elapsed") == "now", (
+        "missing launch clock: %r" % current_agent(pane_id).get("tokens", {}).get("elapsed"))
     # Agent-provided tier metadata remains outside the plugin's ownership.
     rpc.call("pane.report_metadata", {"pane_id": pane_id, "source": "themed-proof",
                                       "tokens": {"themed_model_tier": "fixture-tier"}})
     wait("working observation", lambda: state.load()["agent_settled"].get(pane_id, {}).get("status") == "working")
     report["state"] = "idle"
     rpc.call("pane.report_agent", report)
-    wait("completion event", lambda: state.load()["agent_settled"].get(pane_id, {}).get("last_settled_at"))
+    wait("completion event", lambda: state.load()["agent_settled"].get(pane_id, {}).get("status") == "idle")
     wait("completion clock", lambda: current_agent(pane_id).get("tokens", {}).get("elapsed") == "now")
     assert len(current_agent(pane_id)["tokens"]["elapsed"]) == elapsed.WIDTH
     with ctx.Lock():

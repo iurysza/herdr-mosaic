@@ -77,6 +77,27 @@ class SettledBase(Base):
         data.update(extra)
         return data
 
+    def _detect(self, pane_id, **extra):
+        data = {
+            "type": "pane_agent_detected",
+            "pane_id": pane_id,
+            "workspace_id": "w1",
+        }
+        data.update(extra)
+        return data
+
+    def _stub_agents(self, pane_ids=None):
+        import rpc
+
+        pane_ids = pane_ids or []
+
+        def boom(method, params=None, **kw):
+            self.fail("unexpected rpc %s" % method)
+
+        rpc.agents = lambda: [{"pane_id": pane_id} for pane_id in pane_ids]
+        rpc.call = boom
+        rpc.try_call = boom
+
     def _envelope(self, pane_id, status, **extra):
         return {
             "event": "pane_agent_status_changed",
@@ -91,7 +112,7 @@ class TestTransition(SettledBase):
         for status in STATUSES:
             rec = agent_tracker.transition(rec, status, 10)
             self.assertEqual(rec["status"], status)
-            self.assertIsNone(rec["last_settled_at"])
+            self.assertEqual(rec["last_settled_at"], 10)
 
     def test_working_to_idle_and_done_record_now(self):
         import agent_tracker
@@ -115,38 +136,41 @@ class TestTransition(SettledBase):
         rec = {"status": "done", "last_settled_at": 40}
         self.assertEqual(agent_tracker.transition(rec, "done", 99)["last_settled_at"], 40)
 
-    def test_first_idle_or_done_does_not_invent_completion(self):
+    def test_first_idle_or_done_initialises_launch_not_a_completion(self):
         import agent_tracker
-        self.assertIsNone(agent_tracker.transition(None, "idle", 5)["last_settled_at"])
-        self.assertIsNone(agent_tracker.transition(None, "done", 5)["last_settled_at"])
+        idle = agent_tracker.transition(None, "idle", 5)
+        self.assertEqual(idle, {"status": "idle", "last_settled_at": 5})
+        done = agent_tracker.transition(None, "done", 6)
+        self.assertEqual(done, {"status": "done", "last_settled_at": 6})
+        # Occupancy already exists without a timestamp: do not backfill.
         self.assertIsNone(agent_tracker.transition({}, "idle", 5)["last_settled_at"])
 
     def test_blocked_is_not_completion(self):
         import agent_tracker
         working = agent_tracker.transition(None, "working", 1)
         blocked = agent_tracker.transition(working, "blocked", 2)
-        self.assertIsNone(blocked["last_settled_at"])
+        self.assertEqual(blocked["last_settled_at"], 1)
         self.assertEqual(blocked["status"], "blocked")
         idle = agent_tracker.transition(blocked, "idle", 3)
-        self.assertIsNone(idle["last_settled_at"])
+        self.assertEqual(idle["last_settled_at"], 1)
         done = agent_tracker.transition(blocked, "done", 4)
-        self.assertIsNone(done["last_settled_at"])
+        self.assertEqual(done["last_settled_at"], 1)
 
     def test_unknown_is_not_completion(self):
         import agent_tracker
         working = agent_tracker.transition(None, "working", 1)
         unknown = agent_tracker.transition(working, "unknown", 2)
         self.assertEqual(unknown["status"], "unknown")
-        self.assertIsNone(unknown["last_settled_at"])
-        self.assertIsNone(agent_tracker.transition(unknown, "idle", 3)["last_settled_at"])
-        self.assertIsNone(agent_tracker.transition(unknown, "done", 4)["last_settled_at"])
+        self.assertEqual(unknown["last_settled_at"], 1)
+        self.assertEqual(agent_tracker.transition(unknown, "idle", 3)["last_settled_at"], 1)
+        self.assertEqual(agent_tracker.transition(unknown, "done", 4)["last_settled_at"], 1)
 
     def test_working_blocked_idle_is_not_direct_working_to_idle(self):
         import agent_tracker
         rec = agent_tracker.transition(None, "working", 1)
         rec = agent_tracker.transition(rec, "blocked", 2)
         rec = agent_tracker.transition(rec, "idle", 3)
-        self.assertEqual(rec, {"status": "idle", "last_settled_at": None})
+        self.assertEqual(rec, {"status": "idle", "last_settled_at": 1})
 
     def test_blocked_working_idle_does_count(self):
         import agent_tracker
@@ -174,6 +198,30 @@ class TestTransition(SettledBase):
         rec = {"status": "working", "last_settled_at": None}
         agent_tracker.transition(rec, "idle", 3)
         self.assertEqual(rec, {"status": "working", "last_settled_at": None})
+
+    def test_launch_initialises_once_and_does_not_backfill(self):
+        import agent_tracker
+        first = agent_tracker.launch(None, 10)
+        self.assertEqual(first, {"status": None, "last_settled_at": 10})
+        self.assertEqual(agent_tracker.launch(first, 99), first)
+        occupied = {"status": "idle", "last_settled_at": None}
+        self.assertEqual(agent_tracker.launch(occupied, 50)["last_settled_at"], None)
+        saved = {"status": "working", "last_settled_at": 40}
+        self.assertEqual(agent_tracker.launch(saved, 50), saved)
+
+    def test_detection_then_status_keeps_launch_time(self):
+        import agent_tracker
+        rec = agent_tracker.launch(None, 10)
+        rec = agent_tracker.transition(rec, "working", 11)
+        self.assertEqual(rec, {"status": "working", "last_settled_at": 10})
+        rec = agent_tracker.transition(rec, "idle", 20)
+        self.assertEqual(rec, {"status": "idle", "last_settled_at": 20})
+
+    def test_status_then_detection_keeps_status_and_launch_time(self):
+        import agent_tracker
+        rec = agent_tracker.transition(None, "working", 7)
+        rec = agent_tracker.launch(rec, 9)
+        self.assertEqual(rec, {"status": "working", "last_settled_at": 7})
 
 
 class TestEventAdapter(SettledBase):
@@ -302,7 +350,7 @@ class TestEventAdapter(SettledBase):
         self.assertEqual(st["agent_settled"], {})
         self.assertEqual(st["identities"]["w1"]["colour"], "#4f8cff")
 
-    def test_reused_pane_id_does_not_inherit_settled(self):
+    def test_reused_pane_id_starts_a_new_launch_clock(self):
         self._forbid_rpc()
         self._fire("pane.agent_status_changed",
                    self._direct("w1:p1", "working"), now=10)
@@ -316,7 +364,7 @@ class TestEventAdapter(SettledBase):
         import state as st_mod
         rec = st_mod.load()["agent_settled"]["w1:p1"]
         self.assertEqual(rec["status"], "idle")
-        self.assertIsNone(rec["last_settled_at"])
+        self.assertEqual(rec["last_settled_at"], 12)
 
     def test_close_without_record_does_not_write(self):
         self._forbid_rpc()
@@ -345,10 +393,91 @@ class TestEventAdapter(SettledBase):
                    self._direct("w1:p1", "working"), now=1)
         self.assertTrue(held)
 
+    def test_detection_initialises_clock_once_without_status(self):
+        self._stub_agents([])
+        self.assertEqual(self._fire(
+            "pane.agent_detected", self._detect("w1:p1"), now=10), 0)
+        import ctx
+        import state as st_mod
+        rec = st_mod.load()["agent_settled"]["w1:p1"]
+        self.assertEqual(rec, {"status": None, "last_settled_at": 10})
+        path = os.path.join(ctx.state_dir(), "state.json")
+        mtime = os.path.getmtime(path)
+        self.assertEqual(self._fire(
+            "pane.agent_detected",
+            {"event": "pane_agent_detected", "data": self._detect("w1:p1")},
+            now=99), 0)
+        self.assertEqual(st_mod.load()["agent_settled"]["w1:p1"]["last_settled_at"], 10)
+        self.assertEqual(os.path.getmtime(path), mtime)
+
+    def test_detection_before_status_then_completion_resets(self):
+        self._stub_agents([])
+        self._fire("pane.agent_detected", self._detect("w1:p1"), now=10)
+        self._fire("pane.agent_status_changed",
+                   self._direct("w1:p1", "working"), now=11)
+        import state as st_mod
+        self.assertEqual(st_mod.load()["agent_settled"]["w1:p1"],
+                         {"status": "working", "last_settled_at": 10})
+        self._fire("pane.agent_status_changed",
+                   self._direct("w1:p1", "idle"), now=20)
+        self.assertEqual(st_mod.load()["agent_settled"]["w1:p1"],
+                         {"status": "idle", "last_settled_at": 20})
+
+    def test_status_before_detection_keeps_status_and_launch_time(self):
+        self._stub_agents([])
+        self._fire("pane.agent_status_changed",
+                   self._direct("w1:p1", "working"), now=7)
+        self._fire("pane.agent_detected", self._detect("w1:p1"), now=9)
+        import state as st_mod
+        self.assertEqual(st_mod.load()["agent_settled"]["w1:p1"],
+                         {"status": "working", "last_settled_at": 7})
+
+    def test_released_detection_does_not_initialise(self):
+        self._stub_agents([])
+        self.assertEqual(self._fire(
+            "pane.agent_detected",
+            self._detect("w1:p1", released=True, final_status="idle"),
+            now=10), 0)
+        import state as st_mod
+        self.assertNotIn("w1:p1", st_mod.load()["agent_settled"])
+
+    def test_detection_does_not_backfill_existing_null_timestamp(self):
+        self._stub_agents([])
+        import state as st_mod
+        st = self._seed_unrelated()
+        st["agent_settled"] = {"w1:p1": {"status": "idle", "last_settled_at": None}}
+        st_mod.save(st)
+        self._fire("pane.agent_detected", self._detect("w1:p1"), now=50)
+        rec = st_mod.load()["agent_settled"]["w1:p1"]
+        self.assertEqual(rec["status"], "idle")
+        self.assertIsNone(rec["last_settled_at"])
+
+    def test_moved_does_not_initialise_a_clock(self):
+        self._stub_agents([])
+        self.assertEqual(self._fire("pane.moved", {
+            "type": "pane_moved",
+            "previous_pane_id": "old",
+            "previous_workspace_id": "w1",
+            "previous_tab_id": "t1",
+            "pane": {"pane_id": "w1:p1"},
+        }, now=10), 0)
+        import state as st_mod
+        self.assertEqual(st_mod.load()["agent_settled"], {})
+
+    def test_malformed_detection_writes_nothing(self):
+        self._stub_agents([])
+        import state as st_mod
+        before = json.dumps(st_mod.load(), sort_keys=True)
+        for payload in ({}, {"pane_id": ""}, {"released": True}, "nope"):
+            self.assertEqual(
+                self._fire("pane.agent_detected", payload, now=10), 0, payload)
+        self.assertEqual(json.dumps(st_mod.load(), sort_keys=True), before)
+
     def test_manifest_declares_new_hooks(self):
         root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
         with open(os.path.join(root, "herdr-plugin.toml"), encoding="utf-8") as fh:
             text = fh.read()
+        self.assertIn('on = "pane.agent_detected"', text)
         self.assertIn('on = "pane.agent_status_changed"', text)
         self.assertIn('on = "pane.closed"', text)
         self.assertIn('on = "pane.exited"', text)
