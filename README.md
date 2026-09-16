@@ -6,6 +6,14 @@ Give each Herdr space a color, keep agents grouped by space, and arrange the pan
 
 Mosaic is experimental. Back up `config.toml` before setup. Do not run another plugin or service that writes the same sidebar rows, sidebar tokens, or theme values.
 
+## Who this is for
+
+Mosaic is for the crowded Herdr session.
+
+You keep several spaces, each with its own agents. The native list is a pile of similar rows. You lose which piece of work a row belongs to, and how long since that agent launched or last finished a turn.
+
+That session is what Mosaic is for. If you run one agent in one space, Herdr already does the job.
+
 ## Set up Mosaic
 
 You need Herdr 0.8.0 or newer and Python 3.6 or newer at `/usr/bin/python3`. Mosaic runs on macOS and Linux with the Python standard library only.
@@ -138,7 +146,7 @@ The board reads Herdr's agent state. Selecting an agent focuses it.
 - Herdr sessions share one `config.toml`. Use dynamic window tint with one active session.
 - Herdr has no theme-introspection API. Set `theme_base` if Mosaic cannot identify your dark theme.
 - A `rows_by_agent` config entry replaces the shared agent row for that agent. Mosaic preserves these entries, so affected agents may not show Mosaic's title and elapsed labels.
-- Elapsed ages begin after Mosaic observes an agent move directly from `working` to `idle` or `done`. Changing focus never resets them. Published labels use three cells, including a blank placeholder before completion. Ages cap at `99d`. Herdr drops the column if metadata expires. See [elapsed column](./docs/elapsed-column.md).
+- Elapsed ages begin when Mosaic sees an agent launch, then reset on a direct `working` to `idle` or `done` transition. Changing focus never resets them. Published labels use three cells. A blank placeholder remains for panes without a timestamp. Ages cap at `99d`. Herdr drops the column if metadata expires. See [elapsed column](./docs/elapsed-column.md).
 
 See [config safety and limitations](./docs/config-safety.md) for config ownership and recovery details.
 

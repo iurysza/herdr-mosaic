@@ -170,8 +170,9 @@ and socket. It starts no external title publisher or scheduler.
 - `tab.list` without a workspace filter returns the session's tab labels.
 - `plugin.list` with `plugin_id` reports `enabled` and `plugin_root`, allowing a
   detached worker to stop when its registration is disabled, removed, or moved.
-- Native `tab.renamed` and `pane.agent_status_changed` hooks publish titles and
-  observed-completion clocks. Model-tier metadata from another source survives.
+- Native `tab.renamed`, `pane.agent_detected`, and `pane.agent_status_changed`
+  hooks publish titles and launch-or-completion clocks. Model-tier metadata
+  from another source survives.
 - `[[startup]]` reconciliation launches a new per-socket-generation worker after
   server restart. Repeated reconciliation does not create a second publisher.
 - Disabled workers exit. Elapsed tokens expire; durable title tokens remain.
