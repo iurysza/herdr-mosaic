@@ -3,7 +3,7 @@ import { join } from "node:path"
 import { Effect, Predicate, Result, Schema } from "effect"
 
 import { PLUGIN_ID } from "../ids.ts"
-import { FlockError, PaneMoveError, RpcTransportError } from "../runtime/errors.ts"
+import { FlockError, LockTimeout, PaneMoveError, RpcTransportError } from "../runtime/errors.ts"
 import { paneIdFromContextJson } from "../runtime/invocation.ts"
 import { pluginLockPath, withExclusiveLock } from "../runtime/lock.ts"
 import {
@@ -14,8 +14,11 @@ import {
 } from "../runtime/plugin-log.ts"
 import type { PluginPathValues } from "../runtime/paths.ts"
 import { PluginPaths } from "../runtime/paths.ts"
-import { listPanes, rpcCall, rpcTryCall, type JsonObject } from "../runtime/rpc.ts"
+import { listPanes, listWorkspaces, rpcCall, rpcTryCall, type JsonObject } from "../runtime/rpc.ts"
 import { load, save, type PluginState } from "../state/store.ts"
+import { isEscape, type Key } from "../terminal/keys.ts"
+import { addnstr, emptyScreen, type Screen } from "../terminal/screen.ts"
+import { runRawLoop, type LoopEvent } from "../terminal/session.ts"
 
 type Json = typeof Schema.Json.Type
 
@@ -55,10 +58,12 @@ function asJsonObject(value: Json): JsonObject {
   return decoded.success
 }
 
-function errorText(error: PaneMoveError | RpcTransportError | FlockError | Error): string {
+function errorText(error: PaneMoveError | RpcTransportError | FlockError | LockTimeout | Error): string {
   if (error instanceof PaneMoveError) return error.message
 
   if (error instanceof RpcTransportError) return `${error.code}: ${error.message}`
+
+  if (error instanceof LockTimeout) return "timed out waiting for plugin lock"
 
   return error.message
 }
@@ -141,6 +146,111 @@ export function placementForKey(key: number): Placement | undefined {
 
   return undefined
 }
+
+export function paneDetails(
+  paneId: string,
+  panes: ReadonlyMap<string, JsonObject>,
+  workspaceNames: { readonly [id: string]: string },
+): readonly [string, string] {
+  const pane = panes.get(paneId)
+
+  if (pane === undefined) return [paneId, "No longer available"]
+
+  const title = Predicate.isString(pane.terminal_title_stripped) && pane.terminal_title_stripped !== ""
+    ? pane.terminal_title_stripped
+    : Predicate.isString(pane.terminal_title) && pane.terminal_title !== ""
+      ? pane.terminal_title
+      : paneId
+
+  const workspaceId = Predicate.isString(pane.workspace_id) && pane.workspace_id !== ""
+    ? pane.workspace_id
+    : "?"
+
+  const workspace = workspaceNames[workspaceId] ?? workspaceId
+
+  return [title, `${workspace}  ·  ${paneId}`]
+}
+
+export type PaneMoveUi = {
+  readonly sourceId: string
+  readonly destinationId: string
+  notice: string
+  panes: Map<string, JsonObject>
+  workspaceNames: { [id: string]: string }
+}
+
+export type PaneMoveIntent =
+  | { readonly type: "continue"; readonly state: PaneMoveUi }
+  | { readonly type: "place"; readonly placement: Placement }
+  | { readonly type: "cancel" }
+
+export function handlePaneMoveKey(state: PaneMoveUi, key: Key): PaneMoveIntent {
+  if (isEscape(key)) return { type: "cancel" }
+
+  if (key.type === "char") {
+    const placement = placementForKey(key.code)
+
+    if (placement !== undefined) return { type: "place", placement }
+  }
+
+  return { type: "continue", state }
+}
+
+export function renderPaneMove(state: PaneMoveUi, rows: number, cols: number): Screen {
+  const screen = emptyScreen(rows, cols)
+  const limit = Math.max(0, cols - 4)
+  const source = paneDetails(state.sourceId, state.panes, state.workspaceNames)
+  const destination = paneDetails(state.destinationId, state.panes, state.workspaceNames)
+
+  addnstr(screen, 1, 2, "FROM", limit, { dim: true })
+  addnstr(screen, 2, 3, `• ${source[0]}`, Math.max(0, limit - 1), { bold: true })
+  addnstr(screen, 3, 5, source[1], Math.max(0, limit - 3), { dim: true })
+  addnstr(screen, 4, 3, "↓", Math.max(0, limit - 1), { dim: true })
+  addnstr(screen, 5, 2, "TO", limit, { dim: true })
+  addnstr(screen, 6, 3, `• ${destination[0]}`, Math.max(0, limit - 1), { bold: true })
+  addnstr(screen, 7, 5, destination[1], Math.max(0, limit - 3), { dim: true })
+
+  if (state.notice !== "") {
+    addnstr(screen, rows - 4, 2, state.notice, limit, { bold: true })
+  }
+
+  addnstr(screen, rows - 3, 2, "─".repeat(limit), limit, { dim: true })
+  addnstr(screen, rows - 1, 2, "[S]", 3, { reverse: true, bold: true })
+  addnstr(screen, rows - 1, 6, "Split right", 13, { bold: true })
+  addnstr(screen, rows - 1, 22, "[T]", 3, { reverse: true, bold: true })
+  addnstr(screen, rows - 1, 26, "New tab", 10, { bold: true })
+  addnstr(screen, rows - 1, 40, "[Q]", 3, { reverse: true, bold: true })
+  addnstr(screen, rows - 1, 44, "Cancel", 10, { bold: true })
+
+  return screen
+}
+
+function noticeForOutcome(outcome: MoveOutcome): string {
+  if (outcome === "source_missing") return "Selected pane no longer exists; move cancelled."
+
+  if (outcome === "destination_missing") {
+    return "Destination pane no longer exists. Press q to cancel."
+  }
+
+  return "Choose another pane to split beside, or press t for a new tab."
+}
+
+const reloadPopup = Effect.fnUntraced(function*(state: PaneMoveUi) {
+  const names: { [id: string]: string } = {}
+
+  for (const workspace of yield* listWorkspaces()) {
+    const id = workspace.workspace_id
+
+    if (!Predicate.isString(id) || id === "") continue
+
+    const label = workspace.label
+
+    names[id] = Predicate.isString(label) && label !== "" ? label : id
+  }
+
+  state.panes = panesById(yield* listPanes())
+  state.workspaceNames = names
+})
 
 const notice = Effect.fnUntraced(function*(body: string) {
   yield* rpcTryCall("notification.show", {
@@ -390,7 +500,74 @@ export const runPaneMove = Effect.fnUntraced(function*(argv: readonly string[]) 
     return commandResult(1, output)
   }
 
-  output.stderr.push("pane-move confirmation UI is not implemented in this TypeScript candidate")
+  const state: PaneMoveUi = {
+    sourceId,
+    destinationId,
+    notice: "",
+    panes: new Map(),
+    workspaceNames: {},
+  }
 
-  return commandResult(1, output)
+  yield* reloadPopup(state)
+
+  const result = yield* runRawLoop(state, renderPaneMove, (current, key) =>
+    Effect.gen(function*() {
+      const intent = handlePaneMoveKey(current, key)
+
+      if (intent.type === "cancel") {
+        yield* withExclusiveLock(
+          pluginLockPath(paths.stateDir),
+          cancelPending(sourceId),
+        ).pipe(Effect.catchTags({
+          LockTimeout: () => Effect.void,
+          FlockError: () => Effect.void,
+        }))
+
+        return { type: "stop", code: 0, stdout: "", stderr: "" } as const satisfies LoopEvent<PaneMoveUi>
+      }
+
+      if (intent.type === "place") {
+        const placed = yield* withExclusiveLock(
+          pluginLockPath(paths.stateDir),
+          confirmMove(sourceId, destinationId, intent.placement),
+        ).pipe(Effect.result)
+
+        if (Result.isFailure(placed)) {
+          current.notice = `Move failed: ${errorText(placed.failure)}`
+
+          return { type: "continue", state: current } as const satisfies LoopEvent<PaneMoveUi>
+        }
+
+        if (placed.success === "moved" || placed.success === "source_missing") {
+          if (placed.success === "source_missing") {
+            current.notice = noticeForOutcome(placed.success)
+          }
+
+          return {
+            type: "stop",
+            code: 0,
+            stdout: "",
+            stderr: "",
+          } as const satisfies LoopEvent<PaneMoveUi>
+        }
+
+        current.notice = noticeForOutcome(placed.success)
+        yield* reloadPopup(current)
+
+        return { type: "continue", state: current } as const satisfies LoopEvent<PaneMoveUi>
+      }
+
+      return { type: "continue", state: intent.state } as const satisfies LoopEvent<PaneMoveUi>
+    }),
+  ).pipe(
+    Effect.catchTag("NotATty", () =>
+      Effect.succeed({
+        code: 1,
+        stdout: "",
+        stderr: "pane-move needs a terminal; run it through the Mosaic action.\n",
+      }),
+    ),
+  )
+
+  return { code: result.code, stdout: result.stdout, stderr: result.stderr } as const
 })

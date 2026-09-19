@@ -201,5 +201,17 @@ Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun r
 
 Next: picker/board/prune/pane-move TUI. Wire `refresh.start` once CLI fixtures can own a short-lived worker. Still no success-returning stubs.
 
+## 2026-09-19 step 5 picker, board, prune, and pane-move TUIs
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Ported the four popups as pure key/render transitions plus a raw TTY loop. `set-identity` opens the picker popup. `q` cancels (picker prints `cancelled`). Custom hex is a prompt where `q` is a character. `board --once` dumps without a TTY. Prune columns match the Python layout. Pane-move cancel clears the pending selection under the plugin lock. Scripted PTY tests cover cancel, resize, and cursor restore.
+
+File placement: `src/terminal/{keys,screen,session}.ts`, `src/spaces/picker.ts`, `src/agents/board.ts`, `src/agents/prune-ui.ts`, `src/panes/pane-move.ts`, `tests/support/pty-drive.py`.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 265 pass, `bun run test:runtime` 15 pass, parity inventory 105.
+
+Next: wire `refresh.start` once CLI fixtures can own a short-lived worker. Then stress and package. Still no success-returning stubs.
+
 
 

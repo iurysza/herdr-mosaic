@@ -29,8 +29,11 @@ import {
 import { runEvent } from "../agents/events.ts"
 import { runElapsedPublish } from "../agents/sidebar-publish.ts"
 import { runNextIdleAgent, runPruneStaleAgents } from "../agents/triage.ts"
+import { runBoard, runBoardOpen } from "../agents/board.ts"
+import { runPrune } from "../agents/prune-ui.ts"
 import { runLayout } from "../panes/layout-actions.ts"
 import { runCaptureOrOpen, runPaneMove, runPromotePane } from "../panes/pane-move.ts"
+import { runPicker, runSetIdentity } from "../spaces/picker.ts"
 import { runDoctor } from "../lifecycle/doctor.ts"
 import { runInstall } from "../lifecycle/install.ts"
 import { runReconcile } from "../lifecycle/reconcile.ts"
@@ -75,6 +78,10 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command !== "migrate" && command !== "install" && windowManagerPending(paths)) {
     return yield* new WindowManagerPending({ command })
+  }
+
+  if (command === "set-identity") {
+    return yield* runSetIdentity(rewritten.slice(1))
   }
 
   if (command === "apply-identity") {
@@ -233,6 +240,10 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
     return yield* runPruneStaleAgents(rewritten.slice(1))
   }
 
+  if (command === "prune") {
+    return yield* runPrune(rewritten.slice(1))
+  }
+
   if (command === "elapsed-publish") {
     return yield* runElapsedPublish(rewritten.slice(1))
   }
@@ -251,6 +262,18 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command === "pane-move") {
     return yield* runPaneMove(rewritten.slice(1))
+  }
+
+  if (command === "picker") {
+    return yield* runPicker(rewritten.slice(1))
+  }
+
+  if (command === "board-open") {
+    return yield* runBoardOpen(rewritten.slice(1))
+  }
+
+  if (command === "board") {
+    return yield* runBoard(rewritten.slice(1))
   }
 
   if (command === "refresh-worker") {
