@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync } from "node:fs"
+import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -41,4 +41,25 @@ export function makeSandbox(): Sandbox {
       LC_ALL: "C.UTF-8",
     },
   }
+}
+
+function shSingleQuote(value: string): string {
+  return `'${value.replaceAll("'", "'\\''")}'`
+}
+
+export function installFakeHerdr(sandbox: Sandbox): string {
+  const binDir = join(sandbox.root, "bin")
+
+  mkdirSync(binDir, { recursive: true })
+
+  const wrapperPath = join(binDir, "herdr")
+  const scriptPath = join(import.meta.dir, "fake-herdr-bin.ts")
+
+  writeFileSync(
+    wrapperPath,
+    `#!/bin/sh\nexec ${shSingleQuote(process.execPath)} ${shSingleQuote(scriptPath)} "$@"\n`,
+  )
+  chmodSync(wrapperPath, 0o755)
+
+  return wrapperPath
 }

@@ -38,3 +38,11 @@ export class FlockError extends Schema.TaggedError<FlockError>()("FlockError", {
   path: Schema.String,
   message: Schema.String,
 }) {}
+
+export class TomlEditError extends Schema.TaggedError<TomlEditError>()("TomlEditError", {
+  message: Schema.String,
+}) {}
+
+export class ConfigError extends Schema.TaggedError<ConfigError>()("ConfigError", {
+  message: Schema.String,
+}) {}
