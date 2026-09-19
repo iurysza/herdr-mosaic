@@ -162,8 +162,9 @@ export function wantsHelp(argv: readonly string[]): boolean {
 export function helpText(): string {
   let text = HELP.endsWith("\n") ? HELP : `${HELP}\n`
   text += "\nCLI aliases (preferred -> existing):\n"
+  const aliases = ALIAS_NAMES.slice().sort()
 
-  for (const alias of ALIAS_NAMES) {
+  for (const alias of aliases) {
     const target = CLI_ALIASES[alias]
     text += `  ${alias} -> ${target.join(" ")}\n`
   }
