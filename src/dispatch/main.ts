@@ -28,6 +28,7 @@ import {
 } from "../agents/view.ts"
 import { runEvent } from "../agents/events.ts"
 import { runElapsedPublish } from "../agents/sidebar-publish.ts"
+import { runNextIdleAgent, runPruneStaleAgents } from "../agents/triage.ts"
 import { runDoctor } from "../lifecycle/doctor.ts"
 import { runInstall } from "../lifecycle/install.ts"
 import { runReconcile } from "../lifecycle/reconcile.ts"
@@ -220,6 +221,14 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command === "event") {
     return yield* runEvent(rewritten.slice(1))
+  }
+
+  if (command === "next-idle-agent") {
+    return yield* runNextIdleAgent(rewritten.slice(1))
+  }
+
+  if (command === "prune-stale-agents") {
+    return yield* runPruneStaleAgents(rewritten.slice(1))
   }
 
   if (command === "elapsed-publish") {
