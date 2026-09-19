@@ -283,5 +283,15 @@ Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 289, `env -
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 fact-17/20 install-uninstall restore
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Python and TypeScript install then uninstall restore the same `users_real` config bytes in separate sandboxes. A disposable Herdr 0.9.0 server accepts that cycle after `plugin link --disabled` and `plugin.enable` (`tests/herdr/lifecycle.test.ts`).
+
+Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 290, `bun run test:herdr` 3 pass.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 

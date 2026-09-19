@@ -1,6 +1,6 @@
 import { closeSync, openSync } from "node:fs"
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
-import { spawn } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -29,7 +29,11 @@ export type IsolatedHerdr = {
   stop(): Promise<void>
 }
 
-export function startIsolatedHerdr(bin: string): IsolatedHerdr {
+export type IsolatedHerdrOptions = {
+  readonly linkPluginRoot?: string
+}
+
+export function startIsolatedHerdr(bin: string, options: IsolatedHerdrOptions = {}): IsolatedHerdr {
   const home = mkdtempSync(join(tmpdir(), "mosaic-proof-"))
   const config = join(home, ".config", "herdr")
   const stateDir = join(home, ".local", "state", "herdr", "plugins", PLUGIN_ID)
@@ -59,6 +63,20 @@ export function startIsolatedHerdr(bin: string): IsolatedHerdr {
     LANG: "C.UTF-8",
     LC_ALL: "C.UTF-8",
     TMPDIR: home,
+  }
+
+  const pluginRoot = options.linkPluginRoot
+
+  if (pluginRoot !== undefined) {
+    const linked = spawnSync(bin, ["plugin", "link", pluginRoot, "--disabled"], {
+      cwd: home,
+      env,
+      encoding: "utf8",
+    })
+
+    if (linked.status !== 0) {
+      throw new Error(`herdr plugin link failed: ${linked.stdout}${linked.stderr}`)
+    }
   }
 
   const log = openSync(join(home, "server.log"), "w")
