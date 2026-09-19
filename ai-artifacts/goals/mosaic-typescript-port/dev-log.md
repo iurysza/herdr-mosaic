@@ -129,3 +129,16 @@ Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun r
 
 Next: tint/theme apply, title publish, refresh.start, events, TUI, layouts. Still no success-returning stubs.
 
+## 2026-09-19 step 5 tint and presentation
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Wired `applyTint` (`applied`/`noop`/`conflict`/`skip`), theme backup of TINT_KEYS ∪ OVERLAY_KEYS, window title set/clear, `tint-enable`/`tint-disable`/`theme-restore`, `intensity`, `preview`, `marker`, `announce`, `repalette`, `list`, and `state`. Reconcile now reapplies tint when enabled. Duplicate focus is a noop (one reload). User-edited theme keys skip without `--force`. Semantic slots are not written. Restore is byte-exact on the users_real fixture.
+
+File placement: `src/spaces/tint.ts`, `src/spaces/presentation.ts`, `tests/cli/tint.test.ts`, `tests/unit/theme.test.ts`.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 168 pass, parity inventory 105.
+
+Next: title/elapsed publish and a real refresh worker loop before wiring `publish_once`/`startRefreshWorker` in `runCli`. Then events, TUI, layouts. Still no success-returning stubs.
+
+

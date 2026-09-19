@@ -30,6 +30,14 @@ import { runDoctor } from "../lifecycle/doctor.ts"
 import { runInstall } from "../lifecycle/install.ts"
 import { runReconcile } from "../lifecycle/reconcile.ts"
 import { runUninstall } from "../lifecycle/uninstall.ts"
+import { runAnnounce, runList, runMarker, runRepalette, runState } from "../spaces/presentation.ts"
+import {
+  runIntensity,
+  runPreview,
+  runThemeRestore,
+  runTintDisable,
+  runTintEnable,
+} from "../spaces/tint.ts"
 import { PLUGIN_ID } from "../ids.ts"
 import { windowManagerPending } from "../migrate/pending.ts"
 import {
@@ -166,6 +174,46 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command === "doctor") {
     return yield* runDoctor(rewritten.slice(1))
+  }
+
+  if (command === "tint-enable") {
+    return yield* runTintEnable(rewritten.slice(1))
+  }
+
+  if (command === "tint-disable") {
+    return yield* runTintDisable(rewritten.slice(1))
+  }
+
+  if (command === "theme-restore") {
+    return yield* runThemeRestore(rewritten.slice(1))
+  }
+
+  if (command === "intensity") {
+    return yield* runIntensity(rewritten.slice(1))
+  }
+
+  if (command === "preview") {
+    return yield* runPreview(rewritten.slice(1))
+  }
+
+  if (command === "marker") {
+    return yield* runMarker(rewritten.slice(1))
+  }
+
+  if (command === "announce") {
+    return yield* runAnnounce(rewritten.slice(1))
+  }
+
+  if (command === "repalette") {
+    return yield* runRepalette(rewritten.slice(1))
+  }
+
+  if (command === "list") {
+    return yield* runList(rewritten.slice(1))
+  }
+
+  if (command === "state") {
+    return yield* runState(rewritten.slice(1))
   }
 
   if (command === "refresh-worker") {
