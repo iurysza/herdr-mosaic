@@ -323,5 +323,15 @@ Validation (Linux x86_64): typecheck pass, lint pass, `bun run test:herdr` 4 pas
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 fact-03 alias argv rewrite
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+`tests/unit/catalog.test.ts` expands every CLI alias with leftover argv, drops Bun compiled placeholders, and lists aliases in Python's sorted help order.
+
+Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 298.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 
