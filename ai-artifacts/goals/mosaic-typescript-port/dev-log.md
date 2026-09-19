@@ -177,5 +177,29 @@ Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun r
 
 Next: layouts, then picker/board/prune/pane-move TUI. Wire `refresh.start` once CLI fixtures can own a short-lived worker. Still no success-returning stubs.
 
+## 2026-09-19 step 5 pane layouts
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Ported the pure layout core and the locked equalize/cycle/resize CLI. Equalize stages leftover panes through a `new_tab` then reinserts. A rejected reinsert recovers onto the original tab. Zoomed tabs fail before moves. Errors use the `mosaic:` prefix. `arrange-columns` and `next-layout` aliases are wired.
+
+File placement: `src/panes/layouts.ts`, `src/panes/layout-actions.ts`, `tests/unit/layouts.test.ts`, `tests/cli/layout.test.ts`.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 242 pass, parity inventory 105.
+
+Next: pane-move capture/promote, then picker/board/prune/pane-move TUI. Wire `refresh.start` once CLI fixtures can own a short-lived worker. Still no success-returning stubs.
+
+## 2026-09-19 step 5 pane-move capture and promote
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Wired `move-pane` two-step capture and confirm-open, `promote-pane` without consuming a pending selection, and `pane-move` usage/env/TTY guards. Confirmed split moves right of the destination at ratio 0.5. Same-pane split is refused; same-pane new tab is allowed. The confirmation TUI is not ported.
+
+File placement: `src/panes/pane-move.ts`, `tests/cli/pane-move.test.ts`.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 242 pass, parity inventory 105.
+
+Next: picker/board/prune/pane-move TUI. Wire `refresh.start` once CLI fixtures can own a short-lived worker. Still no success-returning stubs.
+
 
 

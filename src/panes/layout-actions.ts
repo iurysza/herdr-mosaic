@@ -74,14 +74,12 @@ function paneContext(paths: PluginPathValues): string | undefined {
   return paneIdFromContextJson(paths.contextJson)
 }
 
-function errorText(error: unknown): string {
+function errorText(error: LayoutError | RpcTransportError | FlockError | Error): string {
   if (error instanceof LayoutError) return error.message
 
   if (error instanceof RpcTransportError) return `${error.code}: ${error.message}`
 
-  if (error instanceof Error) return error.message
-
-  return String(error)
+  return error.message
 }
 
 function parseNode(value: Json | undefined): LayoutNode {
@@ -160,6 +158,7 @@ const exportLayout = Effect.fnUntraced(function*(
   tabId: string | undefined,
 ) {
   const paneId = tabId === undefined ? paneContext(paths) : undefined
+
   const payload = yield* rpcCall(
     "layout.export",
     tabId !== undefined
@@ -168,6 +167,7 @@ const exportLayout = Effect.fnUntraced(function*(
         ? asJsonObject({ pane_id: paneId })
         : {},
   )
+
   const layout = asObject(payload.layout)
 
   if (layout === undefined) {
@@ -177,9 +177,13 @@ const exportLayout = Effect.fnUntraced(function*(
   try {
     return parseExportedLayout(layout)
   } catch (error) {
-    return yield* (error instanceof LayoutError
-      ? error
-      : new LayoutError({ message: errorText(error) }))
+    if (error instanceof LayoutError) return yield* error
+
+    if (error instanceof Error) {
+      return yield* new LayoutError({ message: error.message })
+    }
+
+    return yield* new LayoutError({ message: "layout.export returned no layout" })
   }
 })
 
@@ -216,6 +220,7 @@ const movePane = Effect.fnUntraced(function*(
     destination,
     focus,
   })
+
   const moveResult = asObject(payload.move_result) ?? {}
 
   if (moveResult.changed !== true) {
@@ -261,7 +266,7 @@ const recover = Effect.fnUntraced(function*(
   }
 })
 
-const reshape = Effect.fnUntraced(function*(
+const rearrangePanes = Effect.fnUntraced(function*(
   paths: PluginPathValues,
   output: CapturedOutput,
   layout: ExportedLayout,
@@ -294,6 +299,7 @@ const reshape = Effect.fnUntraced(function*(
       firstStaged,
       newTabDestination(layout.workspace_id, `layout-staging-${process.pid}`),
     )
+
     const created = createdTabId(firstMoved)
 
     if (created === undefined) {
@@ -306,6 +312,7 @@ const reshape = Effect.fnUntraced(function*(
 
     for (const paneId of staged.slice(1)) {
       const liveId = current.get(paneId) ?? paneId
+
       const moved = yield* movePane(
         liveId,
         tabDestination(created, stagingTarget, "right", 0.5),
@@ -317,6 +324,7 @@ const reshape = Effect.fnUntraced(function*(
     for (const step of insertionPlan(target)) {
       const sourceLive = current.get(step.sourceId) ?? step.sourceId
       const targetLive = current.get(step.targetId) ?? step.targetId
+
       const moved = yield* movePane(
         sourceLive,
         tabDestination(tabId, targetLive, step.direction, step.ratio),
@@ -376,7 +384,7 @@ const runAction = Effect.fnUntraced(function*(
   if (action === "equalize" || action === "cycle") {
     const current = yield* exportLayout(paths, undefined)
 
-    yield* reshape(paths, output, current, targetFor(action, current.root))
+    yield* rearrangePanes(paths, output, current, targetFor(action, current.root))
 
     return 0
   }
@@ -384,13 +392,19 @@ const runAction = Effect.fnUntraced(function*(
   return yield* new LayoutError({ message: `unknown layout action ${pythonRepr(action)}` })
 })
 
-function isLayoutFailure(
-  error: unknown,
-): error is LayoutError | RpcTransportError | FlockError {
-  return error instanceof LayoutError
-    || error instanceof RpcTransportError
-    || error instanceof FlockError
-}
+const reportLayoutFailure = Effect.fnUntraced(function*(
+  paths: PluginPathValues,
+  output: CapturedOutput,
+  error: LayoutError | RpcTransportError | FlockError,
+) {
+  const message = errorText(error)
+
+  yield* pluginWarn(paths, output, `layouts: ${message}`)
+  yield* notifyFailure(message)
+  output.stderr.push(`mosaic: ${message}`)
+
+  return 1
+})
 
 export const runLayout = Effect.fnUntraced(function*(argv: readonly string[]) {
   const paths = yield* PluginPaths
@@ -401,22 +415,13 @@ export const runLayout = Effect.fnUntraced(function*(argv: readonly string[]) {
     pluginLockPath(paths.stateDir),
     runAction(paths, output, action),
   ).pipe(
-    Effect.catchIf(
-      isLayoutFailure,
-      (error) =>
-        Effect.gen(function*() {
-          const message = errorText(error)
-
-          yield* pluginWarn(paths, output, `layouts: ${message}`)
-          yield* notifyFailure(message)
-          output.stderr.push(`mosaic: ${message}`)
-
-          return 1
-        }),
-    ),
-    Effect.catchTag("LockTimeout", () =>
-      pluginWarn(paths, output, "layout: timed out waiting for plugin lock").pipe(Effect.as(1)),
-    ),
+    Effect.catchTags({
+      LayoutError: (error) => reportLayoutFailure(paths, output, error),
+      RpcTransportError: (error) => reportLayoutFailure(paths, output, error),
+      FlockError: (error) => reportLayoutFailure(paths, output, error),
+      LockTimeout: () =>
+        pluginWarn(paths, output, "layout: timed out waiting for plugin lock").pipe(Effect.as(1)),
+    }),
   )
 
   return commandResult(code, output)

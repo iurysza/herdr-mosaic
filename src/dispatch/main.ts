@@ -30,6 +30,7 @@ import { runEvent } from "../agents/events.ts"
 import { runElapsedPublish } from "../agents/sidebar-publish.ts"
 import { runNextIdleAgent, runPruneStaleAgents } from "../agents/triage.ts"
 import { runLayout } from "../panes/layout-actions.ts"
+import { runCaptureOrOpen, runPaneMove, runPromotePane } from "../panes/pane-move.ts"
 import { runDoctor } from "../lifecycle/doctor.ts"
 import { runInstall } from "../lifecycle/install.ts"
 import { runReconcile } from "../lifecycle/reconcile.ts"
@@ -238,6 +239,18 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command === "layout") {
     return yield* runLayout(rewritten.slice(1))
+  }
+
+  if (command === "move-pane") {
+    return yield* runCaptureOrOpen(rewritten.slice(1))
+  }
+
+  if (command === "promote-pane") {
+    return yield* runPromotePane(rewritten.slice(1))
+  }
+
+  if (command === "pane-move") {
+    return yield* runPaneMove(rewritten.slice(1))
   }
 
   if (command === "refresh-worker") {
