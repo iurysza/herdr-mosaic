@@ -40,6 +40,10 @@ class TestPublicManifest(unittest.TestCase):
             'show-all-agents': ('view all', workspace),
             'show-current-space-agents': ('view current', workspace),
             'open-agent-board': ('board-open', workspace),
+            'next-idle-agent': ('next-idle-agent', ['global', 'workspace', 'pane']),
+            'prune-stale-agents': ('prune-stale-agents', ['global', 'workspace', 'pane']),
+            'move-pane': ('move-pane', ['global', 'workspace', 'pane']),
+            'promote-pane': ('promote-pane', ['global', 'workspace', 'pane']),
             'install': ('install', workspace),
             'migrate': ('migrate', workspace),
             'equalize': ('layout equalize', ['tab', 'pane']),
@@ -55,8 +59,8 @@ class TestPublicManifest(unittest.TestCase):
             expected[name] = ('layout ' + name, ['pane'])
         for intensity in ('subtle', 'medium', 'bold'):
             expected['intensity-' + intensity] = ('intensity ' + intensity, workspace)
-        # The manifest has 26 actions. Derive the count from this contract,
-        # rather than treating prose counts as a source of truth.
+        # Derive the action count from this frozen contract rather than treating
+        # prose counts as a source of truth.
         text = (Path(__file__).resolve().parents[1] / 'herdr-plugin.toml').read_text()
         blocks = text.split('[[actions]]')[1:]
         ids = [re.search(r'^id = "([^"]+)"', block, re.M).group(1) for block in blocks]

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add an Age-of-Empires-style `prefix+.` shortcut to cycle through idle and done agents by observed completion time.
+- Add a `prefix+alt+x` stale-agent pruner with a persistent threshold, multi-selection, explicit `x` confirmation, and live eligibility checks before closing panes.
 - Group documentation and CLI help by task, with clearer color, tint, agent view, and layout command aliases.
 - Clarify menu labels while preserving every existing action ID and binding. No new menu entries or binding migration.
 - Make `-h` and `--help` print help without running a command, including after the command name.

@@ -154,7 +154,7 @@ class Base(unittest.TestCase):
         for mod in ('ctx', 'state', 'identity', 'theme', 'config_patch',
                     'metadata', 'agent_view', 'toml_edit', 'rpc', 'main',
                     'labels', 'migrate', 'layouts', 'layout_actions',
-                    'agent_tracker', 'sidebar', 'refresh', 'elapsed'):
+                    'agent_tracker', 'agent_triage', 'prune', 'pane_move', 'sidebar', 'refresh', 'elapsed'):
             sys.modules.pop(mod, None)
 
     def tearDown(self):

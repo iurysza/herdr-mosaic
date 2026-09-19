@@ -18,6 +18,7 @@ With the default paths, that is `~/.config/herdr/plugins/config/iurysza.mosaic/`
 	"announce": false,
 	"window_title": true,
 	"window_title_suffix": " — Herdr",
+	"prune_stale_after": null,
 	"label_identities_file": null,
 	"label_identities": {}
 }
@@ -56,6 +57,18 @@ Colors accept palette names, `#rrggbb`, or `#rgb`. Tint uses a custom hex value 
 ```
 
 Setting an intensity does not enable tint. The existing `intensity-subtle`, `intensity-medium`, `intensity-bold`, and `preview-tint` action IDs remain available. Use the direct CLI to see swatches in your terminal.
+
+## Stale-agent pruning
+
+`prune_stale_after` controls which settled agents can be selected in the **Prune stale agent sessions** popup. It is unset by default, so Mosaic never assumes an arbitrary cleanup period. Set it in the popup with `t`, or add a positive whole duration to `settings.json`:
+
+```json
+{
+	"prune_stale_after": "2d"
+}
+```
+
+Units are `s`, `m`, `h`, `d`, and `w`. Mosaic lists idle and done agents by observed settlement age. An agent first found already idle has no reliable age, remains marked `untracked`, and cannot be selected. The popup protects the agent focused before it opens and confirms every close.
 
 ## Label rules
 

@@ -40,6 +40,18 @@ def default_state():
         "keybind_key": None,
         "sort_keybind_installed": False,
         "sort_keybind_key": None,
+        "idle_keybind_installed": False,
+        "idle_keybind_key": None,
+        "prune_keybind_installed": False,
+        "prune_keybind_key": None,
+        "pane_move_keybind_installed": False,
+        "pane_move_keybind_key": None,
+        "promote_pane_keybind_installed": False,
+        "promote_pane_keybind_key": None,
+        # The selected source pane for pick-and-place moves. It has no timeout.
+        "pending_pane_move": None,
+        # Last target of the Age-of-Empires-style idle-agent cycle.
+        "idle_cycle_last_pane_id": None,
         # pane_id -> {"status", "last_settled_at"}; launch or completion, not last viewed
         "agent_settled": {},
     }

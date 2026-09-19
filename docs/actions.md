@@ -1,6 +1,6 @@
 # Actions and keybindings
 
-Mosaic colors spaces and arranges existing panes. Herdr owns workspace creation, navigation, splits, and moves. A space in the sidebar is a workspace in Herdr's CLI.
+Mosaic colors spaces, arranges panes, and moves panes between workspaces. Herdr owns workspace creation and navigation. A space in the sidebar is a workspace in Herdr's CLI.
 
 Mosaic's plugin ID is `iurysza.mosaic`. Invoke an action with its full ID:
 
@@ -69,6 +69,19 @@ These actions change the view, not agent status. The board is a separate popup, 
 
 Use `main.py agents current`, `main.py agents all`, or `main.py agent-board` directly. Use `main.py sort activity` or `main.py sort spaces` to set a sort. The focus and sort settings persist independently. There is no third sort.
 
+## Cycle idle agents and prune stale sessions
+
+| Action suffix | Effect |
+|---|---|
+| `next-idle-agent` | Focus the next idle or done agent, ordered by most recent observed completion and wrapping after the oldest. |
+| `prune-stale-agents` | Open the popup for reviewing and confirming closure of stale idle and done agent panes. |
+
+Setup binds `next-idle-agent` to `prefix+.` and `prune-stale-agents` to `prefix+alt+x` when each key is free. Neither binding replaces an occupied key.
+
+The pruner lists settled agents oldest first. Use `t` to set its file-backed stale threshold, Space to select eligible rows, then `x` to review and `x` again to confirm. It protects the focused agent that opened the popup, excludes working, blocked, unknown, and untracked agents, and rereads live state before every close. A close ends the agent process and pane. It does not delete agent session history.
+
+Use `main.py next-idle-agent` or `main.py prune-stale-agents` directly. The popup command itself is internal.
+
 ## Arrange panes
 
 | Action suffix | Menu title | Effect |
@@ -89,16 +102,32 @@ Layout commands use the calling pane's `HERDR_PANE_ID` when present, then the in
 
 There is no direct named-preset setter in this release. `next-layout` cycles the existing presets.
 
-### Workspace operations, splits, and moves
+### Move a pane
 
-Use Herdr directly instead of Mosaic wrappers:
+| Action suffix | Effect |
+|---|---|
+| `move-pane` | Pick the focused pane, then confirm a destination and placement |
+| `promote-pane` | Move the focused pane to a new tab in its current workspace |
+
+Setup binds `move-pane` to `prefix+/` and `promote-pane` to `prefix+shift+m` only when those keys are free. With the standard prefix, press Ctrl+A then `/` or Shift+M. Mosaic never replaces an occupied binding.
+
+1. Focus the source pane and press `prefix+/`. Mosaic stores the selection and shows a short confirmation.
+2. Navigate normally to the destination pane, including another workspace.
+3. Press `prefix+/` again. The confirmation popup shows the source and destination.
+4. Press `s` to move the source into a split on the right of the destination. Press `t` to make it a new tab in the destination workspace. Mosaic does not use Enter because terminals commonly collapse Shift+Enter into it.
+5. Press Esc or `q` to cancel and clear the selection.
+
+A source that no longer exists is cleared when the action is next invoked. Mosaic refuses a split when the source and destination are the same pane, but the new-tab choice still works. A valid selection has no timeout.
+
+Use `promote-pane` for the former one-step promotion behaviour. It does not clear a separately selected pane move.
+
+For scripted operations, use Herdr directly:
 
 ```sh
 herdr workspace create --label Website --no-focus
 herdr workspace rename w1 Website
 herdr workspace focus w1
 herdr pane split --pane w1:p1 --direction right --no-focus
-herdr pane split --pane w1:p1 --direction down --no-focus
 herdr pane move w1:p2 --tab w1:t2 --split right --no-focus
 herdr pane resize --pane w1:p1 --direction left --amount 0.02
 ```
@@ -138,6 +167,14 @@ These existing actions remain callable and visible in Herdr's flat list. They ar
 | `unbind-picker-key` | `keybind-remove` | Remove the picker action binding |
 | — | `sort-keybind-install` | Bind `prefix+shift+s` if free |
 | — | `sort-keybind-remove` | Remove Mosaic's sorting shortcut |
+| — | `idle-keybind-install` | Bind `prefix+.` if free |
+| — | `idle-keybind-remove` | Remove Mosaic's idle-agent shortcut |
+| — | `prune-keybind-install` | Bind `prefix+alt+x` if free |
+| — | `prune-keybind-remove` | Remove Mosaic's stale-agent shortcut |
+| — | `pane-move-keybind-install` | Bind `prefix+/` if free |
+| — | `pane-move-keybind-remove` | Remove Mosaic's pane-move shortcut |
+| — | `promote-pane-keybind-install` | Bind `prefix+shift+m` if free |
+| — | `promote-pane-keybind-remove` | Remove Mosaic's pane-promotion shortcut |
 
 Text printed by actions is available in Herdr's plugin command logs. For diagnostics and swatches in your terminal, use the direct CLI.
 
