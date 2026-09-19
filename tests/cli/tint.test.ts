@@ -130,6 +130,18 @@ describe("tint CLI", () => {
       expect(second.code).toBe(0)
       expect(second.stdout).toContain("tint enabled; noop for w1")
       expect(reloadCount(fake)).toBe(1)
+
+      const focused = await run(
+        ["event", "workspace.focused"],
+        {
+          ...env,
+          HERDR_PLUGIN_EVENT: "workspace.focused",
+          HERDR_PLUGIN_EVENT_JSON: JSON.stringify({ workspace_id: "w1" }),
+        },
+      )
+
+      expect(focused.code).toBe(0)
+      expect(reloadCount(fake)).toBe(1)
     } finally {
       await fake.close()
     }
@@ -392,6 +404,28 @@ describe("intensity, preview, marker, announce, list, state", () => {
       expect(result.stdout).toContain("#ff00aa ->")
       expect(result.stdout).toContain("(dry run -- nothing changed)")
       expect(load(statePath).identities.w1).toEqual({ colour: "#ff00aa", origin: "manual" })
+    } finally {
+      await fake.close()
+    }
+  })
+
+  test("repalette remaps a custom hex onto the live palette", async () => {
+    const { env, fake, statePath } = tintEnv()
+    const state = load(statePath)
+
+    state.identities = { w1: { colour: "#ff00aa", origin: "manual" } }
+    save(statePath, state)
+
+    await fake.listen()
+
+    try {
+      const result = await run(["repalette"], env)
+
+      expect(result.code).toBe(0)
+      expect(result.stdout).toContain("#ff00aa ->")
+      expect(result.stdout).toContain("remapped 1 Space(s)")
+      expect(load(statePath).identities.w1).toEqual(expect.objectContaining({ origin: "auto" }))
+      expect(JSON.stringify(load(statePath).identities.w1)).not.toContain("#ff00aa")
     } finally {
       await fake.close()
     }

@@ -13,6 +13,7 @@ import {
   slotForColour,
   slotToken,
 } from "../../src/spaces/identity.ts"
+import { luminance } from "../../src/spaces/theme.ts"
 import { defaultState, identityOf, setIdentity } from "../../src/state/store.ts"
 
 function workspaces(n: number) {
@@ -55,6 +56,13 @@ describe("identity", () => {
       new Set(PALETTE.map(([, hex]) => hex)).size,
     )
     expect(PALETTE.length).toBe(12)
+
+    for (const [, hex] of PALETTE) {
+      const luma = luminance(hex)
+
+      expect(luma).toBeGreaterThanOrEqual(150)
+      expect(luma).toBeLessThanOrEqual(215)
+    }
   })
 
   test("slot tokens are valid metadata names", () => {

@@ -728,7 +728,8 @@ class TestManifest(Base):
         commands = re.findall(r'^command = (.+)$', text, re.M)
         self.assertTrue(commands)
         for cmd in commands:
-            self.assertIn('/usr/bin/python3', cmd)
+            self.assertIn('/dist/mosaic', cmd)
+            self.assertNotIn('/usr/bin/python3', cmd)
             self.assertNotIn('"python3"', cmd)
             self.assertIn('$HERDR_PLUGIN_ROOT', cmd)
 
@@ -753,6 +754,7 @@ class TestManifest(Base):
         self.assertEqual(package['extra-files'], [
             {'type': 'generic', 'path': 'herdr-plugin.toml'},
             {'type': 'generic', 'path': 'src/ctx.py'},
+            {'type': 'generic', 'path': 'src/ids.ts'},
         ])
 
 

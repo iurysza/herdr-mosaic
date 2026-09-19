@@ -16,7 +16,7 @@ That session is what Mosaic is for. If you run one agent in one space, Herdr alr
 
 ## Set up Mosaic
 
-You need Herdr 0.8.0 or newer and Python 3.6 or newer at `/usr/bin/python3`. Mosaic runs on macOS and Linux with the Python standard library only.
+You need Herdr 0.8.0 or newer. Mosaic runs on macOS and Linux. From a source checkout, build the plugin binary with `bun run build` so `dist/mosaic` exists.
 
 ```sh
 herdr plugin install iurysza/herdr-mosaic
@@ -57,7 +57,7 @@ The picker accepts a named palette color and a custom hex color.
 For scripts or a color you already know, run this from a Mosaic checkout:
 
 ```sh
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py apply-identity --workspace <id> --color <name|hex>
+/path/to/herdr-mosaic/dist/mosaic apply-identity --workspace <id> --color <name|hex>
 ```
 
 Mosaic saves the exact hex value. If window tint is on, it uses that value for the tint accent. Herdr sidebar styles are static, so the space marker and agent title use the nearest Mosaic palette color instead. This is a Herdr limit, not a color conversion error.

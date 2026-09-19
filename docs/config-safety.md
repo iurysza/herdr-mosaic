@@ -33,7 +33,7 @@ A checkout registered under a different plugin ID cannot run as Mosaic. Restore 
 - Herdr has no theme introspection API. Set `theme_base` if Mosaic does not recognize your theme. Tint assumes a dark base.
 - Model-tier labels need optional agent-provided metadata. Mosaic owns the [title and elapsed refresh](./settings.md#sidebar-refresh).
 - Last-settled tracking records launch time and later observed completions. It is not last-focus tracking, which Mosaic does not provide.
-- Mosaic runs on macOS and Linux. It uses `fcntl`, a Unix socket, and `/usr/bin/python3`.
+- Mosaic runs on macOS and Linux. It uses `fcntl`, a Unix socket, and the compiled `dist/mosaic` binary.
 - Other plugins or services must not write the same sidebar tokens, templates, or theme values while Mosaic owns them.
 
 State persists in `state.json`. Herdr metadata does not survive a server restart, so Mosaic republishes it during startup reconciliation.

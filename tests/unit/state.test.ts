@@ -197,6 +197,17 @@ describe("identity migration", () => {
     expect(loaded.agent_settled).toEqual({})
   })
 
+  test("legacy state without sort_mode defaults to spaces", () => {
+    const path = tempStatePath("legacy-sort")
+
+    writeFileSync(path, JSON.stringify({ version: 1, view_mode: "current", identities: {} }))
+
+    const loaded = load(path)
+
+    expect(loaded.view_mode).toBe("current")
+    expect(loaded.sort_mode).toBe("spaces")
+  })
+
   test("resets identities when the value is not a dict-like object", () => {
     const path = tempStatePath("identities-array")
     writeFileSync(path, JSON.stringify({

@@ -535,6 +535,50 @@ describe("event CLI detection and workspace hooks", () => {
     }
   })
 
+  test("label apply publishes the other matching workspace", async () => {
+    const sandbox = makeSandbox()
+    const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
+    const statePath = join(required(sandbox.env, "HERDR_PLUGIN_STATE_DIR"), "state.json")
+    const rulesPath = join(sandbox.root, "rules.json")
+
+    writeFileSync(rulesPath, JSON.stringify({
+      version: 1,
+      identities: { agents: "sage", api: "peach" },
+    }))
+    fake.on("workspace.list", () => ({
+      workspaces: [
+        { workspace_id: "w1", label: "agents" },
+        { workspace_id: "w2", label: "api" },
+      ],
+    }))
+    fake.on("agent.list", () => ({ agents: [] }))
+    fake.on("workspace.report_metadata", () => ({}))
+    await fake.listen()
+
+    try {
+      const result = await run(
+        ["event", "workspace.created"],
+        {
+          ...eventEnv(sandbox.env, "workspace.created", { workspace_id: "w1" }),
+          HERDR_LABEL_IDENTITIES_FILE: rulesPath,
+        },
+      )
+
+      expect(result.code).toBe(0)
+
+      const published = fake.requests
+        .filter((request) => request.method === "workspace.report_metadata")
+        .map((request) => request.params.workspace_id)
+        .sort()
+
+      expect(published).toEqual(["w1", "w2"])
+      expect(load(statePath).identities.w1).toEqual({ colour: "#a6d189", origin: "label" })
+      expect(load(statePath).identities.w2).toEqual({ colour: "#fab387", origin: "label" })
+    } finally {
+      await fake.close()
+    }
+  })
+
   test("workspace.renamed keeps identity and republishes agent panes", async () => {
     const sandbox = makeSandbox()
     const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))

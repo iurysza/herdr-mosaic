@@ -52,8 +52,8 @@ Colors accept palette names, `#rrggbb`, or `#rgb`. Tint uses a custom hex value 
 `medium` is the default. Surfaces blend the theme's dark base toward the space color, subject to luminance ceilings. `theme_base` defaults to `auto`; set a hex value if Mosaic does not recognize your theme. `blend` overrides individual blend fractions. `tint_overlays` overrides the intensity preset's border setting when set to `true` or `false`.
 
 ```sh
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py tint-intensity subtle
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py tint-preview
+/path/to/herdr-mosaic/dist/mosaic tint-intensity subtle
+/path/to/herdr-mosaic/dist/mosaic tint-preview
 ```
 
 Setting an intensity does not enable tint. The existing `intensity-subtle`, `intensity-medium`, `intensity-bold`, and `preview-tint` action IDs remain available. Use the direct CLI to see swatches in your terminal.
@@ -94,9 +94,9 @@ Mosaic publishes tab titles in the space's color. If a tab has no label, it uses
 
 Elapsed labels show time since launch or the latest observed `working` to `idle` or `done` transition. Focus changes do not reset them. Mosaic uses receipt time for launch because Herdr's detect and status events have no timestamp.
 
-Setup starts a detached Python worker. Herdr's startup hook starts it again after a server restart. A file lock permits one worker per socket generation. It refreshes every 30 seconds and expires elapsed labels after 45 seconds without a successful update. Relevant tab and agent events also refresh labels and restart a missing worker.
+Setup starts a detached Mosaic worker. Herdr's startup hook starts it again after a server restart. A file lock permits one worker per socket generation. It refreshes every 30 seconds and expires elapsed labels after 45 seconds without a successful update. Relevant tab and agent events also refresh labels and restart a missing worker.
 
-The worker exits when its server socket disappears or changes, the plugin is disabled or unlinked, or the sidebar is uninstalled. It checks these conditions each round, so exit can take up to one refresh interval plus an in-flight RPC. It does not install launchd or systemd units. `doctor` reports the last successful round; errors go to `refresh.log` in the plugin state directory. To restart a failed worker manually, run `src/main.py reconcile` from the installed checkout.
+The worker exits when its server socket disappears or changes, the plugin is disabled or unlinked, or the sidebar is uninstalled. It checks these conditions each round, so exit can take up to one refresh interval plus an in-flight RPC. It does not install launchd or systemd units. `doctor` reports the last successful round; errors go to `refresh.log` in the plugin state directory. To restart a failed worker manually, run `dist/mosaic reconcile` from the installed checkout.
 
 Mosaic owns the `agent-sidebar-title` and `agent-elapsed` metadata sources. Do not run another publisher for those tokens at the same time.
 

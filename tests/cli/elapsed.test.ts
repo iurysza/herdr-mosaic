@@ -5,9 +5,10 @@ import { describe, expect, test } from "bun:test"
 import { Effect } from "effect"
 
 import { ELAPSED_BLANK, fitWidth } from "../../src/agents/elapsed.ts"
+import { publishOnce } from "../../src/agents/sidebar-publish.ts"
 import { runCli } from "../../src/cli.ts"
 import { ELAPSED_SOURCE, ELAPSED_TTL_MS, TITLE_SOURCE } from "../../src/ids.ts"
-import { PluginPaths } from "../../src/runtime/paths.ts"
+import { PluginPaths, pathsFromEnv, readProcessEnv } from "../../src/runtime/paths.ts"
 import { defaultState, save } from "../../src/state/store.ts"
 import { FakeHerdr } from "../support/fake-herdr.ts"
 import { makeSandbox } from "../support/sandbox.ts"
@@ -108,6 +109,35 @@ describe("elapsed-publish CLI", () => {
       expect(clock?.params.ttl_ms).toBe(ELAPSED_TTL_MS)
       expect(JSON.stringify(clock?.params.tokens)).not.toContain("themed_model_tier")
     } finally {
+      await fake.close()
+    }
+  })
+
+  test("uninstalled sidebar does not publish titles or clocks", async () => {
+    const sandbox = makeSandbox()
+    const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
+
+    fake.on("agent.list", () => ({ agents: [{ pane_id: "p1", workspace_id: "w1" }] }))
+    fake.on("pane.report_metadata", () => ({}))
+    await fake.listen()
+
+    const previous = { ...process.env }
+
+    Object.assign(process.env, sandbox.env)
+
+    try {
+      const count = await Effect.runPromise(
+        publishOnce(pathsFromEnv(readProcessEnv())).pipe(Effect.provide(PluginPaths.layer)),
+      )
+
+      expect(count).toBe(0)
+      expect(fake.requests.some((request) => request.method === "pane.report_metadata")).toBe(false)
+    } finally {
+      for (const key of Object.keys(process.env)) {
+        if (!(key in previous)) delete process.env[key]
+      }
+
+      Object.assign(process.env, previous)
       await fake.close()
     }
   })
