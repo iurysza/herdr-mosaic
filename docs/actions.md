@@ -1,6 +1,6 @@
 # Actions and keybindings
 
-Mosaic colors spaces and arranges existing panes. Herdr owns workspace creation, navigation, splits, and moves. A space in the sidebar is a workspace in Herdr's CLI.
+Mosaic colors spaces, arranges panes, and moves panes between workspaces. Herdr owns workspace creation and navigation. A space in the sidebar is a workspace in Herdr's CLI.
 
 Mosaic's plugin ID is `iurysza.mosaic`. Invoke an action with its full ID:
 
@@ -102,16 +102,32 @@ Layout commands use the calling pane's `HERDR_PANE_ID` when present, then the in
 
 There is no direct named-preset setter in this release. `next-layout` cycles the existing presets.
 
-### Workspace operations, splits, and moves
+### Move a pane
 
-Use Herdr directly instead of Mosaic wrappers:
+| Action suffix | Effect |
+|---|---|
+| `move-pane` | Pick the focused pane, then confirm a destination and placement |
+| `promote-pane` | Move the focused pane to a new tab in its current workspace |
+
+Setup binds `move-pane` to `prefix+/` and `promote-pane` to `prefix+shift+m` only when those keys are free. With the standard prefix, press Ctrl+A then `/` or Shift+M. Mosaic never replaces an occupied binding.
+
+1. Focus the source pane and press `prefix+/`. Mosaic stores the selection and shows a short confirmation.
+2. Navigate normally to the destination pane, including another workspace.
+3. Press `prefix+/` again. The confirmation popup shows the source and destination.
+4. Press `s` to move the source into a split on the right of the destination. Press `t` to make it a new tab in the destination workspace. Mosaic does not use Enter because terminals commonly collapse Shift+Enter into it.
+5. Press Esc or `q` to cancel and clear the selection.
+
+A source that no longer exists is cleared when the action is next invoked. Mosaic refuses a split when the source and destination are the same pane, but the new-tab choice still works. A valid selection has no timeout.
+
+Use `promote-pane` for the former one-step promotion behaviour. It does not clear a separately selected pane move.
+
+For scripted operations, use Herdr directly:
 
 ```sh
 herdr workspace create --label Website --no-focus
 herdr workspace rename w1 Website
 herdr workspace focus w1
 herdr pane split --pane w1:p1 --direction right --no-focus
-herdr pane split --pane w1:p1 --direction down --no-focus
 herdr pane move w1:p2 --tab w1:t2 --split right --no-focus
 herdr pane resize --pane w1:p1 --direction left --amount 0.02
 ```
@@ -155,6 +171,10 @@ These existing actions remain callable and visible in Herdr's flat list. They ar
 | — | `idle-keybind-remove` | Remove Mosaic's idle-agent shortcut |
 | — | `prune-keybind-install` | Bind `prefix+alt+x` if free |
 | — | `prune-keybind-remove` | Remove Mosaic's stale-agent shortcut |
+| — | `pane-move-keybind-install` | Bind `prefix+/` if free |
+| — | `pane-move-keybind-remove` | Remove Mosaic's pane-move shortcut |
+| — | `promote-pane-keybind-install` | Bind `prefix+shift+m` if free |
+| — | `promote-pane-keybind-remove` | Remove Mosaic's pane-promotion shortcut |
 
 Text printed by actions is available in Herdr's plugin command logs. For diagnostics and swatches in your terminal, use the direct CLI.
 

@@ -42,6 +42,8 @@ class TestPublicManifest(unittest.TestCase):
             'open-agent-board': ('board-open', workspace),
             'next-idle-agent': ('next-idle-agent', ['global', 'workspace', 'pane']),
             'prune-stale-agents': ('prune-stale-agents', ['global', 'workspace', 'pane']),
+            'move-pane': ('move-pane', ['global', 'workspace', 'pane']),
+            'promote-pane': ('promote-pane', ['global', 'workspace', 'pane']),
             'install': ('install', workspace),
             'migrate': ('migrate', workspace),
             'equalize': ('layout equalize', ['tab', 'pane']),

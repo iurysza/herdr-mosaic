@@ -12,7 +12,7 @@ Mosaic detects manual changes to tracked theme and sidebar values. It leaves con
 
 ## What Mosaic changes
 
-Mosaic owns the shared spaces and agents row templates, its picker binding, its agent view, and its metadata. Any compatible action bindings changed during setup have their original text recorded for restoration. When tint is enabled, it writes the accent and selected surface colors. Depending on intensity, it also tints borders and separators.
+Mosaic owns the shared spaces and agents row templates, its managed picker, pane-move, and pane-promotion bindings, its agent view, and its metadata. Any compatible action bindings changed during setup have their original text recorded for restoration. When tint is enabled, it writes the accent and selected surface colors. Depending on intensity, it also tints borders and separators.
 
 It does not write Herdr's semantic status colors or the `text` and `subtext0` slots. Space color does not change agent status color.
 

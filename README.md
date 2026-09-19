@@ -62,6 +62,12 @@ For scripts or a color you already know, run this from a Mosaic checkout:
 
 Mosaic saves the exact hex value. If window tint is on, it uses that value for the tint accent. Herdr sidebar styles are static, so the space marker and agent title use the nearest Mosaic palette color instead. This is a Herdr limit, not a color conversion error.
 
+## Move a pane
+
+Press Ctrl+A then `/` to select the focused pane. Navigate to a destination pane, press Ctrl+A then `/` again, and confirm the placement: `s` moves it into a split on the right and `t` makes it a new tab in the destination workspace. Esc or `q` cancels.
+
+Mosaic installs `prefix+/` only when it is free. Press Ctrl+A then Shift+M for the fast one-step move to a new tab when `prefix+shift+m` is free. See [actions and keybindings](./docs/actions.md#move-a-pane) for stale selections, same-pane behaviour, and direct commands.
+
 ## Arrange panes
 
 Mosaic changes only the current tab. Unzoom the tab before you arrange it.

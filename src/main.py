@@ -628,10 +628,14 @@ DEFAULT_KEYBIND = "prefix+i"
 DEFAULT_SORT_KEYBIND = "prefix+shift+s"
 DEFAULT_IDLE_KEYBIND = "prefix+."
 DEFAULT_PRUNE_KEYBIND = "prefix+alt+x"
+DEFAULT_PANE_MOVE_KEYBIND = "prefix+/"
+DEFAULT_PROMOTE_PANE_KEYBIND = "prefix+shift+m"
 PICKER_COMMAND = "%s.set-identity" % ctx.PLUGIN_ID
 SORT_TOGGLE_COMMAND = "%s.toggle-agent-sort" % ctx.PLUGIN_ID
 IDLE_NEXT_COMMAND = "%s.next-idle-agent" % ctx.PLUGIN_ID
 PRUNE_COMMAND = "%s.prune-stale-agents" % ctx.PLUGIN_ID
+PANE_MOVE_COMMAND = "%s.move-pane" % ctx.PLUGIN_ID
+PROMOTE_PANE_COMMAND = "%s.promote-pane" % ctx.PLUGIN_ID
 
 
 MARKER_PRESETS = {
@@ -1018,6 +1022,32 @@ def cmd_prune_keybind_remove(argv):
         "Prune stale agents")
 
 
+def cmd_pane_move_keybind_install(argv):
+    return _managed_keybind_install(
+        argv, PANE_MOVE_COMMAND, DEFAULT_PANE_MOVE_KEYBIND,
+        "pane_move_keybind_installed", "pane_move_keybind_key",
+        "Mosaic: move pane", "Move pane")
+
+
+def cmd_pane_move_keybind_remove(argv):
+    return _managed_keybind_remove(
+        PANE_MOVE_COMMAND, "pane_move_keybind_installed", "pane_move_keybind_key",
+        "Move pane")
+
+
+def cmd_promote_pane_keybind_install(argv):
+    return _managed_keybind_install(
+        argv, PROMOTE_PANE_COMMAND, DEFAULT_PROMOTE_PANE_KEYBIND,
+        "promote_pane_keybind_installed", "promote_pane_keybind_key",
+        "Mosaic: promote pane to new tab", "Promote pane")
+
+
+def cmd_promote_pane_keybind_remove(argv):
+    return _managed_keybind_remove(
+        PROMOTE_PANE_COMMAND, "promote_pane_keybind_installed", "promote_pane_keybind_key",
+        "Promote pane")
+
+
 def _install_view(st, mode, sort):
     mode = agent_view.normalize_scope(mode)
     sort = agent_view.normalize_sort(sort)
@@ -1165,6 +1195,39 @@ def cmd_prune_stale_agents(argv):
 def cmd_prune(argv):
     import prune
     return prune.run(argv)
+
+
+def cmd_move_pane(argv):
+    """Pick the focused pane, or confirm placement at the focused destination."""
+    if argv:
+        ctx.warn("usage: move-pane")
+        return 1
+    import pane_move
+    try:
+        with ctx.Lock():
+            return pane_move.capture_or_open()
+    except (pane_move.PaneMoveError, rpc.RpcError, OSError, KeyError, ValueError) as error:
+        ctx.warn("pane move: %s" % error)
+        return 1
+
+
+def cmd_promote_pane(argv):
+    """Move the focused pane to a new tab in its current workspace."""
+    if argv:
+        ctx.warn("usage: promote-pane")
+        return 1
+    import pane_move
+    try:
+        with ctx.Lock():
+            return pane_move.promote_focused()
+    except (pane_move.PaneMoveError, rpc.RpcError, OSError, KeyError, ValueError) as error:
+        ctx.warn("promote pane: %s" % error)
+        return 1
+
+
+def cmd_pane_move(argv):
+    import pane_move
+    return pane_move.run(argv)
 
 
 def cmd_view_clear(argv):
@@ -1500,6 +1563,10 @@ def cmd_uninstall(argv):
             notes.append("idle-agent keybinding removed")
         if st.get("prune_keybind_installed") and cp.remove_keybind(doc, PRUNE_COMMAND):
             notes.append("prune keybinding removed")
+        if st.get("pane_move_keybind_installed") and cp.remove_keybind(doc, PANE_MOVE_COMMAND):
+            notes.append("pane move keybinding removed")
+        if st.get("promote_pane_keybind_installed") and cp.remove_keybind(doc, PROMOTE_PANE_COMMAND):
+            notes.append("promote pane keybinding removed")
         st["keybind_installed"] = False
         st["keybind_key"] = None
         st["sort_keybind_installed"] = False
@@ -1508,7 +1575,12 @@ def cmd_uninstall(argv):
         st["idle_keybind_key"] = None
         st["prune_keybind_installed"] = False
         st["prune_keybind_key"] = None
+        st["pane_move_keybind_installed"] = False
+        st["pane_move_keybind_key"] = None
+        st["promote_pane_keybind_installed"] = False
+        st["promote_pane_keybind_key"] = None
         st["idle_cycle_last_pane_id"] = None
+        st.pop("pending_pane_move", None)
 
         try:
             cp.commit(doc)
@@ -1579,7 +1651,8 @@ def cmd_install(argv):
     if rc:
         return rc
     for command in (cmd_sidebar_install, cmd_keybind_install, cmd_sort_keybind_install,
-                    cmd_idle_keybind_install, cmd_prune_keybind_install):
+                    cmd_idle_keybind_install, cmd_prune_keybind_install,
+                    cmd_pane_move_keybind_install, cmd_promote_pane_keybind_install):
         rc = command(argv)
         if rc:
             return rc
@@ -1687,6 +1760,13 @@ COMMANDS = {
     "next-idle-agent": cmd_next_idle_agent,
     "prune-stale-agents": cmd_prune_stale_agents,
     "prune": cmd_prune,
+    "move-pane": cmd_move_pane,
+    "promote-pane": cmd_promote_pane,
+    "pane-move": cmd_pane_move,
+    "pane-move-keybind-install": cmd_pane_move_keybind_install,
+    "pane-move-keybind-remove": cmd_pane_move_keybind_remove,
+    "promote-pane-keybind-install": cmd_promote_pane_keybind_install,
+    "promote-pane-keybind-remove": cmd_promote_pane_keybind_remove,
     "sort": cmd_sort,
     "view-clear": cmd_view_clear,
     "picker": cmd_picker,
@@ -1739,6 +1819,10 @@ Agent view:
   next-idle-agent                    Focus the next idle/done agent and wrap
   prune-stale-agents                 Open confirmed stale-agent termination UI
 
+Pane moves:
+  move-pane                           Pick focused pane, then confirm a destination
+  promote-pane                        Move focused pane to a new tab
+
 Pane layouts:
   arrange-columns                    Arrange existing panes as equal-width columns
   next-layout                        Cycle existing pane arrangements
@@ -1750,11 +1834,12 @@ Advanced setup and maintenance:
   install [--dry-run], uninstall [--force], doctor, migrate [--dry-run]
   keybind-install [--key KEY], keybind-remove, theme-restore [--force]
   idle-keybind-install [--key KEY], prune-keybind-install [--key KEY]
+  pane-move-keybind-install [--key KEY], promote-pane-keybind-install [--key KEY]
   repalette [--dry-run], marker [GLYPH], announce on|off, view-clear, state
   install --dry-run previews saved-state import only.
 
 Internal hooks and recovery:
-  reconcile, event, sidebar-install, sidebar-remove, picker, board,
+  reconcile, event, sidebar-install, sidebar-remove, picker, board, pane-move,
   elapsed-publish, refresh-worker
 
 Existing command names and action IDs remain supported. See docs/actions.md.
