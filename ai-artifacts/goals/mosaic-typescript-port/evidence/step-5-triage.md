@@ -13,7 +13,8 @@ focused pane, and writes `idle_cycle_last_pane_id` only after a successful
 
 `prune-stale-agents` opens the prune popup and sets `MOSAIC_PRUNE_PROTECTED_PANE`
 to the agent focused before the popup. `closeSelected` re-reads live agents and
-skips a pane that is no longer eligible. The prune TUI itself is not ported.
+skips a pane that is no longer eligible. The prune TUI is ported in
+`evidence/step-5-tui.md`.
 
 ## Validation (Linux x86_64)
 

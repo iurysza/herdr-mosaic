@@ -18,7 +18,7 @@ consume `pending_pane_move`.
 
 `pane-move` is the confirmation entry: extra argv prints usage, missing env
 requires source and destination IDs, and a non-TTY exits with the frozen Python
-message. The confirmation TUI itself is not ported.
+message. The confirmation TUI is ported in `evidence/step-5-tui.md`.
 
 ## Validation (Linux x86_64)
 
