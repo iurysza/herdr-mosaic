@@ -85,3 +85,13 @@ Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun r
 
 Next: metadata publish and apply-identity/auto-assign through production CLI, then migrate/keybinds/install/uninstall. No success-returning stubs.
 
+## 2026-09-19 step 4 apply-identity CLI
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS remains an open step-2 gate.
+
+Wired `apply-identity` / `set-color` through production CLI under the plugin lock. Invalid colours exit 1 with no state write and no Herdr calls. Valid colours save origin=manual and publish workspace slot tokens via `workspace.report_metadata`. Title publish (`agent-sidebar-title`) and `refresh.start` are not wired yet.
+
+Validation: `bun run typecheck` pass, `bun run lint` pass, `bun run test` 117 pass.
+
+Next: auto-assign, migrate, keybinds, install/uninstall. Still no success-returning stubs.
+
