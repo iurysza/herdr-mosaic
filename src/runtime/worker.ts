@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process"
 import { createHash } from "node:crypto"
 import { closeSync, existsSync, openSync, readFileSync, realpathSync, statSync } from "node:fs"
-import { join } from "node:path"
+import { basename, join } from "node:path"
 
 import { Clock, Duration, Effect, Result, Schema } from "effect"
 
@@ -97,6 +97,16 @@ export const pluginRegistered = Effect.fnUntraced(function*(pluginRoot: string) 
   return false
 })
 
+export function refreshWorkerArgs(execPath: string, cliPath: string, key: string): readonly string[] {
+  const base = basename(execPath)
+
+  if (base === "bun" || base === "bun.exe") {
+    return ["--no-env-file", cliPath, "refresh-worker", key]
+  }
+
+  return ["refresh-worker", key]
+}
+
 export function spawnDetachedWorker(options: {
   readonly execPath: string
   readonly cliPath: string
@@ -107,9 +117,9 @@ export function spawnDetachedWorker(options: {
 }): number {
   const log = openSync(options.logPath, "a")
 
-  const child = spawn(
-    options.execPath,
-    [options.cliPath, "refresh-worker", options.key],
+    const child = spawn(
+      options.execPath,
+      refreshWorkerArgs(options.execPath, options.cliPath, options.key).slice(),
     {
       cwd: options.cwd,
       env: options.env,

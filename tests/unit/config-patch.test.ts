@@ -6,6 +6,7 @@ import {
   SPACES_ROWS,
   agentRowsTemplate,
   captureBackup,
+  checkLimits,
   detectConflicts,
   dotTokens,
   hasAgentTemplate,
@@ -438,6 +439,23 @@ describe("token limits", () => {
     expect(hasDots([row ?? []])).toBe(false)
     expect(rowHasToken(agentRowsTemplate(), "$elapsed")).toBe(true)
     expect(rowHasToken(agentRowsTemplate(), "$themed_model_tier")).toBe(true)
+  })
+
+  test("seventeen tokens in one row are rejected", () => {
+    const tokens: TomlValue[] = []
+
+    for (let index = 0; index < 17; index += 1) tokens.push(`t${index}`)
+
+    try {
+      checkLimits([tokens], "ui.sidebar.agents.rows")
+      throw new Error("expected ConfigError")
+    } catch (error) {
+      expect(error).toBeInstanceOf(ConfigError)
+      const message = error instanceof ConfigError ? error.message : ""
+
+      expect(message).toContain("17 tokens")
+      expect(message).toContain("max 16")
+    }
   })
 
   test("agent row plus twelve dots is rejected", () => {

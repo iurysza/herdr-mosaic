@@ -328,4 +328,57 @@ describe("layout CLI", () => {
       await fake.close()
     }
   })
+
+  test("a failed recovery reports that panes remain on the staging tab", async () => {
+    const sandbox = makeSandbox()
+    const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
+
+    fake.on("layout.export", (_method, params) => {
+      if (params.tab_id === "w1:t-staging") {
+        return {
+          layout: {
+            tab_id: "w1:t-staging",
+            workspace_id: "w1",
+            focused_pane_id: "w1:p2",
+            zoomed: false,
+            root: { type: "pane", pane_id: "w1:p2" },
+          },
+        }
+      }
+
+      if (params.tab_id === "w1:t1") {
+        return {
+          layout: {
+            tab_id: "w1:t1",
+            workspace_id: "w1",
+            focused_pane_id: "w1:p1",
+            zoomed: false,
+            root: { type: "pane", pane_id: "w1:p1" },
+          },
+        }
+      }
+
+      return { layout: twoPaneLayout() }
+    })
+    fake.on("pane.move", (_method, params) => {
+      const dest = asObject(params.destination) ?? {}
+      const paneId = paneIdOf(params)
+
+      if (dest.type === "new_tab") return moveAccepted(paneId, "w1:t-staging")
+
+      return jsonObject({ move_result: { changed: false, reason: "injected" } })
+    })
+    fake.on("notification.show", () => ({}))
+    await fake.listen()
+
+    try {
+      const result = await run(["layout", "equalize"], paneEnv(sandbox.env, "w1:p1"))
+
+      expect(result.code).toBe(1)
+      expect(result.stderr).toContain("pane.move: injected")
+      expect(result.stderr).toContain("recovery failed; panes remain in w1:t-staging")
+    } finally {
+      await fake.close()
+    }
+  })
 })

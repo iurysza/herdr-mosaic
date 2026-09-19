@@ -202,6 +202,23 @@ describe("doctor CLI", () => {
     expect(result.stdout).toContain("fully replaces")
     expect(result.stdout).toContain("Problems")
   })
+
+  test("warns when the agents row exceeds sixteen tokens", async () => {
+    const sandbox = makeSandbox()
+    const herdr = installFakeHerdr(sandbox)
+    const tokens = Array.from({ length: 17 }, (_, index) => `"t${index}"`).join(", ")
+
+    sandbox.env.HERDR_BIN_PATH = herdr
+    writeFileSync(
+      required(sandbox.env, "HERDR_CONFIG_PATH"),
+      `[ui.sidebar.agents]\nrows = [[${tokens}]]\n`,
+    )
+
+    const result = await run(["doctor"], sandbox.env)
+
+    expect(result.code).toBe(0)
+    expect(result.stdout).toContain("Agents row has 17 tokens; Herdr max is 16.")
+  })
 })
 
 describe("agent view CLI", () => {

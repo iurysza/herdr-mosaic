@@ -40,6 +40,59 @@ describe("fake Herdr transport", () => {
     }
   })
 
+  test("reassembles a fragmented reply after interleaved events and garbage", async () => {
+    const sandbox = makeSandbox()
+    const socketPath = join(sandbox.root, "herdr.sock")
+    const fake = new FakeHerdr(socketPath)
+
+    fake.fragmentDelayMs = 25
+    fake.queueUnsolicited({ method: "workspace.focused", params: {} })
+    fake.queueUnsolicited({ id: "other-id", result: { stolen: true } })
+    fake.queueRawLine("{not-json")
+    fake.queueRawLine("")
+    fake.on("ping", () => ({ ok: true, note: "fragmented-reply" }))
+    await fake.listen()
+
+    const paths = PluginPaths.of(pathsFromEnv({
+      HOME: sandbox.home,
+      HERDR_SOCKET_PATH: socketPath,
+    }))
+
+    try {
+      const ping = await Effect.runPromise(
+        rpcCall("ping").pipe(Effect.provideService(PluginPaths, paths)),
+      )
+
+      expect(ping).toEqual({ ok: true, note: "fragmented-reply" })
+    } finally {
+      await fake.close()
+    }
+  })
+
+  test("a non-object result becomes an empty object", async () => {
+    const sandbox = makeSandbox()
+    const socketPath = join(sandbox.root, "herdr.sock")
+    const fake = new FakeHerdr(socketPath)
+
+    fake.setRawResult("ping", "[1,2,3]")
+    await fake.listen()
+
+    const paths = PluginPaths.of(pathsFromEnv({
+      HOME: sandbox.home,
+      HERDR_SOCKET_PATH: socketPath,
+    }))
+
+    try {
+      const ping = await Effect.runPromise(
+        rpcCall("ping").pipe(Effect.provideService(PluginPaths, paths)),
+      )
+
+      expect(ping).toEqual({})
+    } finally {
+      await fake.close()
+    }
+  })
+
   test("records unexpected methods instead of answering them", async () => {
     const sandbox = makeSandbox()
     const socketPath = join(sandbox.root, "herdr.sock")

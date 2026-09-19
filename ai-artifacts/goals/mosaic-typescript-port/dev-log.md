@@ -223,5 +223,15 @@ Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun r
 
 Next: stress integration boundaries, then package. Still no success-returning stubs.
 
+## 2026-09-19 step 6 stress integration boundaries
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Extended the existing fake Herdr transport, CLI, and runtime suites. Faults sit at adapters: fragmented socket writes, leftover tmp files, SIGKILL, overlapping subprocesses, injected `pane.move` failures. `refreshWorkerArgs` omits the source path when the executable is the compiled binary.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 271 pass, `bun run test:runtime` 25 pass, parity inventory 105. Evidence: `evidence/step-6-stress.md`.
+
+Next: package the exact candidate (`herdr-plugin.toml` off Python, benches, `completion.md`). Still no success-returning stubs.
+
 
 
