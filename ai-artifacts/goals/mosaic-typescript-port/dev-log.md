@@ -333,5 +333,15 @@ Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 298.
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 catalog dispatch coverage
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Every `COMMANDS` name has a `command ===` branch in `src/dispatch/main.ts`, so `UnimplementedCommand` cannot hide a missing catalog entry.
+
+Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 299.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 
