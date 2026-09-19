@@ -69,7 +69,7 @@ class TestPublicManifest(unittest.TestCase):
         for action, block in zip(ids, blocks):
             with self.subTest(action=action):
                 command, contexts = expected[action]
-                self.assertIn('src/main.py\\" ' + command + '"]', block)
+                self.assertIn('dist/mosaic\\" ' + command + '"]', block)
                 self.assertIn('contexts = [' + ', '.join('"%s"' % c for c in contexts) + ']', block)
                 self.assertRegex(block, r'title = "Mosaic: [^"]+"')
                 self.assertNotRegex(block, r'(?m)^(hidden|group|aliases|submenu)\s*=')

@@ -12,7 +12,11 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -20,16 +24,40 @@ jobs:
         with:
           python-version: "3.11"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.22.2"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+
       - name: Install Herdr CLI
         run: |
           bash scripts/ci/install-herdr.sh "$HOME/.local/bin/herdr"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           echo "HERDR_BIN_PATH=$HOME/.local/bin/herdr" >> "$GITHUB_ENV"
+          echo "MOSAIC_HERDR_BIN=$HOME/.local/bin/herdr" >> "$GITHUB_ENV"
 
       - name: Verify plugin
         run: |
           python3 -m py_compile src/*.py tests/*.py
           python3 -m unittest discover -s tests -t tests
+
+      - name: Verify TypeScript candidate
+        run: |
+          bun install --frozen-lockfile
+          bun run typecheck
+          bun run lint
+          bun run test
+          bun run test:parity
+          bun run test:runtime
+          bun run build
+          bun run test:artifact
+          bun run test:herdr
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            bun run bench
+          fi
 
       - name: Verify standalone install and restart
         run: python3 scripts/check-standalone.py

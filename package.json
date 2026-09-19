@@ -1,0 +1,31 @@
+{
+  "name": "herdr-mosaic",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.2",
+  "engines": {
+    "bun": "1.4.2",
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "mosaic": "bun --no-env-file src/cli.ts",
+    "lint": "node ./node_modules/oxlint/bin/oxlint .",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test --preload ./tests/support/isolate-preload.ts tests/cli tests/unit",
+    "test:parity": "python3 scripts/check-parity-inventory.py",
+    "test:runtime": "bun test --preload ./tests/support/isolate-preload.ts tests/runtime",
+    "test:herdr": "bun test --preload ./tests/support/isolate-preload.ts tests/herdr",
+    "build": "bun build ./src/cli.ts --compile --outfile dist/mosaic --no-compile-autoload-dotenv --no-compile-autoload-bunfig",
+    "test:artifact": "bun test --preload ./tests/support/isolate-preload.ts tests/artifact",
+    "bench": "bun run scripts/bench.ts"
+  },
+  "dependencies": {
+    "effect": "4.0.0-rc.116"
+  },
+  "devDependencies": {
+    "@oxlint/plugins": "1.82.0",
+    "@types/bun": "1.4.2",
+    "oxlint": "1.82.0",
+    "typescript": "7.0.2"
+  }
+}
