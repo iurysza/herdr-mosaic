@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { dirname } from "node:path"
 
 import { describe, expect, test } from "bun:test"
 import { Effect } from "effect"

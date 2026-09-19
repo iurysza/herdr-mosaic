@@ -47,11 +47,11 @@ Linux x86_64 outcomes:
 | --- | --- |
 | typecheck | pass |
 | lint | pass |
-| `bun run test` | 284 pass |
+| `bun run test` | 287 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:parity` | 105 entrypoints |
 | `bun run test:artifact` | 4 pass |
-| `bun run test:herdr` | ping + plugin.list on disposable 0.9.0 |
+| `bun run test:herdr` | ping + plugin.list, plus real `config check` of a TypeScript-installed sidebar |
 | Python unittest | 280 pass |
 | `check-standalone.py` | `result: passed` |
 

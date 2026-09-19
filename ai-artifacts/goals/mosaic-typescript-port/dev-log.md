@@ -263,5 +263,15 @@ Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 284. Docume
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 fact-17 tint/dry-run/doctor and real config check
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Differential cases now include install `--dry-run`, doctor exit 0, and tint-enable/tint-disable byte restore against Python. Herdr 0.9.0 `config check` accepts a TypeScript-installed sidebar (`tests/herdr/config-check.test.ts`).
+
+Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 287, `bun run test:herdr` 2 pass.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 
