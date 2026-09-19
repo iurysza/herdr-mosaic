@@ -93,6 +93,40 @@ function pairEnv(): PairEnv {
   return { python: pythonSandbox.env, typescript: typescriptSandbox.env }
 }
 
+async function mixedRestore(installer: CliKind, uninstaller: CliKind): Promise<void> {
+  const sandbox = makeSandbox()
+
+  sandbox.env.HERDR_BIN_PATH = installFakeHerdr(sandbox)
+
+  const config = sandbox.env.HERDR_CONFIG_PATH
+  const socket = sandbox.env.HERDR_SOCKET_PATH
+
+  if (config === undefined || socket === undefined) {
+    throw new Error("missing sandbox paths")
+  }
+
+  await Bun.write(config, USERS_REAL)
+
+  const fake = new FakeHerdr(socket)
+
+  attachInstall(fake)
+  await fake.listen()
+
+  try {
+    const installed = await spawnCli(installer, ["install"], sandbox.env)
+
+    expect(installed.code).toBe(0)
+    expect(readFileSync(config, "utf8")).not.toBe(USERS_REAL)
+
+    const removed = await spawnCli(uninstaller, ["uninstall"], sandbox.env)
+
+    expect(removed.code).toBe(0)
+    expect(readFileSync(config, "utf8")).toBe(USERS_REAL)
+  } finally {
+    await fake.close()
+  }
+}
+
 describe("python and typescript differential cases", () => {
   test("help, unknown, and plugin-id errors match in separate sandboxes", async () => {
     const pair = pairEnv()
@@ -305,6 +339,14 @@ describe("python and typescript differential cases", () => {
       await pythonFake.close()
       await tsFake.close()
     }
+  })
+
+  test("python uninstall restores a typescript-installed fixture", async () => {
+    await mixedRestore("typescript", "python")
+  })
+
+  test("typescript uninstall restores a python-installed fixture", async () => {
+    await mixedRestore("python", "typescript")
   })
 })
 

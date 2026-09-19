@@ -293,5 +293,15 @@ Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 290, `bun r
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 fact-08 mixed-runtime uninstall restore
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Python `uninstall` restores a TypeScript-installed `users_real` fixture, and TypeScript `uninstall` restores a Python-installed fixture (`tests/cli/differential.test.ts`). Restoration records written by one runtime are usable by the other.
+
+Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 292.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 

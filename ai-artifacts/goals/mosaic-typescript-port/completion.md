@@ -17,7 +17,7 @@ The TypeScript CLI preserves the reference lock, surgical TOML, byte-exact resto
 | `safety-lock` | blocked | Linux flock proofs exist; macOS native proofs are owner-run after the PR |
 | `cli-compiled-min-path` | in-progress | Linux compiled artifact passed; macOS artifact is owner-run after the PR |
 
-No unexplained Python/TypeScript behavior differences were left unmarked. Shared CLI cases in `tests/cli/differential.test.ts` compare help, unknown-command, plugin-id errors, sidebar-install config bytes, install `--dry-run`, doctor exit 0, tint enable/disable restore, and install/uninstall byte restore in separate sandboxes. Log JSON spacing is a documented incidental difference.
+No unexplained Python/TypeScript behavior differences were left unmarked. Shared CLI cases in `tests/cli/differential.test.ts` compare help, unknown-command, plugin-id errors, sidebar-install config bytes, install `--dry-run`, doctor exit 0, tint enable/disable restore, and install/uninstall byte restore in separate sandboxes. Python uninstall restores a TypeScript-installed fixture, and TypeScript uninstall restores a Python-installed fixture. Log JSON spacing is a documented incidental difference.
 
 ## Automated results (Linux x86_64)
 
@@ -25,7 +25,7 @@ No unexplained Python/TypeScript behavior differences were left unmarked. Shared
 | --- | --- |
 | `bun run typecheck` | pass |
 | `bun run lint` | pass |
-| `bun run test` | 290 pass |
+| `bun run test` | 292 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:artifact` | 4 pass |
 | `bun run test:herdr` | pass against Herdr 0.9.0 after isolate-preload wipes `HERDR_BIN_PATH`: transport, `config check`, and install/uninstall byte restore |
@@ -68,7 +68,7 @@ Rollback:
 
 1. Run TypeScript `uninstall`.
 2. Restore the frozen Python checkout at `8b7bb76`.
-3. Register it and invoke `install`. TypeScript-written `state.json` and restore records remain readable by that Python (`tests/unit/state.test.ts`). Python `sidebar-remove` restored TypeScript-installed `users_real` config bytes in `tests/cli/sidebar.test.ts`.
+3. Register it and invoke `install`. TypeScript-written `state.json` and restore records remain readable by that Python (`tests/unit/state.test.ts`). Python `sidebar-remove` restored TypeScript-installed `users_real` config bytes in `tests/cli/sidebar.test.ts`. Python `uninstall` restored a TypeScript-installed fixture, and TypeScript `uninstall` restored a Python-installed fixture (`tests/cli/differential.test.ts`).
 4. Keep Chromatic/Window Manager source directories; do not apply Chromatic `sidebar_backup` / `theme_backup` / `last_written`.
 
 Do not run install, doctor, or uninstall against the default session until cutover is approved.
