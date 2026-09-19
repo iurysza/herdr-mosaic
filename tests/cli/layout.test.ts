@@ -3,27 +3,17 @@ import { Effect, Predicate, Result, Schema } from "effect"
 
 import { RESIZE_AMOUNT } from "../../src/panes/layout-actions.ts"
 import { runCli } from "../../src/cli.ts"
-import { PluginPaths } from "../../src/runtime/paths.ts"
+import { PluginPaths, pathsFromEnv } from "../../src/runtime/paths.ts"
 import type { JsonObject } from "../../src/runtime/rpc.ts"
 import { FakeHerdr } from "../support/fake-herdr.ts"
 import { makeSandbox } from "../support/sandbox.ts"
 
 type Json = typeof Schema.Json.Type
 
-async function run(argv: readonly string[], extraEnv: { [key: string]: string }) {
-  const previous = { ...process.env }
+async function run(argv: readonly string[], env: { [key: string]: string }) {
+  const paths = PluginPaths.of(pathsFromEnv(env))
 
-  Object.assign(process.env, extraEnv)
-
-  try {
-    return await Effect.runPromise(runCli(argv).pipe(Effect.provide(PluginPaths.layer)))
-  } finally {
-    for (const key of Object.keys(process.env)) {
-      if (!(key in previous)) delete process.env[key]
-    }
-
-    Object.assign(process.env, previous)
-  }
+  return Effect.runPromise(runCli(argv).pipe(Effect.provideService(PluginPaths, paths)))
 }
 
 function required(env: { [key: string]: string }, key: string): string {
@@ -106,11 +96,20 @@ function moveAccepted(paneId: string, createdTab?: string): JsonObject {
 describe("layout CLI", () => {
   test("resize requires a pane context", async () => {
     const sandbox = makeSandbox()
-    const result = await run(["layout", "resize-left"], sandbox.env)
+    const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
 
-    expect(result.code).toBe(1)
-    expect(result.stderr).toContain("resize action requires a pane context")
-    expect(result.stderr).toContain("mosaic:")
+    fake.on("notification.show", () => ({}))
+    await fake.listen()
+
+    try {
+      const result = await run(["layout", "resize-left"], sandbox.env)
+
+      expect(result.code).toBe(1)
+      expect(result.stderr).toContain("resize action requires a pane context")
+      expect(result.stderr).toContain("mosaic:")
+    } finally {
+      await fake.close()
+    }
   })
 
   test("resize uses the plugin lock and a 2 percent amount", async () => {

@@ -12,8 +12,6 @@ import { FakeHerdr } from "../tests/support/fake-herdr.ts"
 
 const repo = join(import.meta.dir, "..")
 
-const pythonCli = join(repo, "src", "main.py")
-
 const tsSource = join(repo, "src", "cli.ts")
 
 const artifact = join(repo, "dist", "mosaic")
@@ -135,14 +133,6 @@ function isolatedEnv(): BenchSandbox {
       PATH: "/usr/bin:/bin",
     },
   }
-}
-
-function pythonBytes(): number {
-  const listing = spawnSync("bash", ["-lc", `stat -c %s ${repo}/src/*.py | awk '{s+=$1} END {print s}'`], {
-    encoding: "utf8",
-  })
-
-  return Number(listing.stdout.trim())
 }
 
 function artifactSha256(): string {
@@ -358,13 +348,6 @@ async function main(): Promise<void> {
   const eventPayload = JSON.stringify({ type: "pane_agent_status_changed" })
   const ticksPerSecond = clockTicksPerSecond()
 
-  const pythonWorker = await sampleWorker(
-    "python refresh-worker",
-    "/usr/bin/python3",
-    [pythonCli, "refresh-worker"],
-    ticksPerSecond,
-  )
-
   const tsWorker = await sampleWorker(
     "dist/mosaic refresh-worker",
     artifact,
@@ -382,12 +365,6 @@ async function main(): Promise<void> {
       path: "/usr/bin:/bin",
       worker: "one FakeHerdr pane; sample after first heartbeat; SIGTERM; no MOSAIC_TEST_ISOLATED",
     },
-    pythonHelp: timeCommand(
-      "python --help",
-      ["/usr/bin/python3", pythonCli, "--help"],
-      helpEnv.env,
-      helpEnv.cwd,
-    ),
     tsSourceHelp: timeCommand(
       "bun source --help",
       [process.execPath, "--no-env-file", tsSource, "--help"],
@@ -400,22 +377,14 @@ async function main(): Promise<void> {
       helpEnv.env,
       helpEnv.cwd,
     ),
-    pythonEvent: timeCommand(
-      "python malformed event",
-      ["/usr/bin/python3", pythonCli, "event", "pane.agent_status_changed"],
-      { ...helpEnv.env, HERDR_PLUGIN_EVENT: "pane.agent_status_changed", HERDR_PLUGIN_EVENT_JSON: eventPayload },
-      helpEnv.cwd,
-    ),
     tsEvent: timeCommand(
       "dist/mosaic malformed event",
       [artifact, "event", "pane.agent_status_changed"],
       { ...helpEnv.env, HERDR_PLUGIN_EVENT: "pane.agent_status_changed", HERDR_PLUGIN_EVENT_JSON: eventPayload },
       helpEnv.cwd,
     ),
-    pythonWorker,
     tsWorker,
     package: {
-      pythonSrcBytes: pythonBytes(),
       mosaicBytes: statSync(artifact).size,
       mosaicSha256: artifactSha256(),
     },

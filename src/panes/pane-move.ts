@@ -38,7 +38,7 @@ function commandResult(code: number, output: CapturedOutput) {
   } as const
 }
 
-function pythonRepr(value: string): string {
+function quotedRepr(value: string): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`
 }
 
@@ -371,7 +371,7 @@ export const confirmMove = Effect.fnUntraced(function*(
   const paths = yield* PluginPaths
 
   if (placement !== "split" && placement !== "tab") {
-    return yield* new PaneMoveError({ message: `unknown placement ${pythonRepr(placement)}` })
+    return yield* new PaneMoveError({ message: `unknown placement ${quotedRepr(placement)}` })
   }
 
   const state = load(statePath(paths.stateDir))

@@ -6,7 +6,7 @@ The agents row still has one `$elapsed` token. Herdr draws ` · ` between that t
 
 ## Published values
 
-`src/elapsed.py` fits every published clock to `WIDTH = 3`.
+`src/agents/elapsed.ts` fits every published clock to `ELAPSED_WIDTH = 3`.
 
 | Age | Published value | Cells |
 |---|---|---|
@@ -44,11 +44,7 @@ The requirement asked for spaces. Herdr 0.8.2 does not keep them.
 
 U+2800 is the existing pad character. It occupies one terminal cell and survives that ingest path. The published column is three blank cells, not three ASCII spaces.
 
-Re-run the probe with:
-
-```sh
-python3 scripts/check-elapsed-column.py
-```
+The unit tests cover the formatter and blank-label contract.
 
 ## Missing while publishing, then expiry
 
@@ -63,12 +59,6 @@ Do not read the 3-cell publish contract as a guarantee after a failed refresh, a
 
 ## What the tests prove
 
-`tests/test_elapsed.py` and `tests/test_sidebar.py` prove Mosaic fits labels to 3 cells and publishes the blank instead of null.
+`tests/unit/elapsed.test.ts` and `tests/cli/sidebar.test.ts` prove Mosaic fits labels to 3 cells and publishes the blank instead of null.
 
-`scripts/check-elapsed-column.py` checks ingestion in a disposable HOME, config, socket, and registry. With `termctrl`, it also checks rendered titles. Probe names appear only in agent rows, so workspace headings cannot produce a false pass.
-
-The Herdr 0.8.2 rendering check passed: blank, `2m`, `now`, `10m`, and `99d` all start their titles at zero-based column 9. Changing one pane through those values keeps column 9. Clearing its metadata moves the title to column 3, confirming the host limitation.
-
-If `termctrl` is a package-manager shim that cannot run inside the disposable HOME, set `TERMCTRL_BIN` to its native executable. A missing or unlaunchable renderer is reported as unverified, not as a rendering pass.
-
-`scripts/check-standalone.py` proves `now` is published at launch before the first completion, `now` still appears after a completion, the timer still advances a 3-cell clock, and a disabled worker still lets the token expire.
+`tests/herdr/lifecycle.test.ts` exercises installation and byte-exact configuration restoration against an isolated Herdr server.

@@ -12,15 +12,13 @@ const repo = join(import.meta.dir, "..", "..")
 const manifest = readFileSync(join(repo, "herdr-plugin.toml"), "utf8")
 
 describe("production manifest", () => {
-  test("every launch command uses the compiled binary and not Python", () => {
+  test("every launch command uses the compiled binary", () => {
     const commands = [...manifest.matchAll(/^command = (.+)$/gm)].map((match) => match[1] ?? "")
 
     expect(commands.length).toBeGreaterThan(0)
 
     for (const command of commands) {
       expect(command).toContain("$HERDR_PLUGIN_ROOT/dist/mosaic")
-      expect(command).not.toContain("python3")
-      expect(command).not.toContain("main.py")
     }
 
     expect(manifest).toContain('id = "picker"')

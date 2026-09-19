@@ -12,7 +12,6 @@
     "lint": "node ./node_modules/oxlint/bin/oxlint .",
     "typecheck": "tsc --noEmit",
     "test": "bun test --preload ./tests/support/isolate-preload.ts tests/cli tests/unit",
-    "test:parity": "python3 scripts/check-parity-inventory.py",
     "test:runtime": "bun test --preload ./tests/support/isolate-preload.ts tests/runtime",
     "test:herdr": "bun test --preload ./tests/support/isolate-preload.ts tests/herdr",
     "build": "bun build ./src/cli.ts --compile --outfile dist/mosaic --no-compile-autoload-dotenv --no-compile-autoload-bunfig",

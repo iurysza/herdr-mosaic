@@ -11,10 +11,6 @@
         },
         {
           "type": "generic",
-          "path": "src/ctx.py"
-        },
-        {
-          "type": "generic",
           "path": "src/ids.ts"
         }
       ],

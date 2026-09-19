@@ -150,7 +150,7 @@ function parseEscape(ch: string): string {
   return ch
 }
 
-function pythonSplitLines(text: string): string[] {
+function splitLinesPreservingTerminators(text: string): string[] {
   const lines: string[] = []
   let start = 0
 
@@ -637,7 +637,7 @@ export class TomlDoc {
   constructor(text: string) {
     this._nl = text.includes("\r\n") ? "\r\n" : "\n"
     this._trailingNl = text.endsWith("\n") || text.endsWith("\r")
-    this.lines = pythonSplitLines(text)
+    this.lines = splitLinesPreservingTerminators(text)
     this.reindex()
   }
 

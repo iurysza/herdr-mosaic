@@ -8,7 +8,7 @@ describe("real subprocess time", () => {
   test("a child sleep is measured on the wall clock", async () => {
     const started = Date.now()
 
-    const proc = Bun.spawn(["python3", "-c", "import time; time.sleep(0.2)"], {
+    const proc = Bun.spawn([process.execPath, "-e", "await Bun.sleep(200)"], {
       stdout: "pipe",
       stderr: "pipe",
       cwd: mkdtempSync(join(tmpdir(), "mosaic-clock-")),
