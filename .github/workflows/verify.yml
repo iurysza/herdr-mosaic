@@ -33,6 +33,7 @@ jobs:
           bash scripts/ci/install-herdr.sh "$HOME/.local/bin/herdr"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           echo "HERDR_BIN_PATH=$HOME/.local/bin/herdr" >> "$GITHUB_ENV"
+          echo "MOSAIC_HERDR_BIN=$HOME/.local/bin/herdr" >> "$GITHUB_ENV"
 
       - name: Verify plugin
         run: |

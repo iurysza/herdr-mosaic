@@ -2,7 +2,11 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { resolveHostHerdrBin } from "./host-herdr.ts"
+
 const root = mkdtempSync(join(tmpdir(), "mosaic-test-"))
+
+const hostHerdr = resolveHostHerdrBin(process.env)
 
 const home = join(root, "home")
 
@@ -54,5 +58,10 @@ for (const key of Object.keys(process.env)) {
 }
 
 Object.assign(process.env, isolated)
+
+// Isolated HERDR_BIN_PATH is a missing placeholder. Keep the host binary for tests/herdr.
+if (hostHerdr !== undefined) {
+  process.env.MOSAIC_HERDR_BIN = hostHerdr
+}
 
 process.chdir(root)

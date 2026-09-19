@@ -17,6 +17,8 @@ if [ -z "${HERDR_BIN_PATH:-}" ]; then
   export HERDR_BIN_PATH
 fi
 
+export MOSAIC_HERDR_BIN="${MOSAIC_HERDR_BIN:-$HERDR_BIN_PATH}"
+
 if [ ! -x "$HERDR_BIN_PATH" ]; then
   bash scripts/ci/install-herdr.sh "$HERDR_BIN_PATH"
 fi
