@@ -87,7 +87,7 @@ export function jsonToToml(value: Json): TomlValue {
   return table
 }
 
-function backupFromJson(value: Json): SidebarBackup | undefined {
+export function backupFromJson(value: Json): SidebarBackup | undefined {
   if (value === null) return undefined
 
   const decoded = Schema.decodeUnknownResult(Schema.JsonObject)(value)
@@ -119,7 +119,7 @@ function backupFromJson(value: Json): SidebarBackup | undefined {
   }
 }
 
-function lastWrittenPairs(lastWritten: Json): ReadonlyArray<readonly [string, TomlValue]> {
+export function lastWrittenPairs(lastWritten: Json): ReadonlyArray<readonly [string, TomlValue]> {
   const object = asJsonObject(lastWritten)
   const pairs: Array<readonly [string, TomlValue]> = []
 

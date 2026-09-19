@@ -55,6 +55,12 @@ export const runCli = Effect.fnUntraced(function*(argv: readonly string[]) {
           stdout: "",
           stderr: `${err.message}\n`,
         } satisfies CliResult),
+      RpcTransportError: (err) =>
+        Effect.succeed({
+          code: 1,
+          stdout: "",
+          stderr: `herdr API error: ${err.code}: ${err.message}\n`,
+        } satisfies CliResult),
     }),
   )
 })

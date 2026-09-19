@@ -128,7 +128,7 @@ export function agentRowsTemplate(): TomlValue[][] {
   ]]
 }
 
-function tokenName(entry: TomlValue): string | undefined {
+export function tokenName(entry: TomlValue): string | undefined {
   if (isTomlString(entry)) return entry
 
   if (entry instanceof TomlTable) {

@@ -19,6 +19,17 @@ import {
   runSortKeybindRemove,
 } from "../config/keybinds.ts"
 import { runSidebarInstall, runSidebarRemove } from "../config/sidebar.ts"
+import {
+  runSort,
+  runToggleAgentFocus,
+  runToggleAgentSort,
+  runView,
+  runViewClear,
+} from "../agents/view.ts"
+import { runDoctor } from "../lifecycle/doctor.ts"
+import { runInstall } from "../lifecycle/install.ts"
+import { runReconcile } from "../lifecycle/reconcile.ts"
+import { runUninstall } from "../lifecycle/uninstall.ts"
 import { PLUGIN_ID } from "../ids.ts"
 import { windowManagerPending } from "../migrate/pending.ts"
 import {
@@ -119,6 +130,42 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command === "sidebar-remove") {
     return yield* runSidebarRemove(rewritten.slice(1))
+  }
+
+  if (command === "view") {
+    return yield* runView(rewritten.slice(1))
+  }
+
+  if (command === "toggle-agent-focus") {
+    return yield* runToggleAgentFocus(rewritten.slice(1))
+  }
+
+  if (command === "toggle-agent-sort") {
+    return yield* runToggleAgentSort(rewritten.slice(1))
+  }
+
+  if (command === "sort") {
+    return yield* runSort(rewritten.slice(1))
+  }
+
+  if (command === "view-clear") {
+    return yield* runViewClear(rewritten.slice(1))
+  }
+
+  if (command === "reconcile") {
+    return yield* runReconcile(rewritten.slice(1))
+  }
+
+  if (command === "install") {
+    return yield* runInstall(rewritten.slice(1))
+  }
+
+  if (command === "uninstall") {
+    return yield* runUninstall(rewritten.slice(1))
+  }
+
+  if (command === "doctor") {
+    return yield* runDoctor(rewritten.slice(1))
   }
 
   if (command === "refresh-worker") {

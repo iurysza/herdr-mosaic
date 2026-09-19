@@ -117,3 +117,15 @@ Validation: `bun run typecheck` pass, `bun run lint` pass, `bun run test` 137 pa
 
 Next: install (dry-run migrate-only), doctor, uninstall. Still no success-returning stubs.
 
+## 2026-09-19 step 4 install, doctor, uninstall
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Wired `install` (dry-run is migrate-only; success is migrate → sidebar → six keybinds → action rename with save-before-commit → view(mode) → reconcile), `doctor` (always 0, warns every `rows_by_agent`), and `uninstall` (one lock, one commit, Mosaic backups only, title/elapsed clear, identities kept). Agent view scope/sort, view-clear, and reconcile view reinstall go through `src/agents/view.ts`. Tint apply and post-success `publish_once` / `refresh.start` are not wired.
+
+File placement: `src/agents/view.ts`, `src/lifecycle/{install,uninstall,doctor,reconcile}.ts`, `src/spaces/theme.ts`, `src/config/action-renames.ts`.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 145 pass, parity inventory 105.
+
+Next: tint/theme apply, title publish, refresh.start, events, TUI, layouts. Still no success-returning stubs.
+
