@@ -1,6 +1,7 @@
 import { Effect } from "effect"
 
 import { COMMAND_SET, helpText, rewriteArgv, wantsHelp } from "./catalog.ts"
+import { runSidebarInstall, runSidebarRemove } from "../config/sidebar.ts"
 import { PLUGIN_ID } from "../ids.ts"
 import { windowManagerPending } from "../migrate/pending.ts"
 import {
@@ -33,6 +34,14 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command !== "migrate" && command !== "install" && windowManagerPending(paths)) {
     return yield* new WindowManagerPending({ command })
+  }
+
+  if (command === "sidebar-install") {
+    return yield* runSidebarInstall(rewritten.slice(1))
+  }
+
+  if (command === "sidebar-remove") {
+    return yield* runSidebarRemove(rewritten.slice(1))
   }
 
   if (command === "refresh-worker") {

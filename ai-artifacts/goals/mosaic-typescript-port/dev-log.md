@@ -54,3 +54,24 @@ Blocker: macOS flock, worker, PTY, artifact, and real-Herdr proofs are required 
 
 Next: macOS runner or owner approval to proceed without that gate.
 
+## 2026-09-19 step 3 Linux reversible sidebar
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated cloud checkout. Default Herdr session, user settings, and live registration were not used. macOS remains an open step-2 completion gate (fact-09 / fact-20). Step 2 is not marked complete.
+
+Frozen Python still matches `8b7bb76`. Contract files left unchanged except append-only `dev-log.md`, `parity.md` evidence columns, and `evidence/step-3-linux.md`.
+
+File placement: `src/config/toml-edit.ts`, `src/config/patch.ts`, `src/config/sidebar.ts`, `src/state/store.ts`, `src/spaces/palette.ts`, `src/runtime/plugin-log.ts`, fake `herdr config check` in `tests/support/fake-herdr-bin.ts` with PATH wrapper `installFakeHerdr`.
+
+Validation (Linux x86_64):
+
+- `bun run typecheck` pass
+- `bun run lint` pass
+- `bun run test` 95 pass (includes `--force` restore)
+- `python3 scripts/check-parity-inventory.py` 105 entrypoints
+
+Python `state.load()` reads TypeScript-written `sidebar_backup` present/value records. Repeat install is a no-op. Remove restores exact fixture bytes. User-edited owned keys skip without `--force` and restore with `--force`. `not_a_real_token` is rejected with live bytes unchanged. `legacy_unknown_key` in the baseline is tolerated. Pre-existing `rows_by_agent.claude` remains byte-stable.
+
+Open in this slice: crash-injection for atomic writes; doctor `rows_by_agent` warning; 17th-token reject; real Herdr `config check` on every fixture (later disposable-HOME).
+
+Next: step 4 full install, identity, migration, doctor, uninstall. Do not add success-returning stubs. macOS proofs remain required for completion.
+
