@@ -14,9 +14,23 @@ export const TINT_KEYS = [
 
 export const OVERLAY_KEYS = ["theme.custom.overlay0", "theme.custom.overlay1"] as const
 
+export const PROTECTED_KEYS = [
+  "theme.custom.red",
+  "theme.custom.green",
+  "theme.custom.yellow",
+  "theme.custom.peach",
+  "theme.custom.blue",
+  "theme.custom.teal",
+  "theme.custom.mauve",
+  "theme.custom.text",
+  "theme.custom.subtext0",
+] as const
+
 export const FALLBACK_BASE = "#1e1f22"
 
 export const DEFAULT_INTENSITY = "medium"
+
+export const INTENSITY_NAMES = ["subtle", "medium", "bold"] as const
 
 const BASE_BY_THEME = [
   ["catppuccin", "#1e1e2e"],
@@ -53,7 +67,7 @@ const INTENSITY_OVERLAYS = [
   ["bold", true],
 ] as const
 
-const LUMA_CEILING = [
+export const LUMA_CEILING = [
   ["panel_bg", 62.0],
   ["surface_dim", 72.0],
   ["surface0", 84.0],
@@ -248,12 +262,16 @@ export function resolveBase(themeName: string | undefined, settings: PluginSetti
   return FALLBACK_BASE
 }
 
-function lumaCeiling(slot: "panel_bg" | "surface_dim" | "surface0" | "surface1"): number {
+export function lumaCeiling(slot: "panel_bg" | "surface_dim" | "surface0" | "surface1"): number {
   for (const [key, value] of LUMA_CEILING) {
     if (key === slot) return value
   }
 
   return 102.0
+}
+
+export function intensityPreset(name: IntensityName): BlendMix {
+  return intensityFromName(name) ?? { panel_bg: 0.14, surface_dim: 0.19, surface0: 0.25, surface1: 0.36 }
 }
 
 export function generate(
@@ -307,4 +325,10 @@ export function themeValue(values: ThemeValues, key: string): string | undefined
   }
 
   return undefined
+}
+
+export function swatch(hexv: string, width = 6): string {
+  const rgb = parseHex(hexv)
+
+  return `\x1b[48;2;${rgb.r};${rgb.g};${rgb.b}m${" ".repeat(width)}\x1b[0m`
 }

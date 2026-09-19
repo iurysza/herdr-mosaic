@@ -121,8 +121,12 @@ export function load(path: string): PluginState {
   return mergeLoaded(decoded.success)
 }
 
+export function dumpState(data: PluginState): string {
+  return `${JSON.stringify(sortJsonKeys(data), null, 2)}\n`
+}
+
 export function save(path: string, data: PluginState): void {
-  atomicWrite(path, `${JSON.stringify(sortJsonKeys(data), null, 2)}\n`)
+  atomicWrite(path, dumpState(data))
 }
 
 export function identityOf(data: PluginState, workspaceId: string): JsonObject | undefined {
