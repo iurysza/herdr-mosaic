@@ -252,6 +252,39 @@ describe("confirmMove", () => {
       Object.assign(process.env, previous)
     }
   })
+
+  test("a missing destination keeps the selection", async () => {
+    const sandbox = makeSandbox()
+    const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
+    const statePath = join(required(sandbox.env, "HERDR_PLUGIN_STATE_DIR"), "state.json")
+    const state = defaultState()
+
+    state.pending_pane_move = { pane_id: "w1:p1" }
+    save(statePath, state)
+    fake.on("pane.list", () => ({ panes: panes().filter((pane) => pane.pane_id === "w1:p1") }))
+    await fake.listen()
+
+    const previous = { ...process.env }
+
+    Object.assign(process.env, sandbox.env)
+
+    try {
+      const outcome = await Effect.runPromise(
+        confirmMove("w1:p1", "w2:p2", "split").pipe(Effect.provide(PluginPaths.layer)),
+      )
+
+      expect(outcome).toBe("destination_missing")
+      expect(load(statePath).pending_pane_move).toEqual({ pane_id: "w1:p1" })
+    } finally {
+      await fake.close()
+
+      for (const key of Object.keys(process.env)) {
+        if (!(key in previous)) delete process.env[key]
+      }
+
+      Object.assign(process.env, previous)
+    }
+  })
 })
 
 describe("promote-pane CLI", () => {

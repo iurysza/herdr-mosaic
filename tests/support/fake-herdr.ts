@@ -22,6 +22,7 @@ export class FakeHerdr {
   readonly requests: { readonly method: string; readonly params: JsonObject; readonly id: string }[] = []
   readonly unexpected: string[] = []
   private readonly handlers = new Map<string, RpcHandler>()
+  private readonly rawResults = new Map<string, string>()
   private readonly server = createServer((socket) => this.onConnection(socket))
   private readonly unsolicited: string[] = []
 
@@ -31,8 +32,18 @@ export class FakeHerdr {
     this.handlers.set(method, handler)
   }
 
+  setRawResult(method: string, json: string): void {
+    this.rawResults.set(method, json)
+  }
+
+  fragmentDelayMs = 0
+
   queueUnsolicited(message: JsonObject): void {
     this.unsolicited.push(`${JSON.stringify(message)}\n`)
+  }
+
+  queueRawLine(line: string): void {
+    this.unsolicited.push(line.endsWith("\n") ? line : `${line}\n`)
   }
 
   async listen(): Promise<void> {
@@ -101,6 +112,14 @@ export class FakeHerdr {
 
     for (const event of this.unsolicited) socket.write(event)
 
+    const raw = this.rawResults.get(method)
+
+    if (raw !== undefined) {
+      this.emitReply(socket, `${JSON.stringify({ id, result: JSON.parse(raw) })}\n`)
+
+      return
+    }
+
     const handler = this.handlers.get(method)
 
     if (handler === undefined && method === "plugin.list") {
@@ -110,7 +129,7 @@ export class FakeHerdr {
         ? []
         : [{ plugin_id: PLUGIN_ID, enabled: true, plugin_root: root }]
 
-      socket.write(`${JSON.stringify({ id, result: { plugins } })}\n`)
+      this.emitReply(socket, `${JSON.stringify({ id, result: { plugins } })}\n`)
 
       return
     }
@@ -125,11 +144,26 @@ export class FakeHerdr {
     const reply = handler(method, params, id)
 
     if ("error" in reply) {
-      socket.write(`${JSON.stringify({ id, error: reply.error })}\n`)
+      this.emitReply(socket, `${JSON.stringify({ id, error: reply.error })}\n`)
 
       return
     }
 
-    socket.write(`${JSON.stringify({ id, result: reply })}\n`)
+    this.emitReply(socket, `${JSON.stringify({ id, result: reply })}\n`)
+  }
+
+  private emitReply(socket: Socket, payload: string): void {
+    if (this.fragmentDelayMs <= 0 || payload.length < 4) {
+      socket.write(payload)
+
+      return
+    }
+
+    const mid = Math.max(1, Math.floor(payload.length / 2))
+
+    socket.write(payload.slice(0, mid))
+    setTimeout(() => {
+      if (!socket.destroyed) socket.write(payload.slice(mid))
+    }, this.fragmentDelayMs)
   }
 }

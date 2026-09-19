@@ -8,7 +8,7 @@ import { Effect } from "effect"
 
 import { PLUGIN_ID } from "../../src/ids.ts"
 import { PluginPaths, pathsFromEnv } from "../../src/runtime/paths.ts"
-import { readSocketGeneration, startRefreshWorker } from "../../src/runtime/worker.ts"
+import { readSocketGeneration, refreshWorkerArgs, startRefreshWorker } from "../../src/runtime/worker.ts"
 import { FakeHerdr } from "../support/fake-herdr.ts"
 
 function waitExit(child: ReturnType<typeof spawn>): Promise<{
@@ -30,6 +30,19 @@ function waitExit(child: ReturnType<typeof spawn>): Promise<{
 }
 
 describe("worker ownership", () => {
+  test("compiled binaries omit the source path from worker argv", () => {
+    expect(refreshWorkerArgs("/usr/bin/bun", "/plugin/src/cli.ts", "gen")).toEqual([
+      "--no-env-file",
+      "/plugin/src/cli.ts",
+      "refresh-worker",
+      "gen",
+    ])
+    expect(refreshWorkerArgs("/plugin/dist/mosaic", "/plugin/src/cli.ts", "gen")).toEqual([
+      "refresh-worker",
+      "gen",
+    ])
+  })
+
   test("the second owner exits 0 while the first still holds the generation lock", async () => {
     const stateDir = mkdtempSync(join(tmpdir(), "mosaic-worker-"))
     const env = { ...process.env, HERDR_PLUGIN_STATE_DIR: stateDir }
