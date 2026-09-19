@@ -273,5 +273,15 @@ Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 287, `bun r
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 CI host Herdr after isolation
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+GitHub Actions Verify failed because isolate-preload deleted `HERDR_BIN_PATH` and replaced it with `missing-herdr`. The host binary is now captured on `MOSAIC_HERDR_BIN` before that wipe. `herdrBin()` skips the placeholder. Verify also exports `MOSAIC_HERDR_BIN` from the Install Herdr step.
+
+Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 289, `env -u MOSAIC_HERDR_BIN HERDR_BIN_PATH=/tmp/mosaic-tools/herdr bun run test:herdr` 2 pass.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 

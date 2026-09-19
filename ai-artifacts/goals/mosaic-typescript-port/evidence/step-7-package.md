@@ -47,7 +47,7 @@ Linux x86_64 outcomes:
 | --- | --- |
 | typecheck | pass |
 | lint | pass |
-| `bun run test` | 287 pass |
+| `bun run test` | 289 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:parity` | 105 entrypoints |
 | `bun run test:artifact` | 4 pass |
@@ -78,5 +78,7 @@ Source bun is slower because it loads TypeScript. The compiled binary matches Py
 Python `sidebar-remove` restored TypeScript-installed `users_real` config bytes in `tests/cli/sidebar.test.ts`. `tests/cli/differential.test.ts` compares help, unknown-command, plugin-id, and sidebar-install config bytes in separate Python and TypeScript sandboxes.
 
 ## Remaining
+
+Isolate-preload still points `HERDR_BIN_PATH` at `missing-herdr`. The host binary is captured on `MOSAIC_HERDR_BIN` before that wipe so `bun run test:herdr` can find Herdr 0.9.0 in GitHub Actions.
 
 macOS flock, TTY, compiled-min-PATH, and artifact proofs are owner-run after the PR is open (`bash scripts/check-native-runtime.sh`). Live cutover is out of scope.
