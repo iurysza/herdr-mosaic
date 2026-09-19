@@ -1,9 +1,10 @@
-import { readFileSync } from "node:fs"
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, test } from "bun:test"
 import { Result, Schema } from "effect"
 
+import { CLI_ALIASES, COMMANDS } from "../../src/dispatch/catalog.ts"
 import { PLUGIN_ID } from "../../src/ids.ts"
 import { FakeHerdr } from "../support/fake-herdr.ts"
 import { installFakeHerdr, makeSandbox } from "../support/sandbox.ts"
@@ -83,6 +84,15 @@ async function spawnCli(kind: CliKind, args: readonly string[], env: { [key: str
   return { code, stdout, stderr }
 }
 
+function markWindowManagerPending(env: { [key: string]: string }): void {
+  const wmState = env.HERDR_LEGACY_WINDOW_MANAGER_STATE_DIR
+
+  if (wmState === undefined) throw new Error("missing window-manager state dir")
+
+  mkdirSync(wmState, { recursive: true })
+  writeFileSync(join(wmState, "state.json"), "{\"version\":1}\n")
+}
+
 function pairEnv(): PairEnv {
   const pythonSandbox = makeSandbox()
   const typescriptSandbox = makeSandbox()
@@ -159,6 +169,41 @@ describe("python and typescript differential cases", () => {
     expect(dropStamps(workerTs.stderr)).toBe(dropStamps(workerPython.stderr))
     expect(workerTs.code).toBe(workerPython.code)
   })
+
+  test("plugin-id and pending-import guards match for every command and alias", async () => {
+    const idPair = pairEnv()
+    const pendingPair = pairEnv()
+
+    markWindowManagerPending(pendingPair.python)
+    markWindowManagerPending(pendingPair.typescript)
+
+    const names = [...COMMANDS, ...Object.keys(CLI_ALIASES)]
+
+    for (const name of names) {
+      const idPython = await spawnCli("python", [name], {
+        ...idPair.python,
+        HERDR_PLUGIN_ID: "another.plugin",
+      })
+
+      const idTs = await spawnCli("typescript", [name], {
+        ...idPair.typescript,
+        HERDR_PLUGIN_ID: "another.plugin",
+      })
+
+      expect(idPython.code, name).toBe(1)
+      expect(idTs, name).toEqual(idPython)
+
+      if (name === "migrate" || name === "install") continue
+
+      const pendingPython = await spawnCli("python", [name], pendingPair.python)
+      const pendingTs = await spawnCli("typescript", [name], pendingPair.typescript)
+
+      expect(pendingPython.code, name).toBe(1)
+      expect(pendingPython.stderr, name).toContain("Compatible saved data awaits import")
+      expect(pendingTs.code, name).toBe(pendingPython.code)
+      expect(dropStamps(pendingTs.stderr), name).toBe(dropStamps(pendingPython.stderr))
+    }
+  }, 60_000)
 
   test("sidebar-install writes the same config bytes from the users_real fixture", async () => {
     const pair = pairEnv()

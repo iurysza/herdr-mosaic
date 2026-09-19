@@ -47,7 +47,7 @@ Linux x86_64 outcomes:
 | --- | --- |
 | typecheck | pass |
 | lint | pass |
-| `bun run test` | 292 pass |
+| `bun run test` | 293 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:parity` | 105 entrypoints |
 | `bun run test:artifact` | 4 pass |
@@ -81,6 +81,6 @@ Python `sidebar-remove` restored TypeScript-installed `users_real` config bytes 
 
 Isolate-preload still points `HERDR_BIN_PATH` at `missing-herdr`. The host binary is captured on `MOSAIC_HERDR_BIN` before that wipe so `bun run test:herdr` can find Herdr 0.9.0 in GitHub Actions.
 
-`tests/cli/differential.test.ts` also compares install then uninstall byte restore. Python uninstall restores a TypeScript-installed fixture, and TypeScript uninstall restores a Python-installed fixture. `tests/herdr/lifecycle.test.ts` runs the same cycle against a disposable Herdr 0.9.0 server after `plugin link --disabled` and `plugin.enable`.
+`tests/cli/differential.test.ts` also compares install then uninstall byte restore. Python uninstall restores a TypeScript-installed fixture, and TypeScript uninstall restores a Python-installed fixture. Plugin-id and pending-import guards match for every catalog command and CLI alias. `tests/herdr/lifecycle.test.ts` runs the same cycle against a disposable Herdr 0.9.0 server after `plugin link --disabled` and `plugin.enable`.
 
 macOS flock, TTY, compiled-min-PATH, and artifact proofs are owner-run after the PR is open (`bash scripts/check-native-runtime.sh`). Live cutover is out of scope.

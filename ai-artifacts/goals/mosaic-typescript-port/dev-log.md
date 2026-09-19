@@ -303,5 +303,15 @@ Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 292.
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 fact-03 command and alias guards
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Python and TypeScript match plugin-id and pending-import guards for every catalog command and CLI alias. `migrate` and `install` stay exempt from the pending-import block.
+
+Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 293.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 
