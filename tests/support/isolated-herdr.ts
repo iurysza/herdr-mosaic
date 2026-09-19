@@ -1,19 +1,21 @@
 import { closeSync, openSync } from "node:fs"
-import { mkdirSync, mkdtempSync, writeFileSync, existsSync } from "node:fs"
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { spawn } from "node:child_process"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { PLUGIN_ID } from "../../src/ids.ts"
+import { resolveHostHerdrBin } from "./host-herdr.ts"
 
 export function herdrBin(): string {
-  const fromEnv = process.env.MOSAIC_HERDR_BIN ?? process.env.HERDR_BIN_PATH
+  const fromEnv = resolveHostHerdrBin({
+    MOSAIC_HERDR_BIN: process.env.MOSAIC_HERDR_BIN,
+    HERDR_BIN_PATH: process.env.HERDR_BIN_PATH,
+  })
 
-  if (fromEnv && existsSync(fromEnv)) return fromEnv
+  if (fromEnv !== undefined) return fromEnv
 
-  if (existsSync("/tmp/mosaic-tools/herdr")) return "/tmp/mosaic-tools/herdr"
-
-  throw new Error("Herdr is required for tests/herdr; set HERDR_BIN_PATH")
+  throw new Error("Herdr is required for tests/herdr; set MOSAIC_HERDR_BIN or HERDR_BIN_PATH")
 }
 
 export type IsolatedHerdr = {

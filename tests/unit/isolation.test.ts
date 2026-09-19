@@ -10,6 +10,10 @@ describe("test isolation", () => {
     expect(home?.startsWith("/tmp/mosaic-test-")).toBe(true)
     expect(socket?.startsWith(home ?? "")).toBe(true)
     expect(process.env.HERDR_BIN_PATH?.includes("missing-herdr")).toBe(true)
+
+    const host = process.env.MOSAIC_HERDR_BIN
+
+    expect(host === undefined || !host.includes("missing-herdr")).toBe(true)
   })
 
   test("child processes inherit the isolated HOME", async () => {
