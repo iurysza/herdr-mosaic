@@ -36,7 +36,7 @@ function statePath(stateDir: string): string {
   return join(stateDir, "state.json")
 }
 
-function pythonRepr(value: string): string {
+function quotedRepr(value: string): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`
 }
 
@@ -103,7 +103,7 @@ const applyLocked = Effect.fnUntraced(function*(
       yield* pluginWarn(
         paths,
         output,
-        `${pythonRepr(colourIn)} is not a palette name (${SLOT_NAMES.join(", ")}) or a #rrggbb hex colour`,
+        `${quotedRepr(colourIn)} is not a palette name (${SLOT_NAMES.join(", ")}) or a #rrggbb hex colour`,
       )
 
       return 1

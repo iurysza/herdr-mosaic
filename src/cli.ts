@@ -26,7 +26,7 @@ const REFRESH_EVENTS = new Set([
   "pane.agent_status_changed",
 ])
 
-function pythonRepr(value: string): string {
+function quotedRepr(value: string): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`
 }
 
@@ -48,7 +48,7 @@ export const runCli = Effect.fnUntraced(function*(argv: readonly string[]) {
         Effect.succeed({
           code: 2,
           stdout: "",
-          stderr: `unknown command ${pythonRepr(err.command)}\n`,
+          stderr: `unknown command ${quotedRepr(err.command)}\n`,
         } satisfies CliResult),
       WrongPluginId: (err) =>
         Effect.succeed({

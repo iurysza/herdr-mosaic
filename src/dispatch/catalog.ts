@@ -1,4 +1,4 @@
-export const HELP = `usage: main.py <command> [args]
+export const HELP = `usage: mosaic <command> [args]
 
 Space color:
   pick-color                         Open the current space's color picker

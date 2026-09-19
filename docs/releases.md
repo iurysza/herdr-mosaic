@@ -1,6 +1,6 @@
 # Releases
 
-Mosaic is experimental. Releases contain the compiled Mosaic binary, plugin manifest, and source. There is no Python package to install.
+Mosaic is experimental. Releases contain the compiled Mosaic binary, plugin manifest, and TypeScript source.
 
 Find published versions and release notes on [GitHub Releases](https://github.com/iurysza/herdr-mosaic/releases). Herdr installs the plugin from its repository:
 
@@ -19,7 +19,7 @@ Mosaic follows a pre-1.0 version policy:
 - Fixes increase the patch version.
 - Documentation-only changes do not create a release.
 
-The version in `version.txt`, `herdr-plugin.toml`, `src/ctx.py`, `src/ids.ts`, and `.release-please-manifest.json` must match.
+The version in `version.txt`, `herdr-plugin.toml`, `src/ids.ts`, and `.release-please-manifest.json` must match.
 
 ## Publishing
 

@@ -67,7 +67,7 @@ function commandResult(code: number, output: CapturedOutput) {
   } as const
 }
 
-function pythonRepr(value: string): string {
+function quotedRepr(value: string): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`
 }
 
@@ -79,7 +79,7 @@ function asObject(value: Json | undefined): JsonObject | undefined {
   return decoded.success
 }
 
-function isPythonFalsy(value: Json): boolean {
+function isLegacyFalsy(value: Json): boolean {
   if (value === null || value === false || value === 0 || value === "") return true
 
   if (Array.isArray(value) && value.length === 0) return true
@@ -110,7 +110,7 @@ function parseEventData(raw: string | undefined): JsonObject {
 
   const nested = root.data
 
-  if (nested === undefined || isPythonFalsy(nested)) return root
+  if (nested === undefined || isLegacyFalsy(nested)) return root
 
   const inner = asObject(nested)
 
@@ -251,7 +251,7 @@ const onWorkspaceChanged = Effect.fnUntraced(function*(
       yield* pluginLog(
         paths,
         output,
-        `workspace ${workspaceId} renamed to ${pythonRepr(workspaceLabelOf(workspaceId, workspaces))}; `
+        `workspace ${workspaceId} renamed to ${quotedRepr(workspaceLabelOf(workspaceId, workspaces))}; `
           + `identity ${colourName(ensured.colour)} unchanged`,
       )
     } else if (ensured.created) {
@@ -432,7 +432,7 @@ export const runEvent = Effect.fnUntraced(function*(argv: readonly string[]) {
     return commandResult(code, output)
   }
 
-  yield* pluginWarn(paths, output, `unhandled event ${pythonRepr(name)}`)
+  yield* pluginWarn(paths, output, `unhandled event ${quotedRepr(name)}`)
 
   return commandResult(0, output)
 })

@@ -63,7 +63,7 @@ function commandResult(code: number, output: CapturedOutput) {
   } as const
 }
 
-function pythonRepr(value: string): string {
+function quotedRepr(value: string): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`
 }
 
@@ -176,7 +176,7 @@ function runningSessions(herdrBin: string): RunningSession[] {
   }
 }
 
-function pythonNone(value: Json | undefined): string {
+function noneRepr(value: Json | undefined): string {
   if (value === undefined || value === null) return "None"
 
   if (Predicate.isString(value)) return value
@@ -277,7 +277,7 @@ export const runDoctor = Effect.fnUntraced(function*(_argv: readonly string[]) {
     const id = Predicate.isString(fid) ? fid : "None"
     const info = Predicate.isString(fid) ? identityOf(state, fid) : undefined
 
-    lines.push(doctorRow("focused workspace", `${id} (${pythonNone(focused.label)})`))
+    lines.push(doctorRow("focused workspace", `${id} (${noneRepr(focused.label)})`))
 
     if (info === undefined) {
       lines.push(doctorRow("focused identity", "NONE ASSIGNED"))
@@ -291,7 +291,7 @@ export const runDoctor = Effect.fnUntraced(function*(_argv: readonly string[]) {
 
       lines.push(doctorRow(
         "focused identity",
-        `${markerGlyph(paths)} ${colour}  slot=${slotForColour(Predicate.isString(colourValue) ? colourValue : "")} (${pythonNone(info.origin)})`,
+        `${markerGlyph(paths)} ${colour}  slot=${slotForColour(Predicate.isString(colourValue) ? colourValue : "")} (${noneRepr(info.origin)})`,
       ))
     }
   } else {
@@ -373,7 +373,7 @@ export const runDoctor = Effect.fnUntraced(function*(_argv: readonly string[]) {
     problems.push(
       `Only ${published} of ${workspaces.length} workspaces carry a space dot. `
         + "Metadata is dropped on server restart -- run the "
-        + "`src/main.py reconcile` recovery command.",
+        + "`mosaic reconcile` recovery command.",
     )
   }
 
@@ -479,7 +479,7 @@ export const runDoctor = Effect.fnUntraced(function*(_argv: readonly string[]) {
   lines.push(doctorRow("tint enabled", state.tint_enabled ? "yes" : "no"))
   lines.push(doctorRow("intensity", intensityName(settings)))
   lines.push(doctorRow("tint overlays", resolveOverlays(settings) ? "yes" : "no"))
-  lines.push(doctorRow("marker", pythonRepr(markerGlyph(paths))))
+  lines.push(doctorRow("marker", quotedRepr(markerGlyph(paths))))
   lines.push(doctorRow("space-change toast", settings.announce ? "on" : "off"))
 
   const lastTint = jsonObject(state.last_tint)

@@ -25,10 +25,9 @@ contract. Do not run another publisher for those tokens at the same time.
 ## Non-negotiables
 
 - **TypeScript, Bun, and Effect.** Production commands use the compiled Mosaic
-  binary. Keep Python at revision `8b7bb76` as an isolated reference and
-  rollback option, never as a runtime of the release artifact. Pin Bun, Effect,
-  Oxlint, and vendored anti-slop rules. Tests replace external capabilities;
-  do not mock application modules, including via `bun:test` `mock.module`.
+  binary. Pin Bun, Effect, Oxlint, and vendored anti-slop rules. Tests replace
+  external capabilities; do not mock application modules, including via
+  `bun:test` `mock.module`.
 - **Every mutation runs under `ctx.Lock`.** Multiple hooks can fire concurrently;
   the file lock serialises all state and config writes. Never bypass it. Layout
   reshape/resize use the same lock.
@@ -80,11 +79,9 @@ Each of these was a real bug, not a hypothetical:
 ## Testing
 
 ```sh
-python3 -m unittest discover -s tests -t tests # frozen Python reference
-python3 scripts/check-standalone.py            # isolated real Herdr lifecycle
 bun run typecheck && bun run lint && bun run test
-bun run test:runtime && bun run test:artifact
-python3 scripts/check-parity-inventory.py
+bun run test:runtime && bun run build && bun run test:artifact
+bun run test:herdr
 ```
 
 Config fixtures are validated by the real `herdr config check` binary. The suite
@@ -121,6 +118,5 @@ Production code lives under `src/` as TypeScript modules: `cli.ts` dispatches,
 `state/` owns the durable identity map, `spaces/` owns palette, labels, and theme,
 `agents/` manages views, triage, titles, and clocks, `panes/` owns layouts and
 pane moves, `terminal/` owns raw TTY sessions, and `lifecycle/` owns
-install/doctor/uninstall. Frozen Python under `src/*.py` is a reference and
-rollback option, not the shipped runtime. `scripts/check-standalone.py` proves
-install, timer refresh, restart, and cleanup without live setup.
+install/doctor/uninstall. `tests/herdr/lifecycle.test.ts` proves installation
+and byte-exact cleanup in an isolated Herdr environment.

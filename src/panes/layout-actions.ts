@@ -48,7 +48,7 @@ function commandResult(code: number, output: CapturedOutput) {
   } as const
 }
 
-function pythonRepr(value: string): string {
+function quotedRepr(value: string): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`
 }
 
@@ -389,7 +389,7 @@ const runAction = Effect.fnUntraced(function*(
     return 0
   }
 
-  return yield* new LayoutError({ message: `unknown layout action ${pythonRepr(action)}` })
+  return yield* new LayoutError({ message: `unknown layout action ${quotedRepr(action)}` })
 })
 
 const reportLayoutFailure = Effect.fnUntraced(function*(

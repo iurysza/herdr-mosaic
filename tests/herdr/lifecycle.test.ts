@@ -140,29 +140,4 @@ describe("real Herdr install lifecycle", () => {
     }
   }, 40_000)
 
-  test("python uninstall restores a typescript-installed fixture", async () => {
-    const { isolated, original } = await startLinkedInstall()
-
-    try {
-      expect(readFileSync(isolated.configPath, "utf8")).toContain("$elapsed")
-
-      const proc = Bun.spawn(
-        ["/usr/bin/python3", join(pluginRoot, "src", "main.py"), "uninstall"],
-        {
-          cwd: pluginRoot,
-          env: isolated.env,
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      )
-
-      const stdout = await new Response(proc.stdout).text()
-      const stderr = await new Response(proc.stderr).text()
-
-      expect(await proc.exited, `${stdout}\n${stderr}`).toBe(0)
-      expect(readFileSync(isolated.configPath, "utf8")).toBe(original)
-    } finally {
-      await isolated.stop()
-    }
-  }, 40_000)
 })

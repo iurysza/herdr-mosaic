@@ -163,33 +163,19 @@ agent, so any existing entry must be patched alongside `rows`.
 config.toml** — configuration is **global across sessions**. Two running sessions
 therefore share the theme keys, and per-session dynamic tinting is impossible.
 
-## Mosaic standalone refresh verification
+## Mosaic lifecycle verification
 
-The local isolated lifecycle check ran on Herdr 0.8.2 on 2026-09-08.
-`scripts/check-standalone.py` creates its own HOME, registry, config, state,
-and socket. It starts no external title publisher or scheduler.
-
-- `tab.list` without a workspace filter returns the session's tab labels.
-- `plugin.list` with `plugin_id` reports `enabled` and `plugin_root`, allowing a
-  detached worker to stop when its registration is disabled, removed, or moved.
-- Native `tab.renamed`, `pane.agent_detected`, and `pane.agent_status_changed`
-  hooks publish titles and launch-or-completion clocks. Model-tier metadata
-  from another source survives.
-- `[[startup]]` reconciliation launches a new per-socket-generation worker after
-  server restart. Repeated reconciliation does not create a second publisher.
-- Disabled workers exit. Elapsed tokens expire; durable title tokens remain.
-- Explicit uninstall clears title/elapsed sources, preserves themed metadata,
-  stops refresh, and restores config byte-for-byte.
+`tests/herdr/lifecycle.test.ts` creates its own HOME, registry, config, state,
+and socket. It starts no external title publisher or scheduler. It verifies
+installation, Herdr config validation, and byte-exact restoration on uninstall.
 
 Herdr's documented startup hooks are one-shot and do not supervise daemons.
-Mosaic therefore starts a detached stdlib Python worker from setup/startup and
+Mosaic therefore starts a detached compiled Mosaic worker from setup/startup and
 checks singleton ownership on relevant events. No manifest timer is assumed.
-The existing 30-second cadence and 45-second TTL are retained. In the final
-one-agent fixture, a normal round took 5.7 ms; the clock advanced from `1m` to
-`2m` on the worker's next round without a new agent event.
+The existing 30-second cadence and 45-second TTL are retained.
 
-CI pins Herdr 0.9.0 on Linux and runs the same isolated check. Local success does
-not substitute for a successful CI run on the release candidate's exact SHA.
+CI pins Herdr 0.9.0 on Linux and runs the isolated lifecycle test. Local success
+does not substitute for a successful CI run on the release candidate's exact SHA.
 
 ## Public action design on installed Herdr 0.9.0
 

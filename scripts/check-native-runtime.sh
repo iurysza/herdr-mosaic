@@ -24,7 +24,6 @@ if [ ! -x "$HERDR_BIN_PATH" ]; then
 fi
 
 bun run test:herdr
-python3 scripts/check-standalone.py
 
 os="$(uname -s)"
 arch="$(uname -m)"
@@ -42,7 +41,7 @@ herdr_v="$(printf '%s' "$herdr_v" | tr '\n' ' ' | sed 's/"/\\"/g; s/[[:space:]]*
   printf '  "bun": "%s",\n' "$bun_v"
   printf '  "herdr_bin": "%s",\n' "$HERDR_BIN_PATH"
   printf '  "herdr_version": "%s",\n' "$herdr_v"
-  printf '  "checks": ["typecheck","lint","test:runtime","build","test:artifact","test:herdr","check-standalone"],\n'
+  printf '  "checks": ["typecheck","lint","test:runtime","build","test:artifact","test:herdr"],\n'
   printf '  "result": "passed"\n'
   printf '}\n'
 } > "$receipt"

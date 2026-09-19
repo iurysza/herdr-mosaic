@@ -42,7 +42,7 @@ describe("CLI dispatcher", () => {
   test("help wins over a command name", async () => {
     const result = await run(["set-color", "-h"])
     expect(result.code).toBe(0)
-    expect(result.stdout).toContain("usage: main.py")
+    expect(result.stdout).toContain("usage: mosaic")
   })
 
   test("help on every command skips pending import and RPC", async () => {

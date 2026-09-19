@@ -11,7 +11,7 @@ function tempStatePath(label: string): string {
 }
 
 describe("defaultState", () => {
-  test("returns the frozen Python default fields", () => {
+  test("returns the expected default fields", () => {
     const state = defaultState()
 
     expect(state.version).toBe(SCHEMA_VERSION)
@@ -221,53 +221,5 @@ describe("identity migration", () => {
     expect(loaded.identities).toEqual({})
     expect(loaded.view_mode).toBe("current")
     expect(loaded.sort_mode).toBe("activity")
-  })
-})
-
-describe("python after typescript", () => {
-  test("python json.load reads TS-written present false and present true list values", async () => {
-    const path = tempStatePath("py")
-    const data = defaultState()
-    data.sidebar_backup = {
-      keys: {
-        "ui.sidebar.spaces.rows": { present: false },
-        "ui.sidebar.agents.rows": {
-          present: true,
-          value: [["state_icon", "workspace"]],
-        },
-      },
-      captured_unix: 99,
-    }
-
-    save(path, data)
-
-    const proc = Bun.spawn(
-      [
-        "python3",
-        "-c",
-        [
-          "import json, sys",
-          "with open(sys.argv[1], encoding='utf-8') as fh:",
-          "    data = json.load(fh)",
-          "keys = data['sidebar_backup']['keys']",
-          "assert keys['ui.sidebar.spaces.rows']['present'] is False",
-          "assert 'value' not in keys['ui.sidebar.spaces.rows']",
-          "assert keys['ui.sidebar.agents.rows']['present'] is True",
-          "assert keys['ui.sidebar.agents.rows']['value'] == [['state_icon', 'workspace']]",
-        ].join("\n"),
-        path,
-      ],
-      {
-        stdout: "pipe",
-        stderr: "pipe",
-        env: { ...process.env },
-      },
-    )
-
-    const stderr = await new Response(proc.stderr).text()
-    const code = await proc.exited
-
-    expect(stderr).toBe("")
-    expect(code).toBe(0)
   })
 })

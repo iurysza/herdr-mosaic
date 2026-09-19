@@ -52,7 +52,7 @@ function commandResult(code: number, output: CapturedOutput) {
   } as const
 }
 
-function pythonRepr(value: string): string {
+function quotedRepr(value: string): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`
 }
 
@@ -92,7 +92,7 @@ export const runMarker = Effect.fnUntraced(function*(argv: readonly string[]) {
   const args = argv.filter((arg) => !arg.startsWith("-"))
 
   if (args.length === 0) {
-    output.stdout.push(`marker: ${pythonRepr(markerGlyph(paths))}`)
+    output.stdout.push(`marker: ${quotedRepr(markerGlyph(paths))}`)
 
     for (const [name, glyph] of MARKER_PRESETS) {
       output.stdout.push(`  ${pad(name, 7)} ${glyph}`)
@@ -107,7 +107,7 @@ export const runMarker = Effect.fnUntraced(function*(argv: readonly string[]) {
     yield* pluginWarn(
       paths,
       output,
-      `marker ${pythonRepr(glyph)} is too long; keep it to a couple of cells`,
+      `marker ${quotedRepr(glyph)} is too long; keep it to a couple of cells`,
     )
 
     return commandResult(1, output)

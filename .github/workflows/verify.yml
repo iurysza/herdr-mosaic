@@ -20,10 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
       - uses: actions/setup-node@v4
         with:
           node-version: "22.22.2"
@@ -39,18 +35,12 @@ jobs:
           echo "HERDR_BIN_PATH=$HOME/.local/bin/herdr" >> "$GITHUB_ENV"
           echo "MOSAIC_HERDR_BIN=$HOME/.local/bin/herdr" >> "$GITHUB_ENV"
 
-      - name: Verify plugin
-        run: |
-          python3 -m py_compile src/*.py tests/*.py
-          python3 -m unittest discover -s tests -t tests
-
       - name: Verify TypeScript candidate
         run: |
           bun install --frozen-lockfile
           bun run typecheck
           bun run lint
           bun run test
-          bun run test:parity
           bun run test:runtime
           bun run build
           bun run test:artifact
@@ -58,6 +48,3 @@ jobs:
           if [ "${{ runner.os }}" = "Linux" ]; then
             bun run bench
           fi
-
-      - name: Verify standalone install and restart
-        run: python3 scripts/check-standalone.py

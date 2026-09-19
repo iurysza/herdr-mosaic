@@ -80,16 +80,16 @@ function commandResult(code: number, output: CapturedOutput) {
   } as const
 }
 
-function pythonRepr(value: string): string {
+function quotedRepr(value: string): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`
 }
 
-function pythonValueRepr(value: TomlValue | undefined): string {
+function valueRepr(value: TomlValue | undefined): string {
   if (value === undefined) return "None"
 
-  if (Predicate.isString(value)) return pythonRepr(value)
+  if (Predicate.isString(value)) return quotedRepr(value)
 
-  return pythonRepr(String(value))
+  return quotedRepr(String(value))
 }
 
 function jsonObject(value: Json | undefined): JsonObject {
@@ -325,7 +325,7 @@ export const applyTint = Effect.fnUntraced(function*(
     yield* pluginWarn(
       paths,
       output,
-      `theme ${pythonRepr(themeName ?? "")} looks light; the derived surfaces assume a dark base `
+      `theme ${quotedRepr(themeName ?? "")} looks light; the derived surfaces assume a dark base `
         + "(set settings.theme_base to override)",
     )
   }
@@ -341,7 +341,7 @@ export const applyTint = Effect.fnUntraced(function*(
 
   if (conflicts.length > 0 && !force) {
     const details = conflicts.map((conflict) =>
-      `${conflict.key} (expected ${pythonValueRepr(conflict.expected)}, found ${pythonValueRepr(conflict.actual)})`
+      `${conflict.key} (expected ${valueRepr(conflict.expected)}, found ${valueRepr(conflict.actual)})`
     )
 
     yield* pluginWarn(
@@ -421,7 +421,7 @@ export const restoreTheme = Effect.fnUntraced(function*(
       yield* pluginWarn(
         paths,
         output,
-        `${conflict.key} changed outside the plugin (plugin wrote ${pythonValueRepr(conflict.expected)}, found ${pythonValueRepr(conflict.actual)}); `
+        `${conflict.key} changed outside the plugin (plugin wrote ${valueRepr(conflict.expected)}, found ${valueRepr(conflict.actual)}); `
           + "leaving it alone -- use --force to restore anyway",
       )
       skip.add(conflict.key)
@@ -702,7 +702,7 @@ export const runIntensity = Effect.fnUntraced(function*(argv: readonly string[])
     yield* pluginWarn(
       paths,
       output,
-      `unknown intensity ${pythonRepr(name)}; choose one of: ${INTENSITY_NAMES.join(", ")}`,
+      `unknown intensity ${quotedRepr(name)}; choose one of: ${INTENSITY_NAMES.join(", ")}`,
     )
 
     return commandResult(1, output)

@@ -11,7 +11,7 @@ const repo = join(import.meta.dir, "..", "..")
 const cli = join(repo, "src", "cli.ts")
 
 describe("compiled CLI", () => {
-  test("runs under minimal PATH without Python, .env, or bunfig", async () => {
+  test("runs under minimal PATH without .env or bunfig", async () => {
     const sandbox = makeSandbox()
     const work = mkdtempSync(join(tmpdir(), "mosaic-artifact-"))
     writeFileSync(join(work, ".env"), "HERDR_PLUGIN_ID=evil.plugin\n")
