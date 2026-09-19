@@ -343,5 +343,13 @@ Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 299.
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 fact evidence table
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+`completion.md` now maps all 27 facts to Linux evidence. `fact-09`, `fact-19`, `fact-20`, and `fact-27` stay incomplete until macOS proofs run. GitHub Actions Verify succeeded on `7667a75` (run 35469328772), including standalone. `scripts/check-native-runtime.sh` writes `evidence/native-runtime-<os>-<arch>.json` after those checks pass.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 

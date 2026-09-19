@@ -25,3 +25,26 @@ fi
 
 bun run test:herdr
 python3 scripts/check-standalone.py
+
+os="$(uname -s)"
+arch="$(uname -m)"
+receipt="ai-artifacts/goals/mosaic-typescript-port/evidence/native-runtime-${os}-${arch}.json"
+uname_a="$(uname -a | sed 's/"/\\"/g')"
+bun_v="$(bun --version)"
+herdr_v="$("$HERDR_BIN_PATH" --version 2>/dev/null || printf unknown)"
+herdr_v="$(printf '%s' "$herdr_v" | tr '\n' ' ' | sed 's/"/\\"/g; s/[[:space:]]*$//')"
+
+{
+  printf '{\n'
+  printf '  "os": "%s",\n' "$os"
+  printf '  "arch": "%s",\n' "$arch"
+  printf '  "uname": "%s",\n' "$uname_a"
+  printf '  "bun": "%s",\n' "$bun_v"
+  printf '  "herdr_bin": "%s",\n' "$HERDR_BIN_PATH"
+  printf '  "herdr_version": "%s",\n' "$herdr_v"
+  printf '  "checks": ["typecheck","lint","test:runtime","build","test:artifact","test:herdr","check-standalone"],\n'
+  printf '  "result": "passed"\n'
+  printf '}\n'
+} > "$receipt"
+
+printf 'wrote %s\n' "$receipt"
