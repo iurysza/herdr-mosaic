@@ -233,5 +233,15 @@ Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun r
 
 Next: package the exact candidate (`herdr-plugin.toml` off Python, benches, `completion.md`). Still no success-returning stubs.
 
+## 2026-09-19 step 7 package the exact candidate
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Production manifest, docs, CI, benches, and standalone now launch `dist/mosaic`. Compiled argv drops Bun's `/$bunfs/root/mosaic` placeholder. Frozen Python stays as a reference. `completion.md` records Linux evidence and the unexecuted cutover.
+
+Validation (Linux x86_64, `77d5f9a`): typecheck pass, lint pass, `bun run test` 280, `bun run test:runtime` 25, `bun run test:artifact` 4, parity 105, Python unittest 280, Herdr 0.9.0 transport pass, `scripts/check-standalone.py` passed. Evidence: `evidence/step-7-package.md`.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 
