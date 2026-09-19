@@ -19,8 +19,8 @@ a launch. `pane.moved` does not start a clock. `pane.closed` / `pane.exited`
 drop occupancy so a reused pane id cannot inherit the previous clock.
 `$themed_model_tier` is never copied into settled records.
 
-`tab.renamed` is a handler no-op. Post-success `publishOnce` is wired for the
-refresh events; `refresh.start` is not called from `runCli`.
+`tab.renamed` is a handler no-op. Post-success `publishOnce` and
+`startRefreshWorker` are wired for the refresh events.
 
 `workspaceIdOfPane` splits on the first colon (`w1:p1` → `w1`). JavaScript
 `split(":", 1)` would have returned the whole pane id.

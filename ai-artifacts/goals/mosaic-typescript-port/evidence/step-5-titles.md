@@ -13,8 +13,9 @@ and `repalette` writes `agent-sidebar-title` with no TTL and elapsed with the
 45s TTL. Neither source includes `$themed_model_tier`.
 
 `refresh-worker` now runs the publish loop under the generation lock and exits
-0 on a singleton race. `refresh.start` is not called from `runCli` yet, so
-isolated CLI tests do not spawn detached 30-second workers.
+0 on a singleton race. `runCli` calls `startRefreshWorker` after a successful
+publish. Isolated CLI tests set `MOSAIC_TEST_ISOLATED` so the worker exits after
+one round instead of sleeping 30 seconds.
 
 ## Validation (Linux x86_64)
 

@@ -3,6 +3,7 @@ import { unlinkSync } from "node:fs"
 
 import { Result, Schema } from "effect"
 
+import { PLUGIN_ID } from "../../src/ids.ts"
 import type { JsonObject } from "../../src/runtime/rpc.ts"
 
 export type RpcHandler = (
@@ -101,6 +102,18 @@ export class FakeHerdr {
     for (const event of this.unsolicited) socket.write(event)
 
     const handler = this.handlers.get(method)
+
+    if (handler === undefined && method === "plugin.list") {
+      const root = process.env.HERDR_PLUGIN_ROOT ?? ""
+
+      const plugins = root === ""
+        ? []
+        : [{ plugin_id: PLUGIN_ID, enabled: true, plugin_root: root }]
+
+      socket.write(`${JSON.stringify({ id, result: { plugins } })}\n`)
+
+      return
+    }
 
     if (handler === undefined) {
       this.unexpected.push(method)
