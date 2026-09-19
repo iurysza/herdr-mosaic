@@ -351,5 +351,13 @@ Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkou
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 macOS Verify matrix
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. Step 2 is not marked complete.
+
+GitHub Actions Verify now runs on `ubuntu-latest` and `macos-latest`. Bench stays Linux-only (`/proc` RSS/CPU). Tests no longer assume `/tmp` or `C.UTF-8`. Runtime helpers spawn `process.execPath` instead of `bun` on PATH. `fact-09`, `fact-19`, `fact-20`, and `fact-27` stay incomplete until the macOS job passes.
+
+Next: wait for `macos-latest` Verify. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 

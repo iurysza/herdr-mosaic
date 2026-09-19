@@ -48,7 +48,7 @@ describe("atomic writes", () => {
 
     writeFileSync(path, original)
 
-    const child = spawn("bun", [join(import.meta.dir, "write-tmp-and-hang.ts"), path, "{partial"], {
+    const child = spawn(process.execPath, [join(import.meta.dir, "write-tmp-and-hang.ts"), path, "{partial"], {
       stdio: ["ignore", "pipe", "pipe"],
     })
 
@@ -73,7 +73,7 @@ describe("atomic writes", () => {
     writeFileSync(path, `${JSON.stringify({ n: 0 })}\n`)
 
     const writers = [1, 2, 3, 4].map((n) =>
-      spawn("bun", [join(import.meta.dir, "atomic-writer.ts"), path, `${JSON.stringify({ n })}\n`], {
+      spawn(process.execPath, [join(import.meta.dir, "atomic-writer.ts"), path, `${JSON.stringify({ n })}\n`], {
         stdio: ["ignore", "pipe", "pipe"],
       })
     )

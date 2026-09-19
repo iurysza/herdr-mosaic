@@ -12,7 +12,11 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -51,7 +55,9 @@ jobs:
           bun run build
           bun run test:artifact
           bun run test:herdr
-          bun run bench
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            bun run bench
+          fi
 
       - name: Verify standalone install and restart
         run: python3 scripts/check-standalone.py

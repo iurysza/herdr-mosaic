@@ -3,6 +3,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { resolveHostHerdrBin } from "./host-herdr.ts"
+import { UTF8_LOCALE } from "./locale.ts"
 
 const root = mkdtempSync(join(tmpdir(), "mosaic-test-"))
 
@@ -47,8 +48,8 @@ const isolated = {
   MOSAIC_TEST_ISOLATED: "1",
   MOSAIC_TEST_HOME: home,
   TERM: "dumb",
-  LANG: "C.UTF-8",
-  LC_ALL: "C.UTF-8",
+  LANG: UTF8_LOCALE,
+  LC_ALL: UTF8_LOCALE,
 }
 
 for (const key of Object.keys(process.env)) {

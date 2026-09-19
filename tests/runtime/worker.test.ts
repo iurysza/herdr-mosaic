@@ -47,7 +47,7 @@ describe("worker ownership", () => {
     const stateDir = mkdtempSync(join(tmpdir(), "mosaic-worker-"))
     const env = { ...process.env, HERDR_PLUGIN_STATE_DIR: stateDir }
 
-    const first = spawn("bun", [join(import.meta.dir, "hold-worker.ts"), "sock:1:2:3", "2000"], {
+    const first = spawn(process.execPath, [join(import.meta.dir, "hold-worker.ts"), "sock:1:2:3", "2000"], {
       env,
       stdio: ["ignore", "pipe", "pipe"],
     })
@@ -56,7 +56,7 @@ describe("worker ownership", () => {
       first.stdout?.on("data", () => resolve())
     })
 
-    const second = spawn("bun", [join(import.meta.dir, "hold-worker.ts"), "sock:1:2:3", "10"], {
+    const second = spawn(process.execPath, [join(import.meta.dir, "hold-worker.ts"), "sock:1:2:3", "10"], {
       env,
       stdio: ["ignore", "pipe", "pipe"],
     })

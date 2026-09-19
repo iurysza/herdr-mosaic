@@ -3,6 +3,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { PLUGIN_ID } from "../../src/ids.ts"
+import { UTF8_LOCALE } from "./locale.ts"
 
 export type Sandbox = {
   readonly root: string
@@ -43,8 +44,8 @@ export function makeSandbox(): Sandbox {
       HERDR_LEGACY_LAYOUTS_CONFIG_DIR: join(root, "layouts-config"),
       MOSAIC_TEST_ISOLATED: "1",
       PATH: "/usr/bin:/bin",
-      LANG: "C.UTF-8",
-      LC_ALL: "C.UTF-8",
+      LANG: UTF8_LOCALE,
+      LC_ALL: UTF8_LOCALE,
     },
   }
 }

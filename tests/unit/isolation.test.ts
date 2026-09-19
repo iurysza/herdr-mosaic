@@ -7,7 +7,8 @@ describe("test isolation", () => {
     const socket = process.env.HERDR_SOCKET_PATH
     expect(home).toBeDefined()
     expect(socket).toBeDefined()
-    expect(home?.startsWith("/tmp/mosaic-test-")).toBe(true)
+    expect(home?.includes("mosaic-test-")).toBe(true)
+    expect(home?.endsWith("/home")).toBe(true)
     expect(socket?.startsWith(home ?? "")).toBe(true)
     expect(process.env.HERDR_BIN_PATH?.includes("missing-herdr")).toBe(true)
 
@@ -29,6 +30,7 @@ describe("test isolation", () => {
     if (childHome === undefined) throw new Error("HOME was not isolated")
 
     expect(stdout).toBe(childHome)
-    expect(stdout.startsWith("/tmp/mosaic-test-")).toBe(true)
+    expect(stdout.includes("mosaic-test-")).toBe(true)
+    expect(stdout.endsWith("/home")).toBe(true)
   })
 })

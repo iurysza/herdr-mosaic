@@ -4,6 +4,7 @@ import { join } from "node:path"
 
 import { describe, expect, test } from "bun:test"
 
+import { UTF8_LOCALE } from "../support/locale.ts"
 import { makeSandbox } from "../support/sandbox.ts"
 
 const repo = join(import.meta.dir, "..", "..")
@@ -73,7 +74,7 @@ describe("production CLI subprocess", () => {
           PATH: `${process.execPath.replace(/\/bun$/, "")}:/usr/bin:/bin`,
           HOME: process.env.HOME,
           TERM: "dumb",
-          LANG: "C.UTF-8",
+          LANG: UTF8_LOCALE,
         },
         stdout: "pipe",
         stderr: "pipe",

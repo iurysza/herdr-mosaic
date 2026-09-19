@@ -40,10 +40,11 @@ def ensure_binary():
 
 if not HERDR:
     raise SystemExit("Herdr is required; set HERDR_BIN_PATH")
-HOME = Path(tempfile.mkdtemp(prefix="mosaic-proof-", dir="/tmp"))
+HOME = Path(tempfile.mkdtemp(prefix="mosaic-proof-"))
 CONFIG = HOME / ".config" / "herdr"
 STATE = HOME / ".local" / "state" / "herdr" / "plugins" / "iurysza.mosaic"
 SOCKET = CONFIG / "herdr.sock"
+LOCALE = "en_US.UTF-8" if sys.platform == "darwin" else "C.UTF-8"
 ENV = {
     "HOME": str(HOME), "XDG_CONFIG_HOME": str(HOME / ".config"),
     "XDG_STATE_HOME": str(HOME / ".local" / "state"),
@@ -55,7 +56,7 @@ ENV = {
     "HERDR_PLUGIN_STATE_DIR": str(STATE),
     "HERDR_PLUGIN_CONFIG_DIR": str(CONFIG / "plugins" / "config" / "iurysza.mosaic"),
     "PATH": "/usr/bin:/bin", "SHELL": "/bin/sh", "TERM": "xterm-256color",
-    "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "TMPDIR": str(HOME),
+    "LANG": LOCALE, "LC_ALL": LOCALE, "TMPDIR": str(HOME),
 }
 ensure_binary()
 # Set before importing plugin modules so no path can fall back to the user's HOME.

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs"
+import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { describe, expect, test } from "bun:test"
@@ -117,7 +118,7 @@ describe("sidebar CLI", () => {
 
     expect(afterRemove.sidebar_installed).toBe(false)
     expect(afterRemove.sidebar_backup).toBeNull()
-    expect(sandbox.root.startsWith("/tmp/")).toBe(true)
+    expect(sandbox.root.startsWith(tmpdir())).toBe(true)
   })
 
   test("remove skips a user-modified owned key without --force", async () => {
