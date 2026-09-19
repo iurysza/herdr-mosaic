@@ -59,7 +59,12 @@ def required_ids():
         required.append(("cmd-" + name, "command " + name))
     for name in alias_ids(main):
         required.append(("alias-" + name, "alias " + name))
-    if 'main.py" reconcile' in manifest or 'main.py\\" reconcile' in manifest:
+    if (
+        'main.py" reconcile' in manifest
+        or 'main.py\\" reconcile' in manifest
+        or 'mosaic" reconcile' in manifest
+        or 'mosaic\\" reconcile' in manifest
+    ):
         required.append(("startup-reconcile", "startup reconcile"))
     for name in toml_section_ids(manifest, "[[events]]", "on"):
         required.append(("event-" + name, "event " + name))

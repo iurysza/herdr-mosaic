@@ -286,7 +286,7 @@ export const runPicker = Effect.fnUntraced(function*(_argv: readonly string[]) {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     output.stderr.push(
       "picker needs a terminal; run it as the plugin popup, or use:\n"
-        + `  main.py set-color --workspace ${target} --color azure`,
+        + `  dist/mosaic set-color --workspace ${target} --color azure`,
     )
 
     return { code: 1, stdout: "", stderr: joinOutput(output.stderr) } as const
@@ -299,7 +299,7 @@ export const runPicker = Effect.fnUntraced(function*(_argv: readonly string[]) {
         stdout: "",
         stderr: joinOutput([
           "picker needs a terminal; run it as the plugin popup, or use:\n"
-            + `  main.py set-color --workspace ${target} --color azure`,
+            + `  dist/mosaic set-color --workspace ${target} --color azure`,
         ]),
       }),
     ),

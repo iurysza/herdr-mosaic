@@ -15,8 +15,8 @@ Public docs present the product, not its migration or personal rollout history.
 Keep runtime compatibility, regression tests, and licence notices intact.
 
 Last-focus is deferred. Mosaic publishes titles and elapsed tokens itself using
-`sidebar.py` and a detached `refresh.py` worker. `$themed_model_tier` remains
-optional agent-provided metadata; Mosaic must never write or clear it.
+`src/agents/sidebar-publish.ts` and a detached refresh worker. `$themed_model_tier`
+remains optional agent-provided metadata; Mosaic must never write or clear it.
 
 The worker uses the existing `agent-sidebar-title` and `agent-elapsed` sources.
 Titles have no TTL. Elapsed uses the measured 30-second refresh / 45-second TTL
@@ -32,7 +32,7 @@ contract. Do not run another publisher for those tokens at the same time.
 - **Every mutation runs under `ctx.Lock`.** Multiple hooks can fire concurrently;
   the file lock serialises all state and config writes. Never bypass it. Layout
   reshape/resize use the same lock.
-- **Config edits go through `config_patch.py`.** It validates via `herdr config check`
+- **Config edits go through `src/config/patch.ts`.** It validates via `herdr config check`
   before writing, takes a backup, and detects external modifications. Never write
   `config.toml` directly.
 - **`uninstall` must be reversible.** The plugin records the exact pre-plugin value
@@ -83,6 +83,7 @@ Each of these was a real bug, not a hypothetical:
 python3 -m unittest discover -s tests -t tests # frozen Python reference
 python3 scripts/check-standalone.py            # isolated real Herdr lifecycle
 bun run typecheck && bun run lint && bun run test
+bun run test:runtime && bun run test:artifact
 python3 scripts/check-parity-inventory.py
 ```
 
@@ -99,7 +100,7 @@ Do not point doctor or install at the default session until cutover is approved.
 Use a fully isolated disposable Herdr HOME/config/socket/registry, or skip.
 
 ```sh
-python3 src/main.py doctor
+./dist/mosaic doctor
 herdr plugin action invoke iurysza.mosaic.doctor
 ```
 
@@ -115,15 +116,11 @@ herdr plugin action invoke iurysza.mosaic.doctor
 
 ## Layout
 
-`src/` is small modules with one job each: `main.py` dispatches, `ctx.py` holds
-env/paths/settings/locking, `rpc.py` talks to the Herdr socket, `state.py` owns
-the durable identity map, `identity.py` owns the palette and allocation,
-`labels.py` applies portable label→colour rules, `theme.py` handles colour blending,
-`config_patch.py` edits `config.toml`, `toml_edit.py` is the surgical TOML writer,
-`metadata.py` publishes workspace/pane metadata, `agent_view.py` manages the native
-agent projection, `picker.py` and `board.py` are the two popup panes,
-`layouts.py` is the pure layout core, `layout_actions.py` reshapes/resizes under
-the plugin lock, `migrate.py` imports Window Manager data intact, or Chromatic/layouts state
-without applying stale Chromatic config backups. `sidebar.py` renders title/clock
-metadata and `refresh.py` owns per-socket scheduling. `scripts/check-standalone.py`
-proves install, timer refresh, restart, and cleanup without live setup.
+Production code lives under `src/` as TypeScript modules: `cli.ts` dispatches,
+`runtime/` holds env/paths/locking/RPC/the worker, `config/` edits `config.toml`,
+`state/` owns the durable identity map, `spaces/` owns palette, labels, and theme,
+`agents/` manages views, triage, titles, and clocks, `panes/` owns layouts and
+pane moves, `terminal/` owns raw TTY sessions, and `lifecycle/` owns
+install/doctor/uninstall. Frozen Python under `src/*.py` is a reference and
+rollback option, not the shipped runtime. `scripts/check-standalone.py` proves
+install, timer refresh, restart, and cleanup without live setup.

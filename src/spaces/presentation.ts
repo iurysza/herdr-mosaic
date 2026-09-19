@@ -362,7 +362,7 @@ export const runList = Effect.fnUntraced(function*(_argv: readonly string[]) {
   output.stdout.push("Set with:")
   output.stdout.push("  prefix+i                                    # picker popup")
   output.stdout.push(
-    `  /usr/bin/python3 ${paths.pluginRoot}/src/main.py set-color `
+    `  ${paths.pluginRoot}/dist/mosaic set-color `
       + "--workspace <id> --color <name|hex>",
   )
 

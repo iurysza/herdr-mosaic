@@ -47,8 +47,10 @@ jobs:
           bun run test
           bun run test:parity
           bun run test:runtime
+          bun run build
           bun run test:artifact
           bun run test:herdr
+          bun run bench
 
       - name: Verify standalone install and restart
         run: python3 scripts/check-standalone.py

@@ -316,4 +316,83 @@ describe("agent view CLI", () => {
       await fake.close()
     }
   })
+
+  test("reconcile republishes workspace and pane metadata after loss", async () => {
+    const { env, fake } = lifecycleEnv()
+    const statePath = join(required(env, "HERDR_PLUGIN_STATE_DIR"), "state.json")
+    const state = defaultState()
+
+    state.identities = { w1: { colour: "#7aa2f7", origin: "manual" } }
+    save(statePath, state)
+    fake.on("workspace.list", () => ({
+      workspaces: [{ workspace_id: "w1", number: 1, label: "Website" }],
+    }))
+    fake.on("agent.list", () => ({
+      agents: [{ pane_id: "w1:p1", workspace_id: "w1" }],
+    }))
+
+    await fake.listen()
+
+    try {
+      expect((await run(["reconcile"], env)).code).toBe(0)
+
+      const spaces = fake.requests.filter((request) => request.method === "workspace.report_metadata")
+      const panes = fake.requests.filter((request) => request.method === "pane.report_metadata")
+
+      expect(spaces.some((request) => request.params.workspace_id === "w1")).toBe(true)
+      expect(panes.some((request) => request.params.pane_id === "w1:p1")).toBe(true)
+    } finally {
+      await fake.close()
+    }
+  })
+
+  test("second ownership cycle restores the current pre-plugin rows", async () => {
+    const { env, fake, configPath } = lifecycleEnv()
+
+    const cycleA = [
+      "[ui.sidebar.agents]",
+      'rows = [["state_icon", "workspace", "tab"], ["agent"]]',
+      "",
+      "[ui.sidebar.spaces]",
+      'rows = [["state_icon", "workspace"], ["branch", "git_status"]]',
+      "",
+    ].join("\n")
+
+    const cycleB = [
+      "[ui.sidebar.agents]",
+      'rows = [["state_icon", "agent"]]',
+      "",
+      "[ui.sidebar.spaces]",
+      'rows = [["state_icon", "workspace"], ["branch", "git_status"]]',
+      "",
+    ].join("\n")
+
+    const statePath = join(required(env, "HERDR_PLUGIN_STATE_DIR"), "state.json")
+
+    writeFileSync(configPath, cycleA)
+    await fake.listen()
+
+    try {
+      expect((await run(["install"], env)).code).toBe(0)
+
+      const first = load(statePath)
+
+      expect(first.sidebar_backup).not.toBeNull()
+      expect((await run(["uninstall"], env)).code).toBe(0)
+      expect(load(statePath).sidebar_backup).toBeNull()
+      expect(load(statePath).ownership_baseline).toBeNull()
+      expect(load(statePath).last_written).toEqual({})
+      writeFileSync(configPath, cycleB)
+      expect((await run(["install"], env)).code).toBe(0)
+
+      const second = load(statePath)
+
+      expect(JSON.stringify(second.sidebar_backup)).toContain('["state_icon","agent"]')
+      expect(JSON.stringify(second.ownership_baseline)).toContain('["state_icon","agent"]')
+      expect((await run(["uninstall"], env)).code).toBe(0)
+      expect(readFileSync(configPath, "utf8")).toBe(cycleB)
+    } finally {
+      await fake.close()
+    }
+  })
 })

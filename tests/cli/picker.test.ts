@@ -100,7 +100,7 @@ describe("picker CLI", () => {
 
       expect(result.code).toBe(1)
       expect(result.stderr).toContain("picker needs a terminal; run it as the plugin popup, or use:")
-      expect(result.stderr).toContain(`main.py set-color --workspace w1 --color azure`)
+      expect(result.stderr).toContain(`dist/mosaic set-color --workspace w1 --color azure`)
     } finally {
       await fake.close()
     }
