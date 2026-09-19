@@ -14,8 +14,8 @@ The TypeScript CLI preserves the reference lock, surgical TOML, byte-exact resto
 
 | ID | Status | Reason |
 | --- | --- | --- |
-| `safety-lock` | blocked | Linux flock proofs exist; macOS native proofs are owner-run after the PR |
-| `cli-compiled-min-path` | in-progress | Linux compiled artifact passed; macOS artifact is owner-run after the PR |
+| `safety-lock` | blocked | Linux flock proofs exist; GitHub Actions `macos-latest` Verify is the remaining native proof |
+| `cli-compiled-min-path` | in-progress | Linux compiled artifact passed; GitHub Actions `macos-latest` Verify is the remaining native proof |
 
 No unexplained Python/TypeScript behavior differences were left unmarked. Shared CLI cases in `tests/cli/differential.test.ts` compare help, unknown-command, plugin-id errors, sidebar-install config bytes, install `--dry-run`, doctor exit 0, tint enable/disable restore, and install/uninstall byte restore in separate sandboxes. Every command and alias keeps the same plugin-id and pending-import guards. `rewriteArgv` keeps extra argv for every alias (`tests/unit/catalog.test.ts`). Every catalog command has a dispatch branch, so `UnimplementedCommand` cannot hide a missing entry. Python uninstall restores a TypeScript-installed fixture, and TypeScript uninstall restores a Python-installed fixture. Log JSON spacing is a documented incidental difference.
 
@@ -82,7 +82,7 @@ Refresh-worker after the first one-pane heartbeat (CLK_TCK=100): Python 21_260 K
 
 ## Remaining non-blocking risks
 
-- macOS native proofs (flock, TTY, compiled PATH, real Herdr) are still outstanding by owner choice. They block `fact-09`, `fact-19`, `fact-20`, `fact-27`, `safety-lock`, and `cli-compiled-min-path`. Run `bash scripts/check-native-runtime.sh` after installing Herdr with `scripts/ci/install-herdr.sh`. A passing run writes `evidence/native-runtime-Darwin-*.json`.
+- macOS native proofs (flock, TTY, compiled PATH, real Herdr) still block `fact-09`, `fact-19`, `fact-20`, `fact-27`, `safety-lock`, and `cli-compiled-min-path` until they pass. Verify now runs the same TypeScript, runtime, artifact, Herdr, and standalone checks on `macos-latest` (bench stays Linux-only because it samples `/proc`). The owner script `bash scripts/check-native-runtime.sh` still writes `evidence/native-runtime-Darwin-*.json`.
 - The compiled binary and worker RSS are larger than Python because Bun embeds its runtime. Round CPU and wall-time stay in the same range.
 - Two named Herdr sessions still share `config.toml`; `doctor` warns. That is unchanged reference behavior.
 - Source `bun` without `--no-env-file` still loads cwd `bunfig.toml`. Production launch is the compiled binary, which does not.

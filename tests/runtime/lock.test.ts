@@ -27,7 +27,7 @@ function waitExit(child: ReturnType<typeof spawn>): Promise<{
 }
 
 function spawnHolder(stateDir: string, holdMs: string, timeoutMs = "2000") {
-  return spawn("bun", [join(import.meta.dir, "hold-lock.ts"), holdMs, timeoutMs], {
+  return spawn(process.execPath, [join(import.meta.dir, "hold-lock.ts"), holdMs, timeoutMs], {
     env: { ...process.env, HERDR_PLUGIN_STATE_DIR: stateDir },
     stdio: ["ignore", "pipe", "pipe"],
   })

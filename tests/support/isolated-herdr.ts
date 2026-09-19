@@ -6,6 +6,7 @@ import { join } from "node:path"
 
 import { PLUGIN_ID } from "../../src/ids.ts"
 import { resolveHostHerdrBin } from "./host-herdr.ts"
+import { UTF8_LOCALE } from "./locale.ts"
 
 export function herdrBin(): string {
   const fromEnv = resolveHostHerdrBin({
@@ -60,8 +61,8 @@ export function startIsolatedHerdr(bin: string, options: IsolatedHerdrOptions = 
     PATH: "/usr/bin:/bin",
     SHELL: "/bin/sh",
     TERM: "xterm-256color",
-    LANG: "C.UTF-8",
-    LC_ALL: "C.UTF-8",
+    LANG: UTF8_LOCALE,
+    LC_ALL: UTF8_LOCALE,
     TMPDIR: home,
   }
 
