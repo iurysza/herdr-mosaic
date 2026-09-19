@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.log
+node_modules/
+dist/
+src/.lint-probe-*.ts
+
+
