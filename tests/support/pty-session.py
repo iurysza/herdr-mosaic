@@ -6,6 +6,7 @@ import fcntl
 import os
 import pty
 import select
+import signal
 import struct
 import sys
 import termios
@@ -23,10 +24,11 @@ def main():
     if pid == 0:
         os.execvp(sys.argv[1], sys.argv[1:])
     collected = bytearray()
-    deadline = time.monotonic() + 5
+    deadline = time.monotonic() + 4
     sent_key = False
     resized = False
     sent_cancel = False
+    status = 0
     try:
         resize(master, 24, 80)
         while time.monotonic() < deadline:
@@ -45,7 +47,7 @@ def main():
                 if "raw:1" in text and not sent_key:
                     os.write(master, b"x")
                     sent_key = True
-                if sent_key and "key:78" in text and not resized:
+                if sent_key and "key:120" in text and not resized:
                     resize(master, 12, 40)
                     resized = True
                 if resized and "resize:" in text and not sent_cancel:
@@ -53,14 +55,30 @@ def main():
                     sent_cancel = True
                 if "restored:1" in text:
                     break
-            _, status = os.waitpid(pid, os.WNOHANG)
-            if status != 0:
+            waited, child_status = os.waitpid(pid, os.WNOHANG)
+            if waited == pid:
+                status = child_status
+                pid = 0
                 break
-        _, status = os.waitpid(pid, 0)
+        if pid:
+            end = time.monotonic() + 1
+            while time.monotonic() < end:
+                waited, child_status = os.waitpid(pid, os.WNOHANG)
+                if waited == pid:
+                    status = child_status
+                    pid = 0
+                    break
+                time.sleep(0.05)
+            if pid:
+                os.kill(pid, signal.SIGKILL)
+                _, status = os.waitpid(pid, 0)
     finally:
         os.close(master)
     sys.stdout.buffer.write(bytes(collected))
-    raise SystemExit(os.waitstatus_to_exitcode(status) if os.WIFEXITED(status) else 1)
+    sys.stderr.write("sent_key=%s resized=%s sent_cancel=%s\n" % (sent_key, resized, sent_cancel))
+    if os.WIFEXITED(status):
+        raise SystemExit(os.WEXITSTATUS(status))
+    raise SystemExit(1)
 
 
 if __name__ == "__main__":

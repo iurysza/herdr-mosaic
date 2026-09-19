@@ -1,6 +1,7 @@
+import { existsSync } from "node:fs"
 import { platform } from "node:os"
 
-import { dlopen, FFIType, read, suffix } from "bun:ffi"
+import { dlopen, FFIType, read } from "bun:ffi"
 
 const LOCK_EX = 2
 
@@ -20,7 +21,7 @@ type FlockLib = {
 }
 
 function darwinLib(): FlockLib {
-  const lib = dlopen("libSystem.B.dylib", {
+  const lib = dlopen("/usr/lib/libSystem.B.dylib", {
     flock: { args: [FFIType.i32, FFIType.i32], returns: FFIType.i32 },
     __error: { args: [], returns: FFIType.ptr },
   })
@@ -35,8 +36,22 @@ function darwinLib(): FlockLib {
   }
 }
 
+function linuxLibcPath(): string {
+  const candidates = [
+    "/lib/x86_64-linux-gnu/libc.so.6",
+    "/lib64/libc.so.6",
+    "/usr/lib/x86_64-linux-gnu/libc.so.6",
+  ]
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate
+  }
+
+  throw new Error("absolute libc.so.6 not found")
+}
+
 function linuxLib(): FlockLib {
-  const lib = dlopen(`libc.${suffix}`, {
+  const lib = dlopen(linuxLibcPath(), {
     flock: { args: [FFIType.i32, FFIType.i32], returns: FFIType.i32 },
     __errno_location: { args: [], returns: FFIType.ptr },
   })

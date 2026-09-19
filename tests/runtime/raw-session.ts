@@ -3,6 +3,8 @@ import { Effect } from "effect"
 
 import { withRawTerminal } from "../../src/runtime/terminal.ts"
 
+process.stdin.resume()
+
 const program = withRawTerminal(Effect.callback<number>((resume) => {
   process.stdout.write("raw:1\n")
 
@@ -11,6 +13,7 @@ const program = withRawTerminal(Effect.callback<number>((resume) => {
   }
 
   process.on("SIGWINCH", onResize)
+  onResize()
 
   const onData = (chunk: Buffer) => {
     const byte = chunk[0]

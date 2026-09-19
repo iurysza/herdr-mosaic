@@ -26,7 +26,7 @@ describe("terminal adapter", () => {
     const code = await proc.exited
     expect(code, stderr).toBe(0)
     expect(stdout).toContain("raw:1")
-    expect(stdout).toContain("key:78")
+    expect(stdout).toContain("key:120")
     expect(stdout).toContain("resize:")
     expect(stdout).toContain("restored:1")
   }, 10_000)
