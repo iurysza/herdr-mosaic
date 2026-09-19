@@ -3,14 +3,17 @@ import { createHash } from "node:crypto"
 import { closeSync, existsSync, openSync, readFileSync, realpathSync, statSync } from "node:fs"
 import { join } from "node:path"
 
-import { Effect, Result, Schema } from "effect"
+import { Clock, Duration, Effect, Result, Schema } from "effect"
 
-import { PLUGIN_ID } from "../ids.ts"
-import { CommandFailed } from "./errors.ts"
-import { pluginLockPath, withExclusiveLock } from "./lock.ts"
+import { publishSidebar } from "../agents/sidebar-publish.ts"
+import { PLUGIN_ID, REFRESH_INTERVAL_SECONDS } from "../ids.ts"
+import { CommandFailed, RpcTransportError } from "./errors.ts"
+import { atomicWrite, pluginLockPath, withExclusiveLock } from "./lock.ts"
+import { emptyOutput, pluginWarn } from "./plugin-log.ts"
 import type { PluginPathValues } from "./paths.ts"
 import { PluginPaths } from "./paths.ts"
 import { rpcCall } from "./rpc.ts"
+import { load } from "../state/store.ts"
 
 const PluginRecord = Schema.Struct({
   plugin_id: Schema.optionalKey(Schema.String),
@@ -48,6 +51,10 @@ export function workerLockName(key: string): string {
 
 export function workerLockPath(stateDir: string, key: string): string {
   return join(stateDir, workerLockName(key))
+}
+
+export function workerHeartbeatPath(stateDir: string, key: string): string {
+  return join(stateDir, `refresh-${createHash("sha256").update(key).digest("hex")}.json`)
 }
 
 export const withWorkerOwnership = Effect.fnUntraced(function*<A, E, R>(
@@ -119,11 +126,84 @@ export function spawnDetachedWorker(options: {
 
 export const runRefreshWorker = Effect.fnUntraced(function*(key: string) {
   const paths = yield* PluginPaths
+  const output = emptyOutput()
 
-  return yield* withWorkerOwnership(paths.stateDir, key, Effect.never).pipe(
+  return yield* withWorkerOwnership(paths.stateDir, key, refreshLoop(paths, output, key)).pipe(
     Effect.catchTag("LockTimeout", () => Effect.succeed(0)),
-    Effect.as(0),
   )
+})
+
+const refreshLoop = Effect.fnUntraced(function*(
+  paths: PluginPathValues,
+  output: ReturnType<typeof emptyOutput>,
+  key: string,
+) {
+  while (true) {
+    const started = yield* Clock.monotonicTimeNanos
+    const round = yield* refreshRound(paths, key).pipe(Effect.result)
+
+    if (Result.isSuccess(round)) {
+
+      if (round.success !== undefined) return round.success
+    } else {
+      const error = round.failure
+
+      const message = error instanceof RpcTransportError
+        ? `${error.code}: ${error.message}`
+        : error instanceof Error
+          ? error.message
+          : String(error)
+
+      yield* pluginWarn(paths, output, `sidebar refresh failed: ${message}`)
+
+      if (error instanceof RpcTransportError && error.code === "socket_unavailable") return 1
+    }
+
+    const ended = yield* Clock.monotonicTimeNanos
+    const elapsedMs = Number((ended - started) / 1_000_000n)
+
+    yield* Effect.sleep(Duration.millis(Math.max(0, REFRESH_INTERVAL_SECONDS * 1000 - elapsedMs)))
+  }
+})
+
+const refreshRound = Effect.fnUntraced(function*(paths: PluginPathValues, key: string) {
+  return yield* withExclusiveLock(
+    pluginLockPath(paths.stateDir),
+    refreshRoundLocked(paths, key),
+  )
+})
+
+const refreshRoundLocked = Effect.fnUntraced(function*(paths: PluginPathValues, key: string) {
+  const current = yield* Effect.try({
+    try: () => readSocketGeneration(paths.socketPath),
+    catch: (cause) =>
+      new RpcTransportError({
+        code: "socket_unavailable",
+        message: cause instanceof Error ? cause.message : String(cause),
+      }),
+  })
+
+  if (current !== key) return 0
+
+  if (!(yield* pluginRegistered(paths.pluginRoot))) return 0
+
+  if (!sidebarInstalled(paths.stateDir)) return 0
+
+  const started = yield* Clock.monotonicTimeNanos
+  const count = yield* publishSidebar(load(join(paths.stateDir, "state.json")))
+  const ended = yield* Clock.monotonicTimeNanos
+  const publishedAt = (yield* Clock.currentTimeMillis) / 1000
+
+  const heartbeat = {
+    pid: process.pid,
+    published_at: publishedAt,
+    agents: count,
+    duration_seconds: Number(ended - started) / 1_000_000_000,
+  }
+
+  atomicWrite(workerHeartbeatPath(paths.stateDir, key), `${JSON.stringify(heartbeat)}\n`)
+
+  return undefined
 })
 
 export const startRefreshWorker = Effect.fnUntraced(function*(
