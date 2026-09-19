@@ -83,4 +83,4 @@ Isolate-preload still points `HERDR_BIN_PATH` at `missing-herdr`. The host binar
 
 `tests/cli/differential.test.ts` also compares install then uninstall byte restore. Python uninstall restores a TypeScript-installed fixture, and TypeScript uninstall restores a Python-installed fixture. Plugin-id and pending-import guards match for every catalog command and CLI alias. `tests/herdr/lifecycle.test.ts` runs the same cycle against a disposable Herdr 0.9.0 server after `plugin link --disabled` and `plugin.enable`.
 
-macOS flock, TTY, compiled-min-PATH, and artifact proofs are owner-run after the PR is open (`bash scripts/check-native-runtime.sh`). Live cutover is out of scope.
+macOS flock, TTY, compiled-min-PATH, Herdr, and standalone proofs passed on GitHub Actions `macos-latest` for `ee0b54b` (run 35470501982). Live cutover is out of scope.

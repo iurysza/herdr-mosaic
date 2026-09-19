@@ -375,5 +375,11 @@ Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkou
 
 Next: wait for `macos-latest` Verify. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 macOS and Linux Verify passed
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529` at `ee0b54b`. Isolated checkout. Default session unused.
+
+GitHub Actions run 35470501982 succeeded on `ubuntu-latest` and `macos-latest`, including TypeScript candidate, Herdr 0.9.0, and `scripts/check-standalone.py`. All 105 inventory rows are `passed`. All 27 facts have evidence. Live cutover was not executed.
+
 
 
