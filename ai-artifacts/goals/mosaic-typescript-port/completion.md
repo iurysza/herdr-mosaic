@@ -1,6 +1,6 @@
 # Mosaic TypeScript port — completion report
 
-Candidate: `77d5f9ae77f2ebb919e0acbbd425deb7c7f4a566` on `cursor/mosaic-typescript-port-1529`. Frozen Python reference remains `8b7bb76` / manifest `0.5.0`. Live cutover was not executed.
+Candidate: `27efbe400bf63080341c5666e95ab5d0b6ce426c` on `cursor/mosaic-typescript-port-1529`. Frozen Python reference remains `8b7bb76` / manifest `0.5.0`. Live cutover was not executed. The compiled artifact hash is unchanged from `77d5f9a`.
 
 ## Implemented behavior
 
@@ -25,7 +25,7 @@ No unexplained Python/TypeScript behavior differences were left unmarked.
 | --- | --- |
 | `bun run typecheck` | pass |
 | `bun run lint` | pass |
-| `bun run test` | 280 pass |
+| `bun run test` | 281 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:artifact` | 4 pass |
 | `bun run test:herdr` | pass against Herdr 0.9.0 |
@@ -33,7 +33,7 @@ No unexplained Python/TypeScript behavior differences were left unmarked.
 | `python3 -m unittest discover -s tests -t tests` | 280 pass |
 | `scripts/check-standalone.py` | passed; receipt in `evidence/step-7-standalone-receipt.json` |
 
-Evidence: `evidence/step-7-package.md`, plus earlier slice files under `evidence/`.
+Evidence: `evidence/step-7-package.md`, `evidence/step-7-bench.json`, plus earlier slice files under `evidence/`.
 
 ## Manual review
 
@@ -43,12 +43,14 @@ macOS native lock, TTY, and compiled-min-PATH proofs were not run here. The owne
 
 ## Performance
 
-Eight isolated samples. Medians: Python `--help` 35.4 ms, compiled `--help` 33.6 ms, bun-source `--help` 95.2 ms. Malformed-event medians: Python 36.8 ms, compiled 33.9 ms. Package size: Python sources 226_695 bytes; compiled `dist/mosaic` 81_823_200 bytes because Bun embeds its runtime. Standalone refresh rounds were 0.3–0.4 s for one pane. TypeScript is not required to outperform Python.
+Eight isolated samples, `PATH=/usr/bin:/bin` for the compiled binary. Medians: Python `--help` 35.8 ms, compiled `--help` 33.7 ms, bun-source `--help` 96.2 ms. Malformed-event medians: Python 51.7 ms, compiled 33.8 ms. Event times vary with host load.
+
+Refresh-worker after the first one-pane heartbeat (CLK_TCK=100): Python 21_260 KB RSS, 5.9 ms round, 0.03 s user CPU; compiled 44_188 KB RSS, 4.3 ms round, 0.03 s user + 0.01 s system CPU. Package size: Python sources 226_695 bytes; compiled `dist/mosaic` 81_823_200 bytes because Bun embeds its runtime. Standalone refresh rounds were 0.3–0.4 s for one pane. TypeScript is not required to outperform Python.
 
 ## Remaining non-blocking risks
 
 - macOS native proofs (flock, TTY, compiled PATH) are still outstanding by owner choice.
-- The compiled binary is large relative to the Python sources. That is the Bun compile payload, not application source growth.
+- The compiled binary and worker RSS are larger than Python because Bun embeds its runtime. Round CPU and wall-time stay in the same range.
 - Two named Herdr sessions still share `config.toml`; `doctor` warns. That is unchanged reference behavior.
 - Source `bun` without `--no-env-file` still loads cwd `bunfig.toml`. Production launch is the compiled binary, which does not.
 
@@ -66,7 +68,7 @@ Rollback:
 
 1. Run TypeScript `uninstall`.
 2. Restore the frozen Python checkout at `8b7bb76`.
-3. Register it and invoke `install`. TypeScript-written `state.json` and restore records remain readable by that Python (see `tests/unit/state.test.ts` and sidebar backup round-trip tests).
+3. Register it and invoke `install`. TypeScript-written `state.json` and restore records remain readable by that Python (`tests/unit/state.test.ts`). Python `sidebar-remove` restored TypeScript-installed `users_real` config bytes in `tests/cli/sidebar.test.ts`.
 4. Keep Chromatic/Window Manager source directories; do not apply Chromatic `sidebar_backup` / `theme_backup` / `last_written`.
 
 Do not run install, doctor, or uninstall against the default session until cutover is approved.
