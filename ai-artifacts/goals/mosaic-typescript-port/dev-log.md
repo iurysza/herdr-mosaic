@@ -253,5 +253,15 @@ Validation (Linux x86_64, `27efbe4`): typecheck pass, lint pass, `bun run test` 
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 fact-17 shared differential cases
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+`tests/cli/differential.test.ts` runs help, unknown-command, plugin-id, sidebar-install, and empty sidebar-remove against Python and TypeScript in separate sandboxes. Sidebar-install config bytes match. Help alias listing uses the same sorted order as the frozen CLI. `scripts/ci/install-herdr.sh` now pins Herdr 0.9.0 for Linux and macOS so the owner can run `scripts/check-native-runtime.sh`.
+
+Validation (Linux x86_64): typecheck pass, lint pass, `bun run test` 284. Documented incidental difference: Python log JSON has spaces; TypeScript `JSON.stringify` does not.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 

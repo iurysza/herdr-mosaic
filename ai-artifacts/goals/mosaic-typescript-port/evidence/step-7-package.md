@@ -47,7 +47,7 @@ Linux x86_64 outcomes:
 | --- | --- |
 | typecheck | pass |
 | lint | pass |
-| `bun run test` | 281 pass |
+| `bun run test` | 284 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:parity` | 105 entrypoints |
 | `bun run test:artifact` | 4 pass |
@@ -75,8 +75,8 @@ Medians and worker resources:
 
 Source bun is slower because it loads TypeScript. The compiled binary matches Python startup on this host. The compiled worker holds about twice Python's RSS because Bun embeds its runtime; round wall-time and CPU ticks stay in the same range. TypeScript is not required to outperform Python.
 
-Python `sidebar-remove` restored TypeScript-installed `users_real` config bytes in `tests/cli/sidebar.test.ts`.
+Python `sidebar-remove` restored TypeScript-installed `users_real` config bytes in `tests/cli/sidebar.test.ts`. `tests/cli/differential.test.ts` compares help, unknown-command, plugin-id, and sidebar-install config bytes in separate Python and TypeScript sandboxes.
 
 ## Remaining
 
-macOS flock, TTY, compiled-min-PATH, and artifact proofs are owner-run after the PR is open. Live cutover is out of scope.
+macOS flock, TTY, compiled-min-PATH, and artifact proofs are owner-run after the PR is open (`bash scripts/check-native-runtime.sh`). Live cutover is out of scope.

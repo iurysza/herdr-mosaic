@@ -17,7 +17,7 @@ The TypeScript CLI preserves the reference lock, surgical TOML, byte-exact resto
 | `safety-lock` | blocked | Linux flock proofs exist; macOS native proofs are owner-run after the PR |
 | `cli-compiled-min-path` | in-progress | Linux compiled artifact passed; macOS artifact is owner-run after the PR |
 
-No unexplained Python/TypeScript behavior differences were left unmarked.
+No unexplained Python/TypeScript behavior differences were left unmarked. Shared CLI cases in `tests/cli/differential.test.ts` compare help, unknown-command, plugin-id errors, and sidebar-install config bytes in separate sandboxes. Log JSON spacing is a documented incidental difference.
 
 ## Automated results (Linux x86_64)
 
@@ -25,7 +25,7 @@ No unexplained Python/TypeScript behavior differences were left unmarked.
 | --- | --- |
 | `bun run typecheck` | pass |
 | `bun run lint` | pass |
-| `bun run test` | 281 pass |
+| `bun run test` | 284 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:artifact` | 4 pass |
 | `bun run test:herdr` | pass against Herdr 0.9.0 |
@@ -49,7 +49,7 @@ Refresh-worker after the first one-pane heartbeat (CLK_TCK=100): Python 21_260 K
 
 ## Remaining non-blocking risks
 
-- macOS native proofs (flock, TTY, compiled PATH) are still outstanding by owner choice.
+- macOS native proofs (flock, TTY, compiled PATH) are still outstanding by owner choice. Run `bash scripts/check-native-runtime.sh` after installing Herdr with `scripts/ci/install-herdr.sh`.
 - The compiled binary and worker RSS are larger than Python because Bun embeds its runtime. Round CPU and wall-time stay in the same range.
 - Two named Herdr sessions still share `config.toml`; `doctor` warns. That is unchanged reference behavior.
 - Source `bun` without `--no-env-file` still loads cwd `bunfig.toml`. Production launch is the compiled binary, which does not.
