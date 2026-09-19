@@ -1,0 +1,223 @@
+{
+  "stage": "facts",
+  "title": "Mosaic TypeScript port: approve the execution contract",
+  "goalSlug": "mosaic-typescript-port",
+  "facts": [
+    {
+      "id": "fact-01",
+      "text": "The finished application uses TypeScript, Bun, and Effect, and has no Python runtime dependency or Python fallback.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-02",
+      "text": "CI runs strict TypeScript checking, Oxlint, and vendored anti-slop generic and Effect rules. Tool versions and anti-slop provenance are pinned, and the no-module-mocking policy covers Bun as well as other test APIs.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-03",
+      "text": "The Python compatibility reference is revision 8b7bb76cf88e9be0452f126209aa58f84be0b0ed, manifest version 0.5.0. Commands, aliases, action IDs, hooks, popup entrypoints, environment inputs, and exit behavior remain compatible.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-04",
+      "text": "The parity inventory covers every reference capability, including colors, labels, themes, sidebar metadata, agent tracking and views, interactive panes, agent pruning, pane operations, installation, migration, recovery, maintenance commands, and refresh scheduling.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-05",
+      "text": "Configuration edits remain surgical, validate candidates against baseline diagnostics, retain backups, detect ownership conflicts, and use atomic writes. Invalid candidates leave the configuration file unchanged.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-06",
+      "text": "Uninstall restores owned configuration to its recorded prior state, including absence and exact bytes where restoration promises them. User edits and pre-existing keybindings survive according to the reference conflict and explicit-force behavior.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-07",
+      "text": "Migration preserves complete Window Manager state and restoration records without overwriting existing Mosaic data. Older Chromatic imports never apply stale sidebar_backup, theme_backup, or last_written records. Source data remains available for rollback.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-08",
+      "text": "The TypeScript application reads existing settings and state without unapproved compatibility tightening. The frozen Python reference can read TypeScript-written state and use its restoration records during an isolated rollback test.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-09",
+      "text": "Mutating operations retain the shared cross-process lock semantics. Contention, interruption, and process death are tested on macOS and Linux, including worker ownership locks.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-10",
+      "text": "Mosaic preserves metadata ownership, leaves themed_model_tier untouched, preserves rows_by_agent, and respects sidebar token limits. Titles have no TTL, and elapsed metadata retains the 30-second refresh and 45-second TTL contract.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-11",
+      "text": "Short-lived commands and one effective refresh publisher per socket generation remain the process model. Reconciliation does not create duplicate publishers, restart restores publication, and workers stop when their ownership or registration ends.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-12",
+      "text": "Agent pruning requires confirmation, preserves protected agents, and rechecks liveness and eligibility immediately before closure. An agent that becomes ineligible after selection is not closed.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-13",
+      "text": "Pane moves, promotion, layout cycling, equalization, and resizing preserve reference behavior. Partial failures preserve recoverable panes and report incomplete recovery instead of silently losing panes.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-14",
+      "text": "The default acceptance suite runs without Herdr installed or running. It launches production command handlers through the real CLI, using real filesystem and subprocess boundaries where practical, a fake Herdr Unix socket, and a fake Herdr executable.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-15",
+      "text": "Test isolation fails closed. Tests and descendants cannot fall back to the user's real socket, configuration, state, credentials, or background services. HOME, relevant environment variables, temporary paths, ambient Bun configuration, and cleanup are controlled.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-16",
+      "text": "Tests replace external capabilities rather than mocking application modules. The fake transport covers newline-delimited JSON, request IDs, errors, and unsolicited events, and fails on unexpected requests.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-17",
+      "text": "Python and TypeScript run shared differential cases in separate sandboxes. Independent safety assertions also verify ownership, restoration, destructive-operation eligibility, and recovery. Only documented incidental differences are normalized.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-18",
+      "text": "Picker, board, pruner, and pane-move workflows have scripted pseudo-terminal tests for applicable navigation, confirmation, cancellation, resizing, exit behavior, and terminal restoration.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-19",
+      "text": "The compiled release artifact and manifest launch commands work under minimal PATH and unrelated working directories. They do not require a separate Python runtime and do not inherit unintended .env or bunfig.toml behavior.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-20",
+      "text": "Separate disposable real-Herdr checks validate the fake adapter assumptions and selected lifecycle scenarios early and again for the release candidate. Missing macOS, Linux, or required Herdr compatibility evidence is a blocker, not a passing skip.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-21",
+      "text": "Execution inventories all entrypoints and critical guarantees upfront, proves risky runtime choices before substantial porting, and completes one reversible configuration slice before expanding into the full installation lifecycle. Detailed scenarios grow per slice.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": false,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-22",
+      "text": "The implementation keeps pure decisions separate from I/O and uses Effect idiomatically for dependencies, failures, and resource ownership. Commands remain thin, and the port introduces no competing dependency container, custom Result framework, or service-per-function architecture.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": false,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-23",
+      "text": "One explicit launch runs the approved plan continuously without routine per-slice approval. Each iteration selects ready work, captures reference behavior, adds failing checks, implements, verifies, reviews, records evidence, and continues. Ordinary application test failures are repaired within the loop.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": false,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-24",
+      "text": "Execution records append-only progress and evidence tied to the tested revision or diff. It verifies recorded progress when resuming, leaves the approved contract unchanged, and never treats an unchecked box, a skipped check, or an unsupported claim as completion.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": false,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-25",
+      "text": "Execution preserves unrelated changes and uses isolated implementation and test environments. Live cutover, active registration changes, release publishing, and other unapproved external actions remain outside this goal. Material contract changes and infrastructure blockers stop execution for owner input.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": false,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-26",
+      "text": "The final report records reproducible Python and TypeScript measurements for startup, event processing, refresh-worker resource use, and package size. The report identifies regressions without requiring TypeScript to outperform Python.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-27",
+      "text": "Completion requires passing evidence for every inventory item and accepted automated fact, reviewed manual facts, tested rollback, and final checks against the exact candidate. No unexplained parity differences or unresolved required gates remain.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": false,
+      "automatedVerification": false
+    }
+  ]
+}
