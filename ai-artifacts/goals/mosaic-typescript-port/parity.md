@@ -43,6 +43,7 @@ fact. Escalate such conflicts instead of choosing silently.
 | Chromatic paths | Window Manager dirs follow Mosaic env siblings. Chromatic/layouts defaults hardcode `ctx.HOME`. They diverge if `HERDR_PLUGIN_STATE_DIR` is nonstandard. |
 | Agent row tokens | `AGENTS.md` lists `$elapsed` + 12 `$title_*` + `$themed_model_tier`. Code also includes leading `state_icon` in the same 15-token template. |
 | `install --dry-run` | HELP, `docs/actions.md`, and tests: previews migration only. Does not install sidebar, keybinds, view, or start refresh. |
+| Sidebar install logs | Python `json.dumps` inserts spaces after `:` and `,`; TypeScript `JSON.stringify` does not. `tests/cli/differential.test.ts` compares config bytes, not log JSON. |
 | Interactive UIs | Picker, board, prune, and pane-move have logic and keybind tests, not Python PTY coverage. TypeScript must add scripted terminal tests. |
 | Layout recovery | `layout_actions.reshape` recovers or reports incomplete recovery. No dedicated unit test for the failure path. |
 
