@@ -165,5 +165,17 @@ Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun r
 
 Next: agent triage (next-idle, prune), then TUI and layouts. Wire `refresh.start` once CLI fixtures can own a short-lived worker. Still no success-returning stubs.
 
+## 2026-09-19 step 5 idle cycle and prune opener
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Wired `next-idle-agent` (newest first, wrap, skip focused, untracked last; cursor only after successful `agent.focus`) and `prune-stale-agents` (opens the prune popup with the pre-popup focused pane protected). `closeSelected` rechecks eligibility so a working agent is not closed. The prune TUI is not ported.
+
+File placement: `src/agents/triage.ts`, `tests/unit/triage.test.ts`, `tests/cli/triage.test.ts`.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 219 pass, parity inventory 105.
+
+Next: layouts, then picker/board/prune/pane-move TUI. Wire `refresh.start` once CLI fixtures can own a short-lived worker. Still no success-returning stubs.
+
 
 
