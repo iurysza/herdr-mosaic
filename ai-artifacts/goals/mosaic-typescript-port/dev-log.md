@@ -359,5 +359,13 @@ GitHub Actions Verify now runs on `ubuntu-latest` and `macos-latest`. Bench stay
 
 Next: wait for `macos-latest` Verify. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 Darwin socket realpath
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. Step 2 is not marked complete.
+
+`macos-latest` Verify failed: Bun `realpathSync` on unix sockets returns `EOPNOTSUPP`, and nested `/var/folders` sandbox sockets exceeded Darwin's 104-byte `sun_path`. `resolveSocketPath` now realpaths the parent directory on that error. Isolated tests on Darwin use `/tmp`.
+
+Next: wait for `macos-latest` Verify. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 

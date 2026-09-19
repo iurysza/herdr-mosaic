@@ -1,6 +1,5 @@
 import { spawnSync } from "node:child_process"
-import { createHash } from "node:crypto"
-import { existsSync, readFileSync, realpathSync, statSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { Effect, Predicate, Result, Schema } from "effect"
@@ -38,6 +37,7 @@ import type { PluginPathValues } from "../runtime/paths.ts"
 import { PluginPaths } from "../runtime/paths.ts"
 import { rpcTryCall, type JsonObject } from "../runtime/rpc.ts"
 import { loadSettings, settingsPath } from "../runtime/settings.ts"
+import { readSocketGeneration, workerHeartbeatPath } from "../runtime/worker.ts"
 import { identityOf, load } from "../state/store.ts"
 import { allSlotTokens, closePairs, slotForColour } from "../spaces/identity.ts"
 import { markerGlyph } from "../spaces/metadata.ts"
@@ -124,11 +124,10 @@ function backupKeyCount(value: Json): number | undefined {
 
 function refreshAgeSeconds(paths: PluginPathValues): number | undefined {
   try {
-    const socket = realpathSync(paths.socketPath)
-    const info = statSync(socket, { bigint: true })
-    const key = `${socket}:${info.dev}:${info.ino}:${info.ctimeNs}`
-    const name = `refresh-${createHash("sha256").update(key).digest("hex")}.json`
-    const parsed: unknown = JSON.parse(readFileSync(join(paths.stateDir, name), "utf8"))
+    const parsed: unknown = JSON.parse(
+      readFileSync(workerHeartbeatPath(paths.stateDir, readSocketGeneration(paths.socketPath)), "utf8"),
+    )
+
     const object = Schema.decodeUnknownResult(Schema.JsonObject)(parsed)
 
     if (Result.isFailure(object)) return undefined

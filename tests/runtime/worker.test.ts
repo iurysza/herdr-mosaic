@@ -8,7 +8,7 @@ import { Effect } from "effect"
 
 import { PLUGIN_ID } from "../../src/ids.ts"
 import { PluginPaths, pathsFromEnv } from "../../src/runtime/paths.ts"
-import { readSocketGeneration, refreshWorkerArgs, startRefreshWorker } from "../../src/runtime/worker.ts"
+import { readSocketGeneration, refreshWorkerArgs, resolveSocketPath, startRefreshWorker } from "../../src/runtime/worker.ts"
 import { FakeHerdr } from "../support/fake-herdr.ts"
 
 function waitExit(child: ReturnType<typeof spawn>): Promise<{
@@ -74,8 +74,9 @@ describe("worker ownership", () => {
     await fake.listen()
 
     try {
+      const real = resolveSocketPath(socketPath)
       const key = readSocketGeneration(socketPath)
-      expect(key.startsWith(`${socketPath}:`)).toBe(true)
+      expect(key.startsWith(`${real}:`)).toBe(true)
       expect(key.split(":")).toHaveLength(4)
     } finally {
       await fake.close()

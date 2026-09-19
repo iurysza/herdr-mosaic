@@ -1,6 +1,6 @@
 # Mosaic TypeScript port — completion report
 
-Candidate: `cursor/mosaic-typescript-port-1529`. Production `dist/mosaic` is unchanged from `77d5f9a` (sha256 `2a55c5abae4bba0ce729bed3f22c15c88b04141f1dd7b8368a79fe9779549a05`). Frozen Python reference remains `8b7bb76` / manifest `0.5.0`. Later commits add tests and evidence only. Live cutover was not executed.
+Candidate: `cursor/mosaic-typescript-port-1529`. Production `dist/mosaic` sha256 `2e692b2a02cad327ab426542aa477af72e361a8928bab61e3f4ee0581d67c035` after the Darwin unix-socket realpath fix. Frozen Python reference remains `8b7bb76` / manifest `0.5.0`. Live cutover was not executed.
 
 ## Implemented behavior
 

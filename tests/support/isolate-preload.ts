@@ -5,7 +5,9 @@ import { join } from "node:path"
 import { resolveHostHerdrBin } from "./host-herdr.ts"
 import { UTF8_LOCALE } from "./locale.ts"
 
-const root = mkdtempSync(join(tmpdir(), "mosaic-test-"))
+const tempBase = process.platform === "darwin" ? "/tmp" : tmpdir()
+
+const root = mkdtempSync(join(tempBase, "mosaic-test-"))
 
 const hostHerdr = resolveHostHerdrBin({
   MOSAIC_HERDR_BIN: process.env.MOSAIC_HERDR_BIN,

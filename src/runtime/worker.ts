@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process"
 import { createHash } from "node:crypto"
 import { closeSync, existsSync, openSync, readFileSync, realpathSync, statSync } from "node:fs"
-import { basename, join } from "node:path"
+import { basename, dirname, join } from "node:path"
 
 import { Clock, Duration, Effect, Result, Schema } from "effect"
 
@@ -38,8 +38,21 @@ export function generationKey(
   return `${socketRealPath}:${device}:${inode}:${ctimeNs}`
 }
 
+export function resolveSocketPath(socketPath: string): string {
+  try {
+    return realpathSync(socketPath)
+  } catch (error) {
+    // Darwin libuv realpath(3) returns EOPNOTSUPP on unix sockets.
+    if (error instanceof Error && "code" in error && error.code === "EOPNOTSUPP") {
+      return join(realpathSync(dirname(socketPath)), basename(socketPath))
+    }
+
+    throw error
+  }
+}
+
 export function readSocketGeneration(socketPath: string): string {
-  const real = realpathSync(socketPath)
+  const real = resolveSocketPath(socketPath)
   const info = statSync(real, { bigint: true })
 
   return generationKey(real, info.dev, info.ino, info.ctimeNs)

@@ -40,7 +40,7 @@ def ensure_binary():
 
 if not HERDR:
     raise SystemExit("Herdr is required; set HERDR_BIN_PATH")
-HOME = Path(tempfile.mkdtemp(prefix="mosaic-proof-"))
+HOME = Path(tempfile.mkdtemp(prefix="mosaic-proof-", dir="/tmp" if sys.platform == "darwin" else None))
 CONFIG = HOME / ".config" / "herdr"
 STATE = HOME / ".local" / "state" / "herdr" / "plugins" / "iurysza.mosaic"
 SOCKET = CONFIG / "herdr.sock"

@@ -2,7 +2,7 @@
 
 Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default Herdr session unused. macOS native proofs remain owner-run after the PR is open. Step 2 is not marked complete.
 
-Candidate: `cursor/mosaic-typescript-port-1529`. Production artifact hash unchanged from `77d5f9a`.
+Candidate: `cursor/mosaic-typescript-port-1529`. Production artifact sha256 `2e692b2a02cad327ab426542aa477af72e361a8928bab61e3f4ee0581d67c035` after the Darwin unix-socket realpath fix.
 
 ## Artifact
 
