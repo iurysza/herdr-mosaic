@@ -16,12 +16,35 @@ import time
 
 ROOT = Path(__file__).resolve().parents[1]
 HERDR = os.environ.get("HERDR_BIN_PATH") or shutil.which("herdr")
+BUN = shutil.which("bun")
+BIN = ROOT / "dist" / "mosaic"
+
+
+def mosaic_cmd(*args):
+    return [str(BIN)] + list(args)
+
+
+def ensure_binary():
+    if BIN.is_file() and os.access(BIN, os.X_OK):
+        return
+    if not BUN:
+        raise SystemExit("dist/mosaic is missing; install Bun and run bun run build")
+    path = os.path.dirname(BUN) + os.pathsep + os.environ.get("PATH", "/usr/bin:/bin")
+    env = dict(os.environ)
+    env["PATH"] = path
+    env["HOME"] = os.environ.get("HOME", str(ROOT))
+    subprocess.check_call([BUN, "run", "build"], cwd=str(ROOT), env=env)
+    if not BIN.is_file():
+        raise SystemExit("bun run build did not produce dist/mosaic")
+
+
 if not HERDR:
     raise SystemExit("Herdr is required; set HERDR_BIN_PATH")
-HOME = Path(tempfile.mkdtemp(prefix="mosaic-proof-", dir="/tmp"))
+HOME = Path(tempfile.mkdtemp(prefix="mosaic-proof-", dir="/tmp" if sys.platform == "darwin" else None))
 CONFIG = HOME / ".config" / "herdr"
 STATE = HOME / ".local" / "state" / "herdr" / "plugins" / "iurysza.mosaic"
 SOCKET = CONFIG / "herdr.sock"
+LOCALE = "en_US.UTF-8" if sys.platform == "darwin" else "C.UTF-8"
 ENV = {
     "HOME": str(HOME), "XDG_CONFIG_HOME": str(HOME / ".config"),
     "XDG_STATE_HOME": str(HOME / ".local" / "state"),
@@ -33,8 +56,9 @@ ENV = {
     "HERDR_PLUGIN_STATE_DIR": str(STATE),
     "HERDR_PLUGIN_CONFIG_DIR": str(CONFIG / "plugins" / "config" / "iurysza.mosaic"),
     "PATH": "/usr/bin:/bin", "SHELL": "/bin/sh", "TERM": "xterm-256color",
-    "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "TMPDIR": str(HOME),
+    "LANG": LOCALE, "LC_ALL": LOCALE, "TMPDIR": str(HOME),
 }
+ensure_binary()
 # Set before importing plugin modules so no path can fall back to the user's HOME.
 os.environ.clear()
 os.environ.update(ENV)
@@ -167,7 +191,7 @@ try:
     st = state.load()
     assert st["view_mode"] == "all", st.get("view_mode")
     assert st["sort_mode"] == "activity", st.get("sort_mode")
-    bad = subprocess.call(["/usr/bin/python3", str(ROOT / "src" / "main.py"), "sort", "grouped"],
+    bad = subprocess.call(mosaic_cmd("sort", "grouped"),
                           env=ENV, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     assert bad == 1, bad
     assert state.load()["sort_mode"] == "activity"
@@ -198,7 +222,7 @@ try:
         # production timeout. One normal 30-second timer round must advance it.
         st["agent_settled"][pane_id]["last_settled_at"] = int(time.time()) - 65
         state.save(st)
-    subprocess.check_call(["/usr/bin/python3", str(ROOT / "src" / "main.py"), "elapsed-publish"], env=ENV)
+    subprocess.check_call(mosaic_cmd("elapsed-publish"), env=ENV)
     before_clock = current_agent(pane_id)["tokens"]["elapsed"]
     wait("timer advances elapsed without an event", lambda: current_agent(pane_id).get("tokens", {}).get("elapsed") not in (None, before_clock))
     after_clock = current_agent(pane_id)["tokens"]["elapsed"]
@@ -248,7 +272,7 @@ try:
     action("install")
     wait("worker after re-enable", lambda: heartbeat() and heartbeat()["pid"] != disabled_pid)
     before_pid = heartbeat()["pid"]
-    subprocess.check_call(["/usr/bin/python3", str(ROOT / "src" / "main.py"), "reconcile"], env=ENV,
+    subprocess.check_call(mosaic_cmd("reconcile"), env=ENV,
                           stdout=subprocess.DEVNULL)
     assert heartbeat()["pid"] == before_pid, "duplicate worker on reconcile"
     receipts["uninstall"] = action("uninstall")

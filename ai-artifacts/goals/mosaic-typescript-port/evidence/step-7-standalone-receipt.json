@@ -1,0 +1,130 @@
+{
+  "install": {
+    "log_id": "plugin-log-3",
+    "plugin_id": "iurysza.mosaic",
+    "action_id": "install",
+    "command": [
+      "/bin/sh",
+      "-c",
+      "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" install"
+    ],
+    "status": "succeeded",
+    "started_unix_ms": 1789849228846,
+    "finished_unix_ms": 1789849230231,
+    "exit_code": 0,
+    "stdout": "{\n  \"chromatic_config_dir\": \"/tmp/mosaic-proof-1gx4wx3g/.config/herdr/plugins/config/jackfrancisdalton.chromatic-spaces\",\n  \"chromatic_state_dir\": \"/tmp/mosaic-proof-1gx4wx3g/.local/state/herdr/plugins/jackfrancisdalton.chromatic-spaces\",\n  \"dry_run\": false,\n  \"identities_imported\": [],\n  \"ignored_stale_backups\": [],\n  \"label_rules_copied\": false,\n  \"layouts_settings_copied\": false,\n  \"layouts_state_dir\": \"/tmp/mosaic-proof-1gx4wx3g/.local/state/herdr/plugins/layouts\",\n  \"notes\": [\n    \"no Chromatic state.json at /tmp/mosaic-proof-1gx4wx3g/.local/state/herdr/plugins/jackfrancisdalton.chromatic-spaces/state.json\",\n    \"snapshotted current config as ownership baseline\"\n  ],\n  \"settings_copied\": false\n}\n2026-09-19T20:20:29 sidebar ui.sidebar.spaces.rows (materialised default): [[\"state_icon\",{\"token\":\"$sd_rose\",\"fg\":\"#eba0ac\"},{\"token\":\"$sd_peach\",\"fg\":\"#fab387\"},{\"token\":\"$sd_amber\",\"fg\":\"#e5c07b\"},{\"token\":\"$sd_sage\",\"fg\":\"#a6d189\"},{\"token\":\"$sd_aqua\",\"fg\":\"#7fd6c1\"},{\"token\":\"$sd_cyan\",\"fg\":\"#8be9fd\"},{\"token\":\"$sd_steel\",\"fg\":\"#8ca0b3\"},{\"token\":\"$sd_azure\",\"fg\":\"#7aa2f7\"},{\"token\":\"$sd_lavender\",\"fg\":\"#b4befe\"},{\"token\":\"$sd_mauve\",\"fg\":\"#cba6f7\"},{\"token\":\"$sd_orchid\",\"fg\":\"#e0a3e8\"},{\"token\":\"$sd_blush\",\"fg\":\"#f5c2e7\"},\"workspace\"],[\"branch\",\"git_status\"]]\n2026-09-19T20:20:29 sidebar ui.sidebar.agents.rows (materialised default): [[\"state_icon\",{\"token\":\"$elapsed\",\"dim\":true},{\"token\":\"$title_rose\",\"fg\":\"#eba0ac\",\"dim\":false},{\"token\":\"$title_peach\",\"fg\":\"#fab387\",\"dim\":false},{\"token\":\"$title_amber\",\"fg\":\"#e5c07b\",\"dim\":false},{\"token\":\"$title_sage\",\"fg\":\"#a6d189\",\"dim\":false},{\"token\":\"$title_aqua\",\"fg\":\"#7fd6c1\",\"dim\":false},{\"token\":\"$title_cyan\",\"fg\":\"#8be9fd\",\"dim\":false},{\"token\":\"$title_steel\",\"fg\":\"#8ca0b3\",\"dim\":false},{\"token\":\"$title_azure\",\"fg\":\"#7aa2f7\",\"dim\":false},{\"token\":\"$title_lavender\",\"fg\":\"#b4befe\",\"dim\":false},{\"token\":\"$title_mauve\",\"fg\":\"#cba6f7\",\"dim\":false},{\"token\":\"$title_orchid\",\"fg\":\"#e0a3e8\",\"dim\":false},{\"token\":\"$title_blush\",\"fg\":\"#f5c2e7\",\"dim\":false},{\"token\":\"$themed_model_tier\",\"dim\":true}]]\ninstalled tokens into 2 row set(s)\n2026-09-19T20:20:29 keybinding installed: prefix+i -> iurysza.mosaic.set-identity\nbound prefix+i to the identity picker  (prefix is ctrl+b unless you changed keys.prefix)\n2026-09-19T20:20:29 keybinding installed: prefix+shift+s -> iurysza.mosaic.toggle-agent-sort\nbound prefix+shift+s to Toggle Agent Sort\n2026-09-19T20:20:29 keybinding installed: prefix+. -> iurysza.mosaic.next-idle-agent\nbound prefix+. to Next idle agent\n2026-09-19T20:20:29 keybinding installed: prefix+alt+x -> iurysza.mosaic.prune-stale-agents\nbound prefix+alt+x to Prune stale agents\n2026-09-19T20:20:29 keybinding installed: prefix+/ -> iurysza.mosaic.move-pane\nbound prefix+/ to Move pane\n2026-09-19T20:20:29 keybinding installed: prefix+shift+m -> iurysza.mosaic.promote-pane\nbound prefix+shift+m to Promote pane\n2026-09-19T20:20:29 agent view installed (all, spaces)\nagent focus: all; sort: spaces (Spaces)\n2026-09-19T20:20:29 metadata reconciled: 1 workspaces, 1 agent panes; assigned identity to w1\n2026-09-19T20:20:30 agent view reapplied (all, spaces)\n",
+    "stderr": ""
+  },
+  "view_toggle": {
+    "log_id": "plugin-log-4",
+    "plugin_id": "iurysza.mosaic",
+    "action_id": "toggle-agent-focus",
+    "command": [
+      "/bin/sh",
+      "-c",
+      "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" toggle-agent-focus"
+    ],
+    "status": "succeeded",
+    "started_unix_ms": 1789849230276,
+    "finished_unix_ms": 1789849230809,
+    "exit_code": 0,
+    "stdout": "2026-09-19T20:20:30 agent focus toggled (current, spaces)\nagent focus: current; sort: spaces (Spaces)\n",
+    "stderr": ""
+  },
+  "sort_toggle": {
+    "log_id": "plugin-log-5",
+    "plugin_id": "iurysza.mosaic",
+    "action_id": "toggle-agent-sort",
+    "command": [
+      "/bin/sh",
+      "-c",
+      "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" toggle-agent-sort"
+    ],
+    "status": "succeeded",
+    "started_unix_ms": 1789849230838,
+    "finished_unix_ms": 1789849230989,
+    "exit_code": 0,
+    "stdout": "2026-09-19T20:20:30 agent sort toggled (current, activity)\nagent focus: current; sort: activity (Activity)\n",
+    "stderr": ""
+  },
+  "view_all": {
+    "log_id": "plugin-log-6",
+    "plugin_id": "iurysza.mosaic",
+    "action_id": "show-all-agents",
+    "command": [
+      "/bin/sh",
+      "-c",
+      "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" view all"
+    ],
+    "status": "succeeded",
+    "started_unix_ms": 1789849230991,
+    "finished_unix_ms": 1789849231144,
+    "exit_code": 0,
+    "stdout": "2026-09-19T20:20:31 agent view installed (all, activity)\nagent focus: all; sort: activity (Activity)\n",
+    "stderr": ""
+  },
+  "view_current": {
+    "log_id": "plugin-log-7",
+    "plugin_id": "iurysza.mosaic",
+    "action_id": "show-current-space-agents",
+    "command": [
+      "/bin/sh",
+      "-c",
+      "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" view current"
+    ],
+    "status": "succeeded",
+    "started_unix_ms": 1789849231185,
+    "finished_unix_ms": 1789849231336,
+    "exit_code": 0,
+    "stdout": "2026-09-19T20:20:31 agent view installed (current, activity)\nagent focus: current; sort: activity (Activity)\n",
+    "stderr": ""
+  },
+  "first_round": {
+    "pid": 33360,
+    "published_at": 1789849230.669,
+    "agents": 1,
+    "duration_seconds": 0.306235145
+  },
+  "timer": {
+    "before": "1m\u2800",
+    "after": "2m\u2800",
+    "round": {
+      "pid": 33360,
+      "published_at": 1789849260.668,
+      "agents": 1,
+      "duration_seconds": 0.406463599
+    }
+  },
+  "socket_generations": {
+    "before": "/tmp/mosaic-proof-1gx4wx3g/.config/herdr/herdr.sock:65056:672373:1789849228682039132",
+    "after": "/tmp/mosaic-proof-1gx4wx3g/.config/herdr/herdr.sock:65056:672373:1789849261258035118"
+  },
+  "restart": {
+    "pid": 34139,
+    "published_at": 1789849262.448,
+    "agents": 0,
+    "duration_seconds": 0.204107668
+  },
+  "disabled": {
+    "worker_exited": true,
+    "elapsed_expired": true,
+    "title_retained": true
+  },
+  "uninstall": {
+    "log_id": "plugin-log-6",
+    "plugin_id": "iurysza.mosaic",
+    "action_id": "uninstall",
+    "command": [
+      "/bin/sh",
+      "-c",
+      "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" uninstall"
+    ],
+    "status": "succeeded",
+    "started_unix_ms": 1789849337421,
+    "finished_unix_ms": 1789849337892,
+    "exit_code": 0,
+    "stdout": "2026-09-19T20:22:17 uninstall complete: sidebar: 2 row sets; picker keybinding removed; sort keybinding removed; idle-agent keybinding removed; prune keybinding removed; pane move keybinding removed; promote pane keybinding removed; agent view cleared; metadata cleared\nrestored. sidebar: 2 row sets; picker keybinding removed; sort keybinding removed; idle-agent keybinding removed; prune keybinding removed; pane move keybinding removed; promote pane keybinding removed; agent view cleared; metadata cleared\n\nIdentities are kept in /tmp/mosaic-proof-1gx4wx3g/.local/state/herdr/plugins/iurysza.mosaic so relinking restores them.\nNow run:  herdr plugin unlink iurysza.mosaic\n",
+    "stderr": ""
+  },
+  "result": "passed"
+}

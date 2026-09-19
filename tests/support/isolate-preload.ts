@@ -1,0 +1,74 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+
+import { resolveHostHerdrBin } from "./host-herdr.ts"
+import { UTF8_LOCALE } from "./locale.ts"
+
+const tempBase = process.platform === "darwin" ? "/tmp" : tmpdir()
+
+const root = mkdtempSync(join(tempBase, "mosaic-test-"))
+
+const hostHerdr = resolveHostHerdrBin({
+  MOSAIC_HERDR_BIN: process.env.MOSAIC_HERDR_BIN,
+  HERDR_BIN_PATH: process.env.HERDR_BIN_PATH,
+  HOME: process.env.HOME,
+})
+
+const home = join(root, "home")
+
+const config = join(home, ".config", "herdr")
+
+const state = join(home, ".local", "state", "herdr", "plugins", "iurysza.mosaic")
+
+const pluginConfig = join(home, ".config", "herdr", "plugins", "config", "iurysza.mosaic")
+
+mkdirSync(config, { recursive: true })
+
+mkdirSync(state, { recursive: true })
+
+mkdirSync(pluginConfig, { recursive: true })
+
+mkdirSync(join(home, ".cache"), { recursive: true })
+
+writeFileSync(join(config, "config.toml"), "# isolated mosaic test config\n")
+
+const isolated = {
+  HOME: home,
+  XDG_CONFIG_HOME: join(home, ".config"),
+  XDG_STATE_HOME: join(home, ".local", "state"),
+  XDG_DATA_HOME: join(home, ".local", "share"),
+  XDG_CACHE_HOME: join(home, ".cache"),
+  TMPDIR: root,
+  HERDR_CONFIG_PATH: join(config, "config.toml"),
+  HERDR_SOCKET_PATH: join(config, "herdr.sock"),
+  HERDR_BIN_PATH: join(root, "bin", "missing-herdr"),
+  HERDR_PLUGIN_ROOT: join(import.meta.dir, "..", ".."),
+  HERDR_PLUGIN_ID: "iurysza.mosaic",
+  HERDR_PLUGIN_STATE_DIR: state,
+  HERDR_PLUGIN_CONFIG_DIR: pluginConfig,
+  MOSAIC_TEST_ISOLATED: "1",
+  MOSAIC_TEST_HOME: home,
+  TERM: "dumb",
+  LANG: UTF8_LOCALE,
+  LC_ALL: UTF8_LOCALE,
+}
+
+for (const key of Object.keys(process.env)) {
+  if (
+    key.startsWith("HERDR_")
+    || key === "BUN_CONFIG_FILE"
+    || key === "DOTENV_CONFIG_PATH"
+  ) {
+    delete process.env[key]
+  }
+}
+
+Object.assign(process.env, isolated)
+
+// Isolated HERDR_BIN_PATH is a missing placeholder. Keep the host binary for tests/herdr.
+if (hostHerdr !== undefined) {
+  process.env.MOSAIC_HERDR_BIN = hostHerdr
+}
+
+process.chdir(root)

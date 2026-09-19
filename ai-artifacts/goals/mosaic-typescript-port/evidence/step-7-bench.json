@@ -1,0 +1,62 @@
+{
+  "candidate": "27efbe400bf63080341c5666e95ab5d0b6ce426c",
+  "host": "linux x64",
+  "bun": "1.4.2",
+  "samples": 8,
+  "ticksPerSecond": 100,
+  "conditions": {
+    "isolatedHome": true,
+    "path": "/usr/bin:/bin",
+    "worker": "one FakeHerdr pane; sample after first heartbeat; SIGTERM; no MOSAIC_TEST_ISOLATED"
+  },
+  "pythonHelp": {
+    "label": "python --help",
+    "medianMs": 35.812298999999996,
+    "exit": 0
+  },
+  "tsSourceHelp": {
+    "label": "bun source --help",
+    "medianMs": 96.217579,
+    "exit": 0
+  },
+  "tsArtifactHelp": {
+    "label": "dist/mosaic --help",
+    "medianMs": 33.66384700000003,
+    "exit": 0
+  },
+  "pythonEvent": {
+    "label": "python malformed event",
+    "medianMs": 51.66829400000006,
+    "exit": 0
+  },
+  "tsEvent": {
+    "label": "dist/mosaic malformed event",
+    "medianMs": 33.76207599999998,
+    "exit": 0
+  },
+  "pythonWorker": {
+    "label": "python refresh-worker",
+    "peakRssKb": 21260,
+    "idleRssKb": 21260,
+    "cpuUserSeconds": 0.03,
+    "cpuSystemSeconds": 0,
+    "roundDurationSeconds": 0.005904020999878412,
+    "agents": 1,
+    "waitMs": 61
+  },
+  "tsWorker": {
+    "label": "dist/mosaic refresh-worker",
+    "peakRssKb": 44188,
+    "idleRssKb": 44188,
+    "cpuUserSeconds": 0.03,
+    "cpuSystemSeconds": 0.01,
+    "roundDurationSeconds": 0.004283542,
+    "agents": 1,
+    "waitMs": 61
+  },
+  "package": {
+    "pythonSrcBytes": 226695,
+    "mosaicBytes": 81823200,
+    "mosaicSha256": "2a55c5abae4bba0ce729bed3f22c15c88b04141f1dd7b8368a79fe9779549a05"
+  }
+}

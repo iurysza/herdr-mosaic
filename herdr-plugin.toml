@@ -11,15 +11,14 @@ description = "Experimental space colors, agent grouping, and pane layouts for H
 
 # Every command is invoked through /bin/sh so $HERDR_PLUGIN_ROOT expands: pane
 # entrypoints run with the pane's cwd, not the plugin root. Herdr also gives
-# plugin commands a minimal PATH, so the interpreter is an absolute path
-# (/usr/bin/python3 is the macOS system Python; the plugin is stdlib-only and
-# needs no packages).
+# plugin commands a minimal PATH, so the compiled Mosaic binary is invoked by
+# absolute path under the plugin root. Build it with `bun run build`.
 
 # Republish everything from durable state after session restore: Herdr's
 # workspace/pane metadata does not survive a server restart, but the plugin's
 # state file does. Idempotent.
 [[startup]]
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" reconcile"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" reconcile"]
 
 # --- events ---------------------------------------------------------------
 # Only events with real work attached are hooked, so Herdr does not spawn a
@@ -30,43 +29,43 @@ command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main
 
 [[events]]
 on = "workspace.focused"
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event workspace.focused"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" event workspace.focused"]
 
 [[events]]
 on = "workspace.created"
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event workspace.created"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" event workspace.created"]
 
 [[events]]
 on = "workspace.renamed"
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event workspace.renamed"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" event workspace.renamed"]
 
 [[events]]
 on = "workspace.closed"
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event workspace.closed"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" event workspace.closed"]
 
 [[events]]
 on = "tab.renamed"
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event tab.renamed"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" event tab.renamed"]
 
 [[events]]
 on = "pane.moved"
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.moved"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" event pane.moved"]
 
 [[events]]
 on = "pane.agent_detected"
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.agent_detected"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" event pane.agent_detected"]
 
 [[events]]
 on = "pane.agent_status_changed"
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.agent_status_changed"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" event pane.agent_status_changed"]
 
 [[events]]
 on = "pane.closed"
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.closed"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" event pane.closed"]
 
 [[events]]
 on = "pane.exited"
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" event pane.exited"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" event pane.exited"]
 
 # --- panes ----------------------------------------------------------------
 
@@ -77,7 +76,7 @@ placement = "popup"
 width = 62
 height = 20
 description = "Pick the color for a space."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" picker"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" picker"]
 
 [[panes]]
 id = "board"
@@ -88,7 +87,7 @@ placement = "popup"
 width = "80%"
 height = "80%"
 description = "Collapsible per-space agent groups (read-only, real Herdr agent state)."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" board"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" board"]
 
 [[panes]]
 id = "prune"
@@ -97,7 +96,7 @@ placement = "popup"
 width = "80%"
 height = "80%"
 description = "Review and confirm closure of stale idle and done agent sessions."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" prune"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" prune"]
 
 [[panes]]
 id = "pane-move"
@@ -106,7 +105,7 @@ placement = "popup"
 width = 76
 height = 14
 description = "Confirm whether a selected pane moves beside this pane or into a new tab."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" pane-move"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" pane-move"]
 
 # --- actions --------------------------------------------------------------
 # Herdr 0.8.2 cannot hide actions. Existing IDs stay listed so invocation and
@@ -118,207 +117,207 @@ id = "set-identity"
 title = "Mosaic: Choose space color"
 contexts = ["workspace", "pane"]
 description = "Open the palette picker, including custom hex input, for the current space."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" set-identity"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" set-identity"]
 
 [[actions]]
 id = "auto-assign"
 title = "Mosaic: Assign missing space colors"
 contexts = ["global", "workspace"]
 description = "Advanced: assign default colors only to spaces without a color."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" auto-assign"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" auto-assign"]
 
 [[actions]]
 id = "tint-enable"
 title = "Mosaic: Enable space tint"
 contexts = ["global", "workspace"]
 description = "Tint the window with the focused space color. Use with one active Herdr session."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" tint-enable"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" tint-enable"]
 
 [[actions]]
 id = "tint-disable"
 title = "Mosaic: Disable space tint"
 contexts = ["global", "workspace"]
 description = "Stop tinting and restore recorded theme values, preserving external edits."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" tint-disable"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" tint-disable"]
 
 [[actions]]
 id = "theme-restore"
 title = "Mosaic: Restore theme"
 contexts = ["global", "workspace"]
 description = "Recovery: same as Disable space tint. Stops tinting and restores recorded theme values."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" theme-restore"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" theme-restore"]
 
 [[actions]]
 id = "toggle-agent-focus"
 title = "Mosaic: Toggle Agent Focus"
 contexts = ["global", "workspace"]
 description = "Toggle all spaces and the current workspace. Follows space switches."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" toggle-agent-focus"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" toggle-agent-focus"]
 
 [[actions]]
 id = "toggle-agent-sort"
 title = "Mosaic: Toggle Agent Sort"
 contexts = ["global", "workspace"]
 description = "Toggle Activity and Spaces sorting. Agent focus is unchanged."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" toggle-agent-sort"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" toggle-agent-sort"]
 
 [[actions]]
 id = "show-all-agents"
 title = "Mosaic: Show all agents"
 contexts = ["global", "workspace"]
 description = "Set agent focus off. Kept for existing bindings and callers."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" view all"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" view all"]
 
 [[actions]]
 id = "show-current-space-agents"
 title = "Mosaic: Show current space agents"
 contexts = ["global", "workspace"]
 description = "Set agent focus on and follow space switches. Kept for existing callers."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" view current"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" view current"]
 
 [[actions]]
 id = "open-agent-board"
 title = "Mosaic: Open agent board"
 contexts = ["global", "workspace"]
 description = "Open collapsible space groups. Select an agent to focus it; no agent state is changed."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" board-open"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" board-open"]
 
 [[actions]]
 id = "next-idle-agent"
 title = "Mosaic: Next idle agent"
 contexts = ["global", "workspace", "pane"]
 description = "Focus the next idle or done agent, newest observed completion first, and wrap around."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" next-idle-agent"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" next-idle-agent"]
 
 [[actions]]
 id = "prune-stale-agents"
 title = "Mosaic: Prune stale agents"
 contexts = ["global", "workspace", "pane"]
 description = "Review stale idle and done agents, select sessions, then explicitly confirm closing their panes."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" prune-stale-agents"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" prune-stale-agents"]
 
 [[actions]]
 id = "move-pane"
 title = "Mosaic: Move pane"
 contexts = ["global", "workspace", "pane"]
 description = "Pick the focused pane, then press again at a destination to choose a right split or new tab."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" move-pane"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" move-pane"]
 
 [[actions]]
 id = "promote-pane"
 title = "Mosaic: Promote pane to new tab"
 contexts = ["global", "workspace", "pane"]
 description = "Move the focused pane to a new tab in its current workspace."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" promote-pane"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" promote-pane"]
 
 [[actions]]
 id = "install"
 title = "Mosaic: Set up Mosaic"
 contexts = ["global", "workspace"]
 description = "Setup: install sidebar templates, the color picker key, the agent view, and title and elapsed refresh."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" install"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" install"]
 
 [[actions]]
 id = "migrate"
 title = "Mosaic: Import saved state"
 contexts = ["global", "workspace"]
 description = "Advanced: import compatible saved state without replacing existing Mosaic data."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" migrate"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" migrate"]
 
 [[actions]]
 id = "equalize"
 title = "Mosaic: Arrange even columns"
 description = "Arrange existing panes in the current tab as equal-width columns. Unzoom first."
 contexts = ["tab", "pane"]
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout equalize"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" layout equalize"]
 
 [[actions]]
 id = "cycle"
 title = "Mosaic: Next pane layout"
 description = "Cycle existing panes through columns, rows, main-left, main-top, and tiled arrangements. Unzoom first."
 contexts = ["tab", "pane"]
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout cycle"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" layout cycle"]
 
 [[actions]]
 id = "resize-left"
 title = "Mosaic: Resize pane left"
 description = "Resize the current pane split left by 2%."
 contexts = ["pane"]
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-left"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" layout resize-left"]
 
 [[actions]]
 id = "resize-down"
 title = "Mosaic: Resize pane down"
 description = "Resize the current pane split down by 2%."
 contexts = ["pane"]
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-down"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" layout resize-down"]
 
 [[actions]]
 id = "resize-up"
 title = "Mosaic: Resize pane up"
 description = "Resize the current pane split up by 2%."
 contexts = ["pane"]
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-up"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" layout resize-up"]
 
 [[actions]]
 id = "resize-right"
 title = "Mosaic: Resize pane right"
 description = "Resize the current pane split right by 2%."
 contexts = ["pane"]
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" layout resize-right"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" layout resize-right"]
 
 [[actions]]
 id = "intensity-subtle"
 title = "Mosaic: Set subtle tint"
 contexts = ["global", "workspace"]
 description = "Set a light surface tint with untinted borders by default. Does not enable tint."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" intensity subtle"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" intensity subtle"]
 
 [[actions]]
 id = "intensity-medium"
 title = "Mosaic: Set medium tint"
 contexts = ["global", "workspace"]
 description = "Set a medium surface tint with tinted borders by default. Does not enable tint."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" intensity medium"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" intensity medium"]
 
 [[actions]]
 id = "intensity-bold"
 title = "Mosaic: Set bold tint"
 contexts = ["global", "workspace"]
 description = "Set a stronger surface tint with tinted borders by default. Does not enable tint."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" intensity bold"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" intensity bold"]
 
 [[actions]]
 id = "preview-tint"
 title = "Mosaic: Preview tint colors"
 contexts = ["global", "workspace"]
 description = "Advanced: print swatches to the action log. Use the direct CLI to see them in your terminal."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" preview"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" preview"]
 
 [[actions]]
 id = "bind-picker-key"
 title = "Mosaic: Bind color picker key"
 contexts = ["global", "workspace"]
 description = "Advanced: bind the picker to prefix+i if free; keep any existing picker binding."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" keybind-install"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" keybind-install"]
 
 [[actions]]
 id = "unbind-picker-key"
 title = "Mosaic: Unbind color picker key"
 contexts = ["global", "workspace"]
 description = "Advanced: remove the color picker action binding."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" keybind-remove"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" keybind-remove"]
 
 [[actions]]
 id = "doctor"
 title = "Mosaic: Check Mosaic setup"
 contexts = ["global", "workspace"]
 description = "Diagnostics: print config, metadata, refresh, and tint checks to the action log."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" doctor"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" doctor"]
 
 [[actions]]
 id = "uninstall"
 title = "Mosaic: Restore config before removal"
 contexts = ["global", "workspace"]
 description = "Cleanup: restore recorded config and clear owned metadata and the agent view before removing Mosaic."
-command = ["/bin/sh", "-c", "exec /usr/bin/python3 \"$HERDR_PLUGIN_ROOT/src/main.py\" uninstall"]
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" uninstall"]

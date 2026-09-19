@@ -22,12 +22,12 @@ Herdr resolves action context from the focused workspace, which may differ from 
 
 ## Set an exact color
 
-Direct commands run through `/usr/bin/python3 /path/to/herdr-mosaic/src/main.py`. There is no separate `mosaic` executable.
+Direct commands run through `/path/to/herdr-mosaic/dist/mosaic`. Build that binary with `bun run build` from a checkout.
 
 ```sh
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py set-color --workspace w1 --color '#123456'
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py set-color --workspace w1 --color azure
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py list-colors
+/path/to/herdr-mosaic/dist/mosaic set-color --workspace w1 --color '#123456'
+/path/to/herdr-mosaic/dist/mosaic set-color --workspace w1 --color azure
+/path/to/herdr-mosaic/dist/mosaic list-colors
 ```
 
 Colors accept a palette name, `#rgb`, or `#rrggbb`. Quote hex values in the shell. Tint uses the exact color for the accent; surfaces blend it with the theme base. Space markers and agent titles use the nearest palette slot because their colors are static Herdr config.
@@ -45,10 +45,10 @@ Without `--workspace`, the setter uses the action context or focused workspace. 
 Use tint with one active Herdr session because sessions share the config file. For direct control:
 
 ```sh
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py tint-enable
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py tint-intensity subtle
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py tint-preview
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py tint-disable
+/path/to/herdr-mosaic/dist/mosaic tint-enable
+/path/to/herdr-mosaic/dist/mosaic tint-intensity subtle
+/path/to/herdr-mosaic/dist/mosaic tint-preview
+/path/to/herdr-mosaic/dist/mosaic tint-disable
 ```
 
 `tint-intensity` without an argument prints the current setting. See [settings](./settings.md) for blend and border overrides.
@@ -67,7 +67,7 @@ Setup binds `toggle-agent-sort` to `prefix+shift+s` when the key is free. On thi
 
 These actions change the view, not agent status. The board is a separate popup, not native sidebar group headers. Herdr 0.8.2 cannot hide actions, so retained maintenance and compatibility actions remain in the flat action list.
 
-Use `main.py agents current`, `main.py agents all`, or `main.py agent-board` directly. Use `main.py sort activity` or `main.py sort spaces` to set a sort. The focus and sort settings persist independently. There is no third sort.
+Use `dist/mosaic agents current`, `dist/mosaic agents all`, or `dist/mosaic agent-board` directly. Use `dist/mosaic sort activity` or `dist/mosaic sort spaces` to set a sort. The focus and sort settings persist independently. There is no third sort.
 
 ## Cycle idle agents and prune stale sessions
 
@@ -80,7 +80,7 @@ Setup binds `next-idle-agent` to `prefix+.` and `prune-stale-agents` to `prefix+
 
 The pruner lists settled agents oldest first. Use `t` to set its file-backed stale threshold, Space to select eligible rows, then `x` to review and `x` again to confirm. It protects the focused agent that opened the popup, excludes working, blocked, unknown, and untracked agents, and rereads live state before every close. A close ends the agent process and pane. It does not delete agent session history.
 
-Use `main.py next-idle-agent` or `main.py prune-stale-agents` directly. The popup command itself is internal.
+Use `dist/mosaic next-idle-agent` or `dist/mosaic prune-stale-agents` directly. The popup command itself is internal.
 
 ## Arrange panes
 
@@ -93,9 +93,9 @@ Use `main.py next-idle-agent` or `main.py prune-stale-agents` directly. The popu
 `equalize` does not balance the existing layout tree. It replaces the arrangement with columns. `cycle` visits columns, rows, main-left, main-top, and tiled layouts, skipping duplicates for the current pane count. Main layouts use the first pane in layout order, not necessarily the focused pane.
 
 ```sh
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py arrange-columns
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py next-layout
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py layout resize-left
+/path/to/herdr-mosaic/dist/mosaic arrange-columns
+/path/to/herdr-mosaic/dist/mosaic next-layout
+/path/to/herdr-mosaic/dist/mosaic layout resize-left
 ```
 
 Layout commands use the calling pane's `HERDR_PANE_ID` when present, then the invocation context. Unzoom before arranging. Mosaic temporarily moves panes through a staging tab without restarting their processes. If a reshape fails, it attempts to recover the panes and reports where any remaining panes are.
@@ -179,10 +179,10 @@ These existing actions remain callable and visible in Herdr's flat list. They ar
 Text printed by actions is available in Herdr's plugin command logs. For diagnostics and swatches in your terminal, use the direct CLI.
 
 ```sh
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py doctor
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py keybind-install --key prefix+shift+i
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py repalette --dry-run
-/usr/bin/python3 /path/to/herdr-mosaic/src/main.py install --dry-run
+/path/to/herdr-mosaic/dist/mosaic doctor
+/path/to/herdr-mosaic/dist/mosaic keybind-install --key prefix+shift+i
+/path/to/herdr-mosaic/dist/mosaic repalette --dry-run
+/path/to/herdr-mosaic/dist/mosaic install --dry-run
 ```
 
 The picker key installer preserves an existing picker binding rather than adding another. `assign-colors --force` removes the focused space's assignment before automatic allocation. `repalette` snaps non-palette colors to the current palette and then resolves close pairs; it can change manual colors. Its dry run previews the snaps, not the later close-pair reallocations.
@@ -195,7 +195,7 @@ Other advanced direct commands remain available: `marker`, `announce`, `view-cle
 
 `reconcile`, `event`, `sidebar-install`, `sidebar-remove`, `picker`, `board`, `elapsed-publish`, and `refresh-worker` support startup, popup entrypoints, publication, and cleanup. They are not new menu actions.
 
-For a failed refresh worker, use `main.py reconcile` as documented in [sidebar refresh](./settings.md#sidebar-refresh). `refresh-worker` requires the socket generation supplied by startup; do not start another publisher manually.
+For a failed refresh worker, use `dist/mosaic reconcile` as documented in [sidebar refresh](./settings.md#sidebar-refresh). `refresh-worker` requires the socket generation supplied by startup; do not start another publisher manually.
 
 ## CLI compatibility
 
@@ -216,4 +216,4 @@ Preferred names are aliases of existing commands. They use the same handlers, ar
 
 These aliases are CLI commands only, not action IDs. Existing command names, picker environment variables, manifest entrypoints, and bindings are unchanged. No binding migration is required. Titles and help text are for people; callers should use IDs and command names.
 
-`main.py --help` groups commands by task and lists compatibility aliases. `--help` or `-h` anywhere in an invocation prints help without running the command.
+`dist/mosaic --help` groups commands by task and lists compatibility aliases. `--help` or `-h` anywhere in an invocation prints help without running the command.
