@@ -9,7 +9,7 @@ effort to discover.
 
 Mosaic is an experimental Herdr plugin for space colours, agent grouping,
 sidebar titles and elapsed labels, optional chrome tint, and pane layouts.
-Plugin id `iurysza.mosaic`, version 0.1.0.
+Plugin id `iurysza.mosaic`, version 0.5.0.
 
 Public docs present the product, not its migration or personal rollout history.
 Keep runtime compatibility, regression tests, and licence notices intact.
@@ -24,8 +24,11 @@ contract. Do not run another publisher for those tokens at the same time.
 
 ## Non-negotiables
 
-- **Python standard library only, 3.6+.** Every command uses `/usr/bin/python3`
-  directly — no launcher, no packages, no `[[build]]` section.
+- **TypeScript, Bun, and Effect.** Production commands use the compiled Mosaic
+  binary. Keep Python at revision `8b7bb76` as an isolated reference and
+  rollback option, never as a runtime of the release artifact. Pin Bun, Effect,
+  Oxlint, and vendored anti-slop rules. Tests replace external capabilities;
+  do not mock application modules, including via `bun:test` `mock.module`.
 - **Every mutation runs under `ctx.Lock`.** Multiple hooks can fire concurrently;
   the file lock serialises all state and config writes. Never bypass it. Layout
   reshape/resize use the same lock.
@@ -77,8 +80,10 @@ Each of these was a real bug, not a hypothetical:
 ## Testing
 
 ```sh
-python3 -m unittest discover -s tests -t tests     # stdlib only
-python3 scripts/check-standalone.py                # isolated real Herdr lifecycle
+python3 -m unittest discover -s tests -t tests # frozen Python reference
+python3 scripts/check-standalone.py            # isolated real Herdr lifecycle
+bun run typecheck && bun run lint && bun run test
+python3 scripts/check-parity-inventory.py
 ```
 
 Config fixtures are validated by the real `herdr config check` binary. The suite
