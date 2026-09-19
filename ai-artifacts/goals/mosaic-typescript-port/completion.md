@@ -17,7 +17,7 @@ The TypeScript CLI preserves the reference lock, surgical TOML, byte-exact resto
 | `safety-lock` | blocked | Linux flock proofs exist; macOS native proofs are owner-run after the PR |
 | `cli-compiled-min-path` | in-progress | Linux compiled artifact passed; macOS artifact is owner-run after the PR |
 
-No unexplained Python/TypeScript behavior differences were left unmarked. Shared CLI cases in `tests/cli/differential.test.ts` compare help, unknown-command, plugin-id errors, sidebar-install config bytes, install `--dry-run`, doctor exit 0, tint enable/disable restore, and install/uninstall byte restore in separate sandboxes. Every command and alias keeps the same plugin-id and pending-import guards. Python uninstall restores a TypeScript-installed fixture, and TypeScript uninstall restores a Python-installed fixture. Log JSON spacing is a documented incidental difference.
+No unexplained Python/TypeScript behavior differences were left unmarked. Shared CLI cases in `tests/cli/differential.test.ts` compare help, unknown-command, plugin-id errors, sidebar-install config bytes, install `--dry-run`, doctor exit 0, tint enable/disable restore, and install/uninstall byte restore in separate sandboxes. Every command and alias keeps the same plugin-id and pending-import guards. `rewriteArgv` keeps extra argv for every alias (`tests/unit/catalog.test.ts`). Python uninstall restores a TypeScript-installed fixture, and TypeScript uninstall restores a Python-installed fixture. Log JSON spacing is a documented incidental difference.
 
 ## Automated results (Linux x86_64)
 
@@ -25,7 +25,7 @@ No unexplained Python/TypeScript behavior differences were left unmarked. Shared
 | --- | --- |
 | `bun run typecheck` | pass |
 | `bun run lint` | pass |
-| `bun run test` | 293 pass |
+| `bun run test` | 298 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:artifact` | 4 pass |
 | `bun run test:herdr` | pass against Herdr 0.9.0 after isolate-preload wipes `HERDR_BIN_PATH`: transport, `config check`, TypeScript install/uninstall restore, and Python uninstall of a TypeScript-installed fixture |
