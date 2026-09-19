@@ -1,6 +1,6 @@
 # Dev log
 
-Status: Step 1 complete; step 2 in progress
+Status: Step 1 complete; step 2 Linux proofs in, blocked on macOS
 
 ## Planning checkpoint
 
@@ -29,3 +29,28 @@ Validation: `python3 scripts/check-parity-inventory.py` → `parity inventory co
 Documented disagreements (preserve Python behavior): version string in `AGENTS.md`, `rows_by_agent` host capability vs Mosaic policy, optional settings keys, dual marker defaults, `ownership_baseline` vs backup restore, `action_renames` omitted from `default_state()`, Chromatic path env divergence, agent-row token listing, `install --dry-run` migrate-only quirk, missing Python PTY tests, untested layout recovery failure path.
 
 Next: step 2 stack pins (Bun 1.4.2, TypeScript 7.0.2, Effect 4.0.0-rc.116, Oxlint 1.82.0, anti-slop `c44ef22`). Prove compile, isolation, lock, worker, terminal, and fake Herdr transport before feature porting.
+
+## 2026-09-19 step 2 Linux runtime proofs
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated cloud checkout. Default Herdr session, user settings, and live registration were not used. Herdr 0.9.0 was installed to `/tmp/mosaic-tools/herdr` for disposable `tests/herdr` only.
+
+Contract files left unchanged except append-only `dev-log.md`, `parity.md` evidence columns, and `evidence/step-2-linux.md`. Frozen Python still matches `8b7bb76`.
+
+Stack: Bun 1.4.2, TypeScript 7.0.2, Effect 4.0.0-rc.116, Oxlint 1.82.0, anti-slop `c44ef22` with Bun `mock.module` coverage. Effect `AGENTS.md` was read. Production CLI is `src/cli.ts`; the Python manifest is unchanged until step 7.
+
+File placement: `src/cli.ts`, `src/dispatch/`, `src/runtime/` (paths, flock FFI, lock, rpc, terminal, worker), `src/migrate/pending.ts`, tests under `tests/{cli,unit,runtime,artifact,herdr,support}`.
+
+Validation (Linux x86_64):
+
+- `bun run typecheck` pass
+- `bun run lint` pass
+- `bun run test` 20 pass
+- `bun run test:runtime` 11 pass (flock contend/death/SIGINT, virtual and wall-clock timeout, PTY raw/input/resize/cancel/restore, worker race exit 0)
+- `bun run test:artifact` pass
+- `bun run test:herdr` pass against Herdr 0.9.0 protocol 22 on a disposable HOME
+- `python3 scripts/check-parity-inventory.py` 105 entrypoints
+
+Blocker: macOS flock, worker, PTY, artifact, and real-Herdr proofs are required by fact-09 / fact-20 and the step 2 gate. This environment cannot run them. Step 3 is not started.
+
+Next: macOS runner or owner approval to proceed without that gate.
+

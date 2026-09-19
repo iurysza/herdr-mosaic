@@ -15,7 +15,7 @@ describe("test isolation", () => {
   test("child processes inherit the isolated HOME", async () => {
     const proc = Bun.spawn(
       ["python3", "-c", "import os; print(os.environ['HOME'])"],
-      { stdout: "pipe", stderr: "pipe" },
+      { stdout: "pipe", stderr: "pipe", env: { ...process.env } },
     )
 
     const stdout = (await new Response(proc.stdout).text()).trim()

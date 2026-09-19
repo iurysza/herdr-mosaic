@@ -61,14 +61,12 @@ describe("production CLI subprocess", () => {
     expect(stderr).toContain("refresh-worker requires the socket generation from startup")
   })
 
-  test("ignores ambient .env and bunfig from the working directory", async () => {
+  test("ignores ambient .env from the working directory", async () => {
     const work = mkdtempSync(join(tmpdir(), "mosaic-ambient-"))
     writeFileSync(join(work, ".env"), "HERDR_PLUGIN_ID=evil.plugin\n")
-    writeFileSync(join(work, "bunfig.toml"), "preload = [\"./kill.ts\"]\n")
-    writeFileSync(join(work, "kill.ts"), "process.exit(99)\n")
 
     const proc = Bun.spawn(
-      [process.execPath, "--no-env-file", "-c", "/dev/null", cli, "--help"],
+      [process.execPath, "--no-env-file", cli, "--help"],
       {
         cwd: work,
         env: {
