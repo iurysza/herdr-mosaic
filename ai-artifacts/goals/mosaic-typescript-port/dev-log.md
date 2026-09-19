@@ -95,3 +95,15 @@ Validation: `bun run typecheck` pass, `bun run lint` pass, `bun run test` 117 pa
 
 Next: auto-assign, migrate, keybinds, install/uninstall. Still no success-returning stubs.
 
+## 2026-09-19 step 4 auto-assign and migrate
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs remain unrun in this environment; the owner will verify them after the PR is open. Step 2 is not marked complete.
+
+Wired `auto-assign` / `assign-colors` under the plugin lock. `--force` drops only the context/focused identity. Repeat assign prints `(all spaces already had identities)`.
+
+Wired `migrate` under the plugin lock. Window Manager import is byte-exact, never overwrites existing Mosaic files (including with `--force`), and records `window-manager-import.json` so later Chromatic state cannot overlay. Chromatic import lists stale `sidebar_backup` / `theme_backup` / `last_written`, snapshots live ownership, and does not auto-enable tint. MigrationError prints a timestamped warn plus the raw message and exits 1.
+
+Validation: `bun run typecheck` pass, `bun run lint` pass, `bun run test` 131 pass, parity inventory 105.
+
+Next: keybinds, install (dry-run migrate-only), doctor, uninstall. Still no success-returning stubs.
+

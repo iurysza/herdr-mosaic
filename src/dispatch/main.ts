@@ -2,6 +2,8 @@ import { Effect } from "effect"
 
 import { COMMAND_SET, helpText, rewriteArgv, wantsHelp } from "./catalog.ts"
 import { runApplyIdentity } from "../spaces/apply-identity.ts"
+import { runAutoAssign } from "../spaces/auto-assign.ts"
+import { runMigrate } from "../migrate/run.ts"
 import { runSidebarInstall, runSidebarRemove } from "../config/sidebar.ts"
 import { PLUGIN_ID } from "../ids.ts"
 import { windowManagerPending } from "../migrate/pending.ts"
@@ -39,6 +41,14 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command === "apply-identity") {
     return yield* runApplyIdentity(rewritten.slice(1))
+  }
+
+  if (command === "auto-assign") {
+    return yield* runAutoAssign(rewritten.slice(1))
+  }
+
+  if (command === "migrate") {
+    return yield* runMigrate(rewritten.slice(1))
   }
 
   if (command === "sidebar-install") {

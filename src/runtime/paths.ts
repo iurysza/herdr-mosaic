@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url"
 
 import { Context, Layer, Schema } from "effect"
 
-import { PLUGIN_ID, WINDOW_MANAGER_ID } from "../ids.ts"
+import { CHROMATIC_ID, LAYOUTS_ID, PLUGIN_ID, WINDOW_MANAGER_ID } from "../ids.ts"
 
 const optionalPath = Schema.optionalKey(Schema.NonEmptyString)
 
@@ -27,6 +27,10 @@ export const ProcessEnv = Schema.Struct({
   HERDR_PLUGIN_ACTION_ID: optionalPath,
   HERDR_LEGACY_WINDOW_MANAGER_STATE_DIR: optionalPath,
   HERDR_LEGACY_WINDOW_MANAGER_CONFIG_DIR: optionalPath,
+  HERDR_LEGACY_CHROMATIC_STATE_DIR: optionalPath,
+  HERDR_LEGACY_CHROMATIC_CONFIG_DIR: optionalPath,
+  HERDR_LEGACY_LAYOUTS_STATE_DIR: optionalPath,
+  HERDR_LEGACY_LAYOUTS_CONFIG_DIR: optionalPath,
   SPACE_IDENTITY_TARGET: optionalPath,
   MOSAIC_PRUNE_PROTECTED_PANE: optionalPath,
   MOSAIC_PANE_MOVE_SOURCE: optionalPath,
@@ -54,6 +58,10 @@ const ENV_KEYS = [
   "HERDR_PLUGIN_ACTION_ID",
   "HERDR_LEGACY_WINDOW_MANAGER_STATE_DIR",
   "HERDR_LEGACY_WINDOW_MANAGER_CONFIG_DIR",
+  "HERDR_LEGACY_CHROMATIC_STATE_DIR",
+  "HERDR_LEGACY_CHROMATIC_CONFIG_DIR",
+  "HERDR_LEGACY_LAYOUTS_STATE_DIR",
+  "HERDR_LEGACY_LAYOUTS_CONFIG_DIR",
   "SPACE_IDENTITY_TARGET",
   "MOSAIC_PRUNE_PROTECTED_PANE",
   "MOSAIC_PANE_MOVE_SOURCE",
@@ -98,6 +106,14 @@ export function pathsFromEnv(env: ProcessEnvValues) {
       ?? join(dirname(stateDir), WINDOW_MANAGER_ID),
     windowManagerConfigDir: env.HERDR_LEGACY_WINDOW_MANAGER_CONFIG_DIR
       ?? join(dirname(configDir), WINDOW_MANAGER_ID),
+    chromaticStateDir: env.HERDR_LEGACY_CHROMATIC_STATE_DIR
+      ?? join(home, ".local", "state", "herdr", "plugins", CHROMATIC_ID),
+    chromaticConfigDir: env.HERDR_LEGACY_CHROMATIC_CONFIG_DIR
+      ?? join(home, ".config", "herdr", "plugins", "config", CHROMATIC_ID),
+    layoutsStateDir: env.HERDR_LEGACY_LAYOUTS_STATE_DIR
+      ?? join(home, ".local", "state", "herdr", "plugins", LAYOUTS_ID),
+    layoutsConfigDir: env.HERDR_LEGACY_LAYOUTS_CONFIG_DIR
+      ?? join(home, ".config", "herdr", "plugins", "config", LAYOUTS_ID),
     paneId: env.HERDR_PANE_ID,
     tabId: env.HERDR_TAB_ID,
     workspaceId: env.HERDR_WORKSPACE_ID,

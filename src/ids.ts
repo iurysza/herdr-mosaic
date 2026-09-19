@@ -6,6 +6,10 @@ export const PLUGIN_NAME = "Mosaic"
 
 export const WINDOW_MANAGER_ID = "iurysza.window-manager"
 
+export const CHROMATIC_ID = "jackfrancisdalton.chromatic-spaces"
+
+export const LAYOUTS_ID = "layouts"
+
 export const TITLE_SOURCE = "agent-sidebar-title"
 
 export const ELAPSED_SOURCE = "agent-elapsed"

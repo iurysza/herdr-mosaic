@@ -1,8 +1,9 @@
 import { join } from "node:path"
 
-import { Effect, Predicate, Result, Schema } from "effect"
+import { Effect, Predicate } from "effect"
 
 import { flagString, parseKv } from "../dispatch/flags.ts"
+import { resolveContextWorkspace } from "../runtime/invocation.ts"
 import { pluginLockPath, withExclusiveLock } from "../runtime/lock.ts"
 import {
   emptyOutput,
@@ -13,7 +14,7 @@ import {
 } from "../runtime/plugin-log.ts"
 import type { PluginPathValues } from "../runtime/paths.ts"
 import { PluginPaths } from "../runtime/paths.ts"
-import { focusedWorkspace, listAgents, listWorkspaces } from "../runtime/rpc.ts"
+import { listAgents, listWorkspaces } from "../runtime/rpc.ts"
 import { identityOf, load, save, setIdentity } from "../state/store.ts"
 import {
   SLOT_NAMES,
@@ -35,36 +36,6 @@ function statePath(stateDir: string): string {
   return join(stateDir, "state.json")
 }
 
-function contextWorkspaceId(paths: PluginPathValues): string | undefined {
-  const raw = paths.contextJson
-
-  if (raw === undefined || raw === "") return undefined
-
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    const decoded = Schema.decodeUnknownResult(Schema.JsonObject)(parsed)
-
-    if (Result.isFailure(decoded)) return undefined
-
-    const value = decoded.success.workspace_id
-
-    return Predicate.isString(value) && value !== "" ? value : undefined
-  } catch {
-    return undefined
-  }
-}
-
-const contextWorkspace = Effect.fnUntraced(function*(paths: PluginPathValues) {
-  const fromContext = contextWorkspaceId(paths)
-
-  if (fromContext !== undefined) return fromContext
-
-  const focused = yield* focusedWorkspace()
-  const id = focused === undefined ? undefined : focused.workspace_id
-
-  return Predicate.isString(id) && id !== "" ? id : undefined
-})
-
 function pythonRepr(value: string): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`
 }
@@ -81,7 +52,7 @@ export const runApplyIdentity = Effect.fnUntraced(function*(argv: readonly strin
   const paths = yield* PluginPaths
   const output = emptyOutput()
   const flags = parseKv(argv)
-  const requested = flagString(flags, "workspace") ?? (yield* contextWorkspace(paths))
+  const requested = flagString(flags, "workspace") ?? (yield* resolveContextWorkspace(paths))
 
   if (requested === undefined) {
     yield* pluginWarn(paths, output, "no workspace specified")

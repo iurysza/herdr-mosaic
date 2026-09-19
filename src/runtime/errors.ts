@@ -50,3 +50,7 @@ export class ConfigError extends Schema.TaggedError<ConfigError>()("ConfigError"
 export class LabelRulesError extends Schema.TaggedError<LabelRulesError>()("LabelRulesError", {
   message: Schema.String,
 }) {}
+
+export class MigrationError extends Schema.TaggedError<MigrationError>()("MigrationError", {
+  message: Schema.String,
+}) {}
