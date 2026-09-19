@@ -16,7 +16,7 @@ describe("agent view definition", () => {
   test("current/activity filter does not mention status", () => {
     for (const scope of ["all", "current"] as const) {
       for (const sort of ["activity", "spaces"] as const) {
-        const text = JSON.stringify(definition(scope, sort).filter)
+        const text = JSON.stringify(definition(scope, sort).filter ?? null)
 
         expect(text).not.toContain("status")
         expect(text).not.toContain("blocked")

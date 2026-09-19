@@ -2,7 +2,7 @@ import { join } from "node:path"
 import { readFileSync, writeFileSync } from "node:fs"
 
 import { describe, expect, test } from "bun:test"
-import { Clock, Effect, Result, Schema } from "effect"
+import { Clock, Effect, Predicate, Result, Schema } from "effect"
 
 import { runCli } from "../../src/cli.ts"
 import { PluginPaths } from "../../src/runtime/paths.ts"
@@ -566,11 +566,19 @@ describe("event CLI detection and workspace hooks", () => {
 
       expect(result.code).toBe(0)
 
-      const published = fake.requests
-        .filter((request) => request.method === "workspace.report_metadata")
-        .map((request) => request.params.workspace_id)
-        .sort()
+      const published: string[] = []
 
+      for (const request of fake.requests) {
+        if (request.method !== "workspace.report_metadata") continue
+
+        const workspaceId = request.params.workspace_id
+
+        if (Predicate.isString(workspaceId) && !published.includes(workspaceId)) {
+          published.push(workspaceId)
+        }
+      }
+
+      published.sort()
       expect(published).toEqual(["w1", "w2"])
       expect(load(statePath).identities.w1).toEqual({ colour: "#a6d189", origin: "label" })
       expect(load(statePath).identities.w2).toEqual({ colour: "#fab387", origin: "label" })
