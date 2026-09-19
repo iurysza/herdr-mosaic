@@ -2,7 +2,7 @@ import { join } from "node:path"
 
 import { Clock, Effect, Predicate, Result, Schema } from "effect"
 
-import { ConfigError, RpcTransportError } from "../runtime/errors.ts"
+import { ConfigError } from "../runtime/errors.ts"
 import { pluginLockPath, withExclusiveLock } from "../runtime/lock.ts"
 import {
   emptyOutput,
@@ -12,8 +12,8 @@ import {
 } from "../runtime/plugin-log.ts"
 import type { PluginPathValues } from "../runtime/paths.ts"
 import { PluginPaths } from "../runtime/paths.ts"
-import { rpcCall } from "../runtime/rpc.ts"
 import { load, save, type PluginState } from "../state/store.ts"
+import { reloadConfig } from "./reload.ts"
 import {
   TomlTable,
   type TomlValue,
@@ -171,34 +171,6 @@ function dropLastWritten(state: PluginState, keys: ReadonlySet<string>, skip: Re
 
   state.last_written = Result.isSuccess(decoded) ? decoded.success : {}
 }
-
-const reloadConfig = Effect.fnUntraced(function*(
-  paths: PluginPathValues,
-  output: ReturnType<typeof emptyOutput>,
-) {
-  const result = yield* rpcCall("server.reload_config", {}).pipe(
-    Effect.result,
-  )
-
-  if (Result.isFailure(result)) {
-    const error = result.failure
-
-    if (error instanceof RpcTransportError) {
-      yield* pluginWarn(paths, output, `config reload failed: ${error.code}: ${error.message}`)
-    }
-
-    return
-  }
-
-  const body = result.success
-  const diagnostics = body.diagnostics
-
-  if (!Array.isArray(diagnostics)) return
-
-  for (const diagnostic of diagnostics) {
-    yield* pluginWarn(paths, output, `reload diagnostic: ${String(diagnostic)}`)
-  }
-})
 
 export const runSidebarInstall = Effect.fnUntraced(function*(argv: readonly string[]) {
   const paths = yield* PluginPaths
