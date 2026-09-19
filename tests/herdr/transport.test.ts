@@ -26,7 +26,11 @@ async function waitPing(paths: PluginPathValues) {
 
 describe("real Herdr transport", () => {
   test("ping and plugin.list work on a disposable server", async () => {
+    expect(process.env.HERDR_BIN_PATH?.includes("missing-herdr")).toBe(true)
+
     const bin = herdrBin()
+
+    expect(bin.includes("missing-herdr")).toBe(false)
 
     const version = Bun.spawn([bin, "--version"], {
       env: { HOME: "/tmp", HERDR_CONFIG_PATH: "/tmp/mosaic-herdr-version.toml" },
