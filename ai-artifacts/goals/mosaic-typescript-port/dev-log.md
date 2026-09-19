@@ -367,5 +367,13 @@ Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkou
 
 Next: wait for `macos-latest` Verify. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 Darwin ps session column
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. Step 2 is not marked complete.
+
+`macos-latest` Verify ran typecheck, lint, Python 280, and `bun run test` 299. `test:runtime` failed because `ps -o sid=` is Linux; Darwin `ps` reports session ID as `sess`. Socket realpath and `/tmp` sandboxes held.
+
+Next: wait for `macos-latest` Verify. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 

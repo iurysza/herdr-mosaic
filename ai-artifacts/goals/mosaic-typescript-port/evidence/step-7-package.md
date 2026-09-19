@@ -17,7 +17,7 @@ Candidate: `cursor/mosaic-typescript-port-1529`. Production artifact sha256 `2e6
 | Python (reference) | 3.12.3 |
 | Herdr | 0.9.0 protocol 22 |
 | Build | `bun run build` → `dist/mosaic` |
-| `dist/mosaic` sha256 | `2a55c5abae4bba0ce729bed3f22c15c88b04141f1dd7b8368a79fe9779549a05` |
+| `dist/mosaic` sha256 | `2e692b2a02cad327ab426542aa477af72e361a8928bab61e3f4ee0581d67c035` |
 | `dist/mosaic` size | 81_823_200 bytes (Bun compiled runtime) |
 | Python `src/*.py` | 226_695 bytes |
 

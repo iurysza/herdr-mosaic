@@ -144,7 +144,9 @@ describe("worker ownership", () => {
       )
       expect(pid).toBeGreaterThan(0)
 
-      const proc = Bun.spawn(["ps", "-o", "pid=,sid=", "-p", String(pid)], {
+      const sessionColumn = process.platform === "darwin" ? "sess=" : "sid="
+
+      const proc = Bun.spawn(["ps", "-p", String(pid), "-o", "pid=", "-o", sessionColumn], {
         stdout: "pipe",
         stderr: "pipe",
       })
