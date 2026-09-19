@@ -131,6 +131,16 @@ const ALIAS_NAMES = [
   "tint-preview",
 ] as const satisfies ReadonlyArray<keyof typeof CLI_ALIASES>
 
+export function processCliArgv(argv: readonly string[]): string[] {
+  const script = argv[1] ?? ""
+
+  if (script.endsWith("cli.ts") || script.endsWith("cli.js") || script.includes("$bunfs")) {
+    return argv.slice(2)
+  }
+
+  return argv.slice(1)
+}
+
 export function rewriteArgv(argv: readonly string[]): string[] {
   if (argv.length === 0) return []
 

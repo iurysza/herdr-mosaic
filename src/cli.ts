@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url"
 import { Effect, Result } from "effect"
 
 import { publishOnce } from "./agents/sidebar-publish.ts"
-import { rewriteArgv, wantsHelp } from "./dispatch/catalog.ts"
+import { processCliArgv, rewriteArgv, wantsHelp } from "./dispatch/catalog.ts"
 import { runCommand } from "./dispatch/main.ts"
 import { PLUGIN_ID } from "./ids.ts"
 import { CommandFailed, FlockError, LockTimeout, RpcTransportError } from "./runtime/errors.ts"
@@ -153,9 +153,7 @@ export function writeResult(result: CliResult): void {
 }
 
 if (import.meta.main) {
-  const argv = process.argv[1]?.endsWith("cli.ts") || process.argv[1]?.endsWith("cli.js")
-    ? process.argv.slice(2)
-    : process.argv.slice(1)
+  const argv = processCliArgv(process.argv)
 
   const result = await Effect.runPromise(
     runCli(argv).pipe(Effect.provide(mainLayer)),

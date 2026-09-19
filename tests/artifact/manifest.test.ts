@@ -3,6 +3,7 @@ import { join } from "node:path"
 
 import { describe, expect, test } from "bun:test"
 
+import { processCliArgv } from "../../src/dispatch/catalog.ts"
 import { refreshWorkerArgs } from "../../src/runtime/worker.ts"
 import { makeSandbox } from "../support/sandbox.ts"
 
@@ -35,6 +36,8 @@ describe("production manifest", () => {
       "refresh-worker",
       "gen",
     ])
+    expect(processCliArgv(["/plugin/dist/mosaic", "/$bunfs/root/mosaic", "nosuch"])).toEqual(["nosuch"])
+    expect(processCliArgv(["bun", "/plugin/src/cli.ts", "doctor"])).toEqual(["doctor"])
   })
 
   test("the compiled artifact handles help, unknown commands, and worker argv", async () => {
