@@ -17,7 +17,7 @@ The TypeScript CLI preserves the reference lock, surgical TOML, byte-exact resto
 | `safety-lock` | blocked | Linux flock proofs exist; macOS native proofs are owner-run after the PR |
 | `cli-compiled-min-path` | in-progress | Linux compiled artifact passed; macOS artifact is owner-run after the PR |
 
-No unexplained Python/TypeScript behavior differences were left unmarked. Shared CLI cases in `tests/cli/differential.test.ts` compare help, unknown-command, plugin-id errors, and sidebar-install config bytes in separate sandboxes. Log JSON spacing is a documented incidental difference.
+No unexplained Python/TypeScript behavior differences were left unmarked. Shared CLI cases in `tests/cli/differential.test.ts` compare help, unknown-command, plugin-id errors, sidebar-install config bytes, install `--dry-run`, doctor exit 0, and tint enable/disable restore in separate sandboxes. Log JSON spacing is a documented incidental difference.
 
 ## Automated results (Linux x86_64)
 
@@ -25,10 +25,10 @@ No unexplained Python/TypeScript behavior differences were left unmarked. Shared
 | --- | --- |
 | `bun run typecheck` | pass |
 | `bun run lint` | pass |
-| `bun run test` | 284 pass |
+| `bun run test` | 287 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:artifact` | 4 pass |
-| `bun run test:herdr` | pass against Herdr 0.9.0 |
+| `bun run test:herdr` | pass against Herdr 0.9.0, including `config check` of a TypeScript-installed sidebar |
 | `bun run test:parity` | 105 entrypoints |
 | `python3 -m unittest discover -s tests -t tests` | 280 pass |
 | `scripts/check-standalone.py` | passed; receipt in `evidence/step-7-standalone-receipt.json` |
