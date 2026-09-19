@@ -54,3 +54,7 @@ export class LabelRulesError extends Schema.TaggedError<LabelRulesError>()("Labe
 export class MigrationError extends Schema.TaggedError<MigrationError>()("MigrationError", {
   message: Schema.String,
 }) {}
+
+export class LayoutError extends Schema.TaggedError<LayoutError>()("LayoutError", {
+  message: Schema.String,
+}) {}

@@ -20,6 +20,28 @@ export function workspaceIdFromContextJson(raw: string | undefined): string | un
   }
 }
 
+export function paneIdFromContextJson(raw: string | undefined): string | undefined {
+  if (raw === undefined || raw === "") return undefined
+
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    const decoded = Schema.decodeUnknownResult(Schema.JsonObject)(parsed)
+
+    if (Result.isFailure(decoded)) return undefined
+
+    const focused = decoded.success.focused_pane_id
+    const pane = decoded.success.pane_id
+
+    if (Predicate.isString(focused) && focused !== "") return focused
+
+    if (Predicate.isString(pane) && pane !== "") return pane
+
+    return undefined
+  } catch {
+    return undefined
+  }
+}
+
 export const resolveContextWorkspace = Effect.fnUntraced(function*(paths: PluginPathValues) {
   const fromContext = workspaceIdFromContextJson(paths.contextJson)
 
