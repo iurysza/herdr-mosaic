@@ -84,7 +84,7 @@ export function markerGlyph(paths: PluginPathValues): string {
 }
 
 export function workspaceIdOfPane(paneId: string): string | undefined {
-  const id = paneId.split(":", 1)[0]
+  const id = paneId.split(":")[0]
 
   return id === undefined || id === "" ? undefined : id
 }

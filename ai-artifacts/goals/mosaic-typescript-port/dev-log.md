@@ -153,5 +153,17 @@ Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun r
 
 Next: event dispatcher, then TUI and layouts. Wire `refresh.start` once CLI fixtures can own a short-lived worker. Still no success-returning stubs.
 
+## 2026-09-19 step 5 event dispatcher and last-settled tracking
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Wired `event` through the production CLI. Last-settled tracking matches the frozen Python launch/completion rules. Focused uses live RPC, not the payload. Closed spaces keep identity. Detection initialises a clock once; released detects are ignored; close/exit drop occupancy. `workspaceIdOfPane` now splits on the first colon so pane republish finds the space. `refresh.start` is still not wired from `runCli`.
+
+File placement: `src/agents/tracker.ts`, `src/agents/events.ts`, `tests/unit/tracker.test.ts`, `tests/cli/events.test.ts`.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 208 pass, parity inventory 105.
+
+Next: agent triage (next-idle, prune), then TUI and layouts. Wire `refresh.start` once CLI fixtures can own a short-lived worker. Still no success-returning stubs.
+
 
 
