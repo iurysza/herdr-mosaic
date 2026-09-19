@@ -11,12 +11,14 @@ import { PALETTE, slotToken } from "../spaces/palette.ts"
 import {
   TomlDoc,
   TomlTable,
+  dumpValue,
   isMissing,
   isTomlList,
   isTomlString,
   tomlEqual,
   type Missing,
   type TomlKeyPath,
+  type TomlSection,
   type TomlValue,
 } from "./toml-edit.ts"
 
@@ -683,3 +685,205 @@ export const commitDoc = Effect.fnUntraced(function*(doc: TomlDoc, path: string)
 
   return checked.output
 })
+
+export const KEYBIND_MARKER = "# added by iurysza.mosaic"
+
+export const KEYS_COMMAND: TomlKeyPath = ["keys", "command"]
+
+export type KeybindStatus = "exists" | "occupied" | "added"
+
+export type KeybindInstallResult = {
+  readonly status: KeybindStatus
+  readonly bound: string | undefined
+}
+
+function optionalScalar(value: TomlValue | Missing): string | undefined {
+  if (isMissing(value)) return undefined
+
+  if (isTomlString(value)) return value
+
+  return String(value)
+}
+
+export function findKeybind(doc: TomlDoc, command: string): TomlSection | undefined {
+  for (const section of doc.aotSections(KEYS_COMMAND)) {
+    if (doc.sectionScalar(section, "command") === command) return section
+  }
+
+  return undefined
+}
+
+export function findBindingForKey(doc: TomlDoc, key: string): TomlSection | undefined {
+  for (const section of doc.aotSections(KEYS_COMMAND)) {
+    if (doc.sectionScalar(section, "key") === key) return section
+  }
+
+  return undefined
+}
+
+export function keybindKey(doc: TomlDoc, command: string): string | undefined {
+  const section = findKeybind(doc, command)
+
+  if (section === undefined) return undefined
+
+  return optionalScalar(doc.sectionScalar(section, "key"))
+}
+
+export function installKeybind(
+  doc: TomlDoc,
+  key: string,
+  command: string,
+  description: string,
+): KeybindInstallResult {
+  const existing = findKeybind(doc, command)
+
+  if (existing !== undefined) {
+    return {
+      status: "exists",
+      bound: optionalScalar(doc.sectionScalar(existing, "key")),
+    }
+  }
+
+  const occupied = findBindingForKey(doc, key)
+
+  if (occupied !== undefined) {
+    return {
+      status: "occupied",
+      bound: optionalScalar(doc.sectionScalar(occupied, "command")),
+    }
+  }
+
+  doc.appendLines([
+    KEYBIND_MARKER,
+    "[[keys.command]]",
+    `key = ${dumpValue(key)}`,
+    'type = "plugin_action"',
+    `command = ${dumpValue(command)}`,
+    `description = ${dumpValue(description)}`,
+  ])
+
+  return { status: "added", bound: key }
+}
+
+export function removeKeybind(doc: TomlDoc, command: string): boolean {
+  const section = findKeybind(doc, command)
+
+  if (section === undefined) return false
+
+  doc.removeSection(section)
+
+  return true
+}
+
+export type ActionRenameRecord = {
+  readonly key: string | undefined
+  readonly command: string
+  readonly before: readonly string[]
+  readonly after: readonly string[]
+}
+
+export function renamePluginActions(
+  doc: TomlDoc,
+  oldId: string,
+  newId: string,
+): ActionRenameRecord[] {
+  const records: ActionRenameRecord[] = []
+  const prefix = `${oldId}.`
+
+  for (const section of [...doc.aotSections(KEYS_COMMAND)].reverse()) {
+    const command = doc.sectionScalar(section, "command")
+
+    if (doc.sectionScalar(section, "type") !== "plugin_action") continue
+
+    if (isMissing(command) || !isTomlString(command) || !command.startsWith(prefix)) continue
+
+    const key = optionalScalar(doc.sectionScalar(section, "key"))
+    const replacement = `${newId}${command.slice(oldId.length)}`
+    const before = doc.lines.slice(section.start, section.end)
+
+    doc.setSectionScalar(section, "command", replacement)
+
+    const changed: TomlSection[] = []
+
+    for (const candidate of doc.aotSections(KEYS_COMMAND)) {
+      if (doc.sectionScalar(candidate, "command") === replacement
+        && optionalScalar(doc.sectionScalar(candidate, "key")) === key) {
+        changed.push(candidate)
+      }
+    }
+
+    if (changed.length !== 1 || changed[0] === undefined) {
+      throw new ConfigError({ message: `ambiguous binding while migrating ${command}` })
+    }
+
+    records.push({
+      key,
+      command: replacement,
+      before,
+      after: doc.lines.slice(changed[0].start, changed[0].end),
+    })
+  }
+
+  return records
+}
+
+function sameLines(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) return false
+
+  for (let i = 0; i < left.length; i++) {
+    if (left[i] !== right[i]) return false
+  }
+
+  return true
+}
+
+export function restoreActionRenames(
+  doc: TomlDoc,
+  records: readonly ActionRenameRecord[],
+): ActionRenameRecord[] {
+  const remaining: ActionRenameRecord[] = []
+
+  for (const record of records) {
+    const keyed: TomlSection[] = []
+
+    for (const section of doc.aotSections(KEYS_COMMAND)) {
+      if (optionalScalar(doc.sectionScalar(section, "key")) === record.key) {
+        keyed.push(section)
+      }
+    }
+
+    let alreadyRestored = false
+
+    for (const section of keyed) {
+      if (sameLines(doc.lines.slice(section.start, section.end), record.before)) {
+        alreadyRestored = true
+        break
+      }
+    }
+
+    if (alreadyRestored) continue
+
+    const matches: TomlSection[] = []
+
+    for (const section of keyed) {
+      if (doc.sectionScalar(section, "command") === record.command) matches.push(section)
+    }
+
+    if (matches.length !== 1 || matches[0] === undefined) {
+      remaining.push(record)
+      continue
+    }
+
+    const section = matches[0]
+
+    if (!sameLines(doc.lines.slice(section.start, section.end), record.after)) {
+      remaining.push(record)
+      continue
+    }
+
+    doc.lines.splice(section.start, section.end - section.start, ...record.before)
+    doc.reindex()
+  }
+
+  return remaining
+}

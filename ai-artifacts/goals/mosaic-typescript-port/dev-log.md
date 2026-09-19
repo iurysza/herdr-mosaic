@@ -107,3 +107,13 @@ Validation: `bun run typecheck` pass, `bun run lint` pass, `bun run test` 131 pa
 
 Next: keybinds, install (dry-run migrate-only), doctor, uninstall. Still no success-returning stubs.
 
+## 2026-09-19 step 4 keybinds
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Wired picker, sort, idle, prune, pane-move, and promote keybind install/remove through the production CLI. Occupied keys and pre-existing sort bindings are not claimed. `# added by iurysza.mosaic` is stripped with the section on remove.
+
+Validation: `bun run typecheck` pass, `bun run lint` pass, `bun run test` 137 pass.
+
+Next: install (dry-run migrate-only), doctor, uninstall. Still no success-returning stubs.
+
