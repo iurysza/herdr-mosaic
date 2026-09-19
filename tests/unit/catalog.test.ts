@@ -1,7 +1,11 @@
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
+
 import { describe, expect, test } from "bun:test"
 
 import {
   CLI_ALIASES,
+  COMMANDS,
   helpText,
   processCliArgv,
   rewriteArgv,
@@ -54,5 +58,13 @@ describe("CLI catalog", () => {
     expect(wantsHelp(["-h"])).toBe(true)
     expect(wantsHelp(["doctor", "--help"])).toBe(true)
     expect(wantsHelp(["doctor"])).toBe(false)
+  })
+
+  test("every catalog command has a dispatch branch", () => {
+    const source = readFileSync(join(import.meta.dir, "..", "..", "src", "dispatch", "main.ts"), "utf8")
+
+    for (const name of COMMANDS) {
+      expect(source, name).toContain(`command === "${name}"`)
+    }
   })
 })
