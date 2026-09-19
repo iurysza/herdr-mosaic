@@ -72,6 +72,37 @@ function asObject(value: Json | undefined): JsonObject | undefined {
   return decoded.success
 }
 
+function jsonObject(value: Json): JsonObject {
+  const decoded = Schema.decodeUnknownResult(Schema.JsonObject)(value)
+
+  if (Result.isFailure(decoded)) return {}
+
+  return decoded.success
+}
+
+function paneIdOf(params: JsonObject): string {
+  return Predicate.isString(params.pane_id) ? params.pane_id : ""
+}
+
+function moveAccepted(paneId: string, createdTab?: string): JsonObject {
+  if (createdTab === undefined) {
+    return jsonObject({
+      move_result: {
+        changed: true,
+        pane: { pane_id: paneId },
+      },
+    })
+  }
+
+  return jsonObject({
+    move_result: {
+      changed: true,
+      pane: { pane_id: paneId },
+      created_tab: { tab_id: createdTab },
+    },
+  })
+}
+
 describe("layout CLI", () => {
   test("resize requires a pane context", async () => {
     const sandbox = makeSandbox()
@@ -150,27 +181,17 @@ describe("layout CLI", () => {
     fake.on("layout.export", () => ({ layout: twoPaneLayout() }))
     fake.on("pane.move", (_method, params) => {
       const dest = asObject(params.destination) ?? {}
-      const paneId = params.pane_id
-      const result: JsonObject = {
-        changed: true,
-        pane: { pane_id: Predicate.isString(paneId) ? paneId : "" },
-      }
+      const paneId = paneIdOf(params)
 
-      if (dest.type === "new_tab") {
-        return {
-          move_result: {
-            ...result,
-            created_tab: { tab_id: "w1:t-staging" },
-          },
-        }
-      }
+      if (dest.type === "new_tab") return moveAccepted(paneId, "w1:t-staging")
 
-      return { move_result: result }
+      return moveAccepted(paneId)
     })
     await fake.listen()
 
     try {
       const result = await run(["layout", "equalize"], paneEnv(sandbox.env, "w1:p1"))
+
       const moves = fake.requests
         .filter((request) => request.method === "pane.move")
         .map((request) => asObject(request.params.destination) ?? {})
@@ -224,6 +245,23 @@ describe("layout CLI", () => {
     }
   })
 
+  test("next-layout aliases to cycle", async () => {
+    const sandbox = makeSandbox()
+    const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
+
+    fake.on("layout.export", () => ({ layout: singlePaneLayout() }))
+    await fake.listen()
+
+    try {
+      const result = await run(["next-layout"], paneEnv(sandbox.env, "w1:p1"))
+
+      expect(result.code).toBe(0)
+      expect(fake.requests.map((request) => request.method)).toEqual(["layout.export"])
+    } finally {
+      await fake.close()
+    }
+  })
+
   test("a failed reinsert recovers panes onto the original tab", async () => {
     const sandbox = makeSandbox()
     const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
@@ -259,27 +297,15 @@ describe("layout CLI", () => {
     fake.on("pane.move", (_method, params) => {
       moves += 1
       const dest = asObject(params.destination) ?? {}
+      const paneId = paneIdOf(params)
 
-      if (dest.type === "new_tab") {
-        return {
-          move_result: {
-            changed: true,
-            pane: { pane_id: params.pane_id },
-            created_tab: { tab_id: "w1:t-staging" },
-          },
-        }
-      }
+      if (dest.type === "new_tab") return moveAccepted(paneId, "w1:t-staging")
 
       if (moves === 2) {
-        return { move_result: { changed: false, reason: "injected" } }
+        return jsonObject({ move_result: { changed: false, reason: "injected" } })
       }
 
-      return {
-        move_result: {
-          changed: true,
-          pane: { pane_id: params.pane_id },
-        },
-      }
+      return moveAccepted(paneId)
     })
     fake.on("notification.show", () => ({}))
     await fake.listen()

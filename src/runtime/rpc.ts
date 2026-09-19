@@ -208,6 +208,25 @@ export const listTabs = Effect.fnUntraced(function*() {
   return out
 })
 
+export const listPanes = Effect.fnUntraced(function*(workspaceId?: string) {
+  const payload = yield* rpcCall(
+    "pane.list",
+    workspaceId !== undefined && workspaceId !== ""
+      ? { workspace_id: workspaceId }
+      : {},
+  )
+
+  const out: JsonObject[] = []
+
+  for (const item of jsonList(payload.panes)) {
+    const object = asObject(item)
+
+    if (object !== undefined) out.push(object)
+  }
+
+  return out
+})
+
 export const focusedWorkspace = Effect.fnUntraced(function*() {
   const workspaces = yield* listWorkspaces()
 

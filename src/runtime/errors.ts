@@ -58,3 +58,7 @@ export class MigrationError extends Schema.TaggedError<MigrationError>()("Migrat
 export class LayoutError extends Schema.TaggedError<LayoutError>()("LayoutError", {
   message: Schema.String,
 }) {}
+
+export class PaneMoveError extends Schema.TaggedError<PaneMoveError>()("PaneMoveError", {
+  message: Schema.String,
+}) {}
