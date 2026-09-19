@@ -213,5 +213,15 @@ Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun r
 
 Next: wire `refresh.start` once CLI fixtures can own a short-lived worker. Then stress and package. Still no success-returning stubs.
 
+## 2026-09-19 step 5 refresh.start from runCli
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+`runCli` now calls `startRefreshWorker` after a successful `publishOnce` on install, reconcile, apply-identity, repalette, and the refresh events. Start still requires `sidebar_installed` and a matching `plugin.list` registration. Isolated tests set `MOSAIC_TEST_ISOLATED` so the worker exits after one round.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 265 pass, `bun run test:runtime` 15 pass, parity inventory 105.
+
+Next: stress integration boundaries, then package. Still no success-returning stubs.
+
 
 

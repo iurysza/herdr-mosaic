@@ -143,8 +143,9 @@ const refreshLoop = Effect.fnUntraced(function*(
     const round = yield* refreshRound(paths, key).pipe(Effect.result)
 
     if (Result.isSuccess(round)) {
-
       if (round.success !== undefined) return round.success
+
+      if (process.env.MOSAIC_TEST_ISOLATED === "1") return 0
     } else {
       const error = round.failure
 
@@ -157,6 +158,8 @@ const refreshLoop = Effect.fnUntraced(function*(
       yield* pluginWarn(paths, output, `sidebar refresh failed: ${message}`)
 
       if (error instanceof RpcTransportError && error.code === "socket_unavailable") return 1
+
+      if (process.env.MOSAIC_TEST_ISOLATED === "1") return 0
     }
 
     const ended = yield* Clock.monotonicTimeNanos

@@ -140,6 +140,7 @@ describe("install CLI", () => {
       expect(view.length).toBeGreaterThanOrEqual(1)
       expect(view[0]?.params.filter).toBeDefined()
       expect(load(join(required(env, "HERDR_PLUGIN_STATE_DIR"), "state.json")).view_mode).toBe("current")
+      expect(fake.requests.some((request) => request.method === "plugin.list")).toBe(true)
     } finally {
       await fake.close()
     }

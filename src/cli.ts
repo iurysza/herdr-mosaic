@@ -1,12 +1,15 @@
+import { fileURLToPath } from "node:url"
+
 import { Effect, Result } from "effect"
 
 import { publishOnce } from "./agents/sidebar-publish.ts"
 import { rewriteArgv, wantsHelp } from "./dispatch/catalog.ts"
 import { runCommand } from "./dispatch/main.ts"
 import { PLUGIN_ID } from "./ids.ts"
-import { LockTimeout, RpcTransportError } from "./runtime/errors.ts"
+import { CommandFailed, FlockError, LockTimeout, RpcTransportError } from "./runtime/errors.ts"
 import { PluginPaths } from "./runtime/paths.ts"
 import { emptyOutput, joinOutput, pluginWarn } from "./runtime/plugin-log.ts"
+import { startRefreshWorker } from "./runtime/worker.ts"
 
 export type CliResult = {
   readonly code: number
@@ -95,14 +98,41 @@ export const runCli = Effect.fnUntraced(function*(argv: readonly string[]) {
   const command = rewriteArgv(argv)[0] ?? ""
   const published = yield* publishOnce(paths).pipe(Effect.result)
 
-  if (Result.isSuccess(published)) return result
+  if (Result.isFailure(published)) {
+    const error = published.failure
 
-  const error = published.failure
+    if (error instanceof RpcTransportError) {
+      yield* pluginWarn(paths, output, `herdr API error in ${command}: ${error.code}: ${error.message}`)
+    } else if (error instanceof LockTimeout) {
+      yield* pluginWarn(paths, output, "sidebar publish: timed out waiting for plugin lock")
+    } else {
+      yield* pluginWarn(paths, output, `${command}: ${String(error)}`)
+    }
+
+    return {
+      code: 1,
+      stdout: result.stdout,
+      stderr: result.stderr + joinOutput(output.stderr),
+    } satisfies CliResult
+  }
+
+  const started = yield* startRefreshWorker(
+    process.execPath,
+    fileURLToPath(import.meta.url),
+  ).pipe(Effect.result)
+
+  if (Result.isSuccess(started)) return result
+
+  const error = started.failure
 
   if (error instanceof RpcTransportError) {
     yield* pluginWarn(paths, output, `herdr API error in ${command}: ${error.code}: ${error.message}`)
   } else if (error instanceof LockTimeout) {
-    yield* pluginWarn(paths, output, "sidebar publish: timed out waiting for plugin lock")
+    yield* pluginWarn(paths, output, `${command}: timed out waiting for plugin lock`)
+  } else if (error instanceof CommandFailed) {
+    yield* pluginWarn(paths, output, `${command}: ${error.message}`)
+  } else if (error instanceof FlockError) {
+    yield* pluginWarn(paths, output, `${command}: ${error.message}`)
   } else {
     yield* pluginWarn(paths, output, `${command}: ${String(error)}`)
   }
