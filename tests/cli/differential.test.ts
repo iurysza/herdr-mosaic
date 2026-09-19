@@ -4,6 +4,7 @@ import { join } from "node:path"
 import { describe, expect, test } from "bun:test"
 import { Result, Schema } from "effect"
 
+import { FakeHerdr } from "../support/fake-herdr.ts"
 import { installFakeHerdr, makeSandbox } from "../support/sandbox.ts"
 
 const repo = join(import.meta.dir, "..", "..")
@@ -173,4 +174,101 @@ describe("python and typescript differential cases", () => {
     expect(typescript).toEqual(python)
     expect(python.stdout).toContain("no sidebar backup recorded; nothing to remove")
   })
+
+  test("install --dry-run previews migrate only and leaves config bytes", async () => {
+    const pair = pairEnv()
+    const pythonConfig = pair.python.HERDR_CONFIG_PATH
+    const tsConfig = pair.typescript.HERDR_CONFIG_PATH
+
+    if (pythonConfig === undefined || tsConfig === undefined) {
+      throw new Error("missing config path")
+    }
+
+    await Bun.write(pythonConfig, USERS_REAL)
+    await Bun.write(tsConfig, USERS_REAL)
+
+    const python = await spawnCli("python", ["install", "--dry-run"], pair.python)
+    const typescript = await spawnCli("typescript", ["install", "--dry-run"], pair.typescript)
+
+    expect(python.code).toBe(0)
+    expect(typescript.code).toBe(0)
+    expect(python.stdout).toContain("install --dry-run only previews migrate")
+    expect(typescript.stdout).toContain("install --dry-run only previews migrate")
+    expect(readFileSync(pythonConfig, "utf8")).toBe(USERS_REAL)
+    expect(readFileSync(tsConfig, "utf8")).toBe(USERS_REAL)
+  })
+
+  test("doctor exits 0 in both runtimes", async () => {
+    const pair = pairEnv()
+    const python = await spawnCli("python", ["doctor"], pair.python)
+    const typescript = await spawnCli("typescript", ["doctor"], pair.typescript)
+
+    expect(python.code).toBe(0)
+    expect(typescript.code).toBe(0)
+  })
+
+  test("tint-enable then tint-disable restores the same fixture bytes", async () => {
+    const pair = pairEnv()
+    const pythonConfig = pair.python.HERDR_CONFIG_PATH
+    const tsConfig = pair.typescript.HERDR_CONFIG_PATH
+    const pythonState = pair.python.HERDR_PLUGIN_STATE_DIR
+    const tsState = pair.typescript.HERDR_PLUGIN_STATE_DIR
+    const pythonSocket = pair.python.HERDR_SOCKET_PATH
+    const tsSocket = pair.typescript.HERDR_SOCKET_PATH
+
+    if (
+      pythonConfig === undefined || tsConfig === undefined
+      || pythonState === undefined || tsState === undefined
+      || pythonSocket === undefined || tsSocket === undefined
+    ) {
+      throw new Error("missing sandbox paths")
+    }
+
+    await Bun.write(pythonConfig, USERS_REAL)
+    await Bun.write(tsConfig, USERS_REAL)
+
+    const identities = JSON.stringify({
+      identities: { w1: { colour: "#4f8cff", origin: "manual" } },
+    })
+
+    await Bun.write(join(pythonState, "state.json"), identities)
+    await Bun.write(join(tsState, "state.json"), identities)
+
+    const pythonFake = new FakeHerdr(pythonSocket)
+    const tsFake = new FakeHerdr(tsSocket)
+
+    attachTint(pythonFake)
+    attachTint(tsFake)
+    await pythonFake.listen()
+    await tsFake.listen()
+
+    try {
+      expect((await spawnCli("python", ["tint-enable"], pair.python)).code).toBe(0)
+      expect((await spawnCli("typescript", ["tint-enable"], pair.typescript)).code).toBe(0)
+      expect(readFileSync(pythonConfig, "utf8")).not.toBe(USERS_REAL)
+      expect(readFileSync(tsConfig, "utf8")).not.toBe(USERS_REAL)
+      expect(readFileSync(tsConfig, "utf8")).toBe(readFileSync(pythonConfig, "utf8"))
+
+      expect((await spawnCli("python", ["tint-disable"], pair.python)).code).toBe(0)
+      expect((await spawnCli("typescript", ["tint-disable"], pair.typescript)).code).toBe(0)
+      expect(readFileSync(pythonConfig, "utf8")).toBe(USERS_REAL)
+      expect(readFileSync(tsConfig, "utf8")).toBe(USERS_REAL)
+    } finally {
+      await pythonFake.close()
+      await tsFake.close()
+    }
+  })
 })
+
+function attachTint(fake: FakeHerdr): void {
+  fake.on("workspace.list", () => ({
+    workspaces: [{ workspace_id: "w1", number: 1, label: "Website", focused: true }],
+  }))
+  fake.on("agent.list", () => ({ agents: [] }))
+  fake.on("server.reload_config", () => ({ status: "applied", diagnostics: [] }))
+  fake.on("workspace.report_metadata", () => ({}))
+  fake.on("pane.report_metadata", () => ({}))
+  fake.on("client.window_title.set", () => ({}))
+  fake.on("client.window_title.clear", () => ({}))
+  fake.on("tab.list", () => ({ tabs: [] }))
+}
