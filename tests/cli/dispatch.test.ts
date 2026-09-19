@@ -1,3 +1,6 @@
+import { mkdirSync, writeFileSync } from "node:fs"
+import { join } from "node:path"
+
 import { describe, expect, test } from "bun:test"
 import { Effect } from "effect"
 
@@ -61,20 +64,28 @@ describe("CLI dispatcher", () => {
 
   test("pending window-manager import blocks non-migrate commands", async () => {
     const sandbox = makeSandbox()
-    const wmState = `${sandbox.home}/.local/state/herdr/plugins/iurysza.window-manager`
-    await Bun.write(`${wmState}/state.json`, "{\"version\":1}\n")
+    const wmState = sandbox.env.HERDR_LEGACY_WINDOW_MANAGER_STATE_DIR ?? join(sandbox.root, "wm-state")
+
+    mkdirSync(wmState, { recursive: true })
+    writeFileSync(join(wmState, "state.json"), "{\"version\":1}\n")
+
     const result = await run(["doctor"], sandbox.env)
+
     expect(result.code).toBe(1)
     expect(result.stderr).toContain("Compatible saved data awaits import")
   })
 
   test("migrate is allowed while window-manager import is pending", async () => {
     const sandbox = makeSandbox()
-    const wmState = `${sandbox.home}/.local/state/herdr/plugins/iurysza.window-manager`
-    await Bun.write(`${wmState}/state.json`, "{\"version\":1}\n")
+    const wmState = sandbox.env.HERDR_LEGACY_WINDOW_MANAGER_STATE_DIR ?? join(sandbox.root, "wm-state")
+
+    mkdirSync(wmState, { recursive: true })
+    writeFileSync(join(wmState, "state.json"), "{\"version\":1}\n")
+
     const result = await run(["migrate"], sandbox.env)
-    expect(result.code).toBe(1)
-    expect(result.stderr).toContain("not implemented")
+
+    expect(result.code).toBe(0)
+    expect(result.stdout).toContain("window_manager_state_dir")
   })
 })
 
