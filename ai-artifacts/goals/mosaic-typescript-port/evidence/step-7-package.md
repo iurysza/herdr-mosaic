@@ -2,7 +2,7 @@
 
 Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default Herdr session unused. macOS native proofs remain owner-run after the PR is open. Step 2 is not marked complete.
 
-Candidate: `27efbe400bf63080341c5666e95ab5d0b6ce426c` (artifact hash unchanged from `77d5f9a`)
+Candidate: `cursor/mosaic-typescript-port-1529`. Production artifact hash unchanged from `77d5f9a`.
 
 ## Artifact
 
@@ -51,7 +51,7 @@ Linux x86_64 outcomes:
 | `bun run test:runtime` | 25 pass |
 | `bun run test:parity` | 105 entrypoints |
 | `bun run test:artifact` | 4 pass |
-| `bun run test:herdr` | ping + plugin.list, `config check` of a TypeScript-installed sidebar, and install/uninstall byte restore on a disposable server |
+| `bun run test:herdr` | ping + plugin.list, `config check`, TypeScript install/uninstall restore, and Python uninstall of a TypeScript-installed fixture on a disposable server |
 | Python unittest | 280 pass |
 | `check-standalone.py` | `result: passed` |
 

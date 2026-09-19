@@ -1,6 +1,6 @@
 # Mosaic TypeScript port — completion report
 
-Candidate: `27efbe400bf63080341c5666e95ab5d0b6ce426c` on `cursor/mosaic-typescript-port-1529`. Frozen Python reference remains `8b7bb76` / manifest `0.5.0`. Live cutover was not executed. The compiled artifact hash is unchanged from `77d5f9a`.
+Candidate: `cursor/mosaic-typescript-port-1529`. Production `dist/mosaic` is unchanged from `77d5f9a` (sha256 `2a55c5abae4bba0ce729bed3f22c15c88b04141f1dd7b8368a79fe9779549a05`). Frozen Python reference remains `8b7bb76` / manifest `0.5.0`. Later commits add tests and evidence only. Live cutover was not executed.
 
 ## Implemented behavior
 
@@ -28,7 +28,7 @@ No unexplained Python/TypeScript behavior differences were left unmarked. Shared
 | `bun run test` | 293 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:artifact` | 4 pass |
-| `bun run test:herdr` | pass against Herdr 0.9.0 after isolate-preload wipes `HERDR_BIN_PATH`: transport, `config check`, and install/uninstall byte restore |
+| `bun run test:herdr` | pass against Herdr 0.9.0 after isolate-preload wipes `HERDR_BIN_PATH`: transport, `config check`, TypeScript install/uninstall restore, and Python uninstall of a TypeScript-installed fixture |
 | `bun run test:parity` | 105 entrypoints |
 | `python3 -m unittest discover -s tests -t tests` | 280 pass |
 | `scripts/check-standalone.py` | passed; receipt in `evidence/step-7-standalone-receipt.json` |
@@ -68,7 +68,7 @@ Rollback:
 
 1. Run TypeScript `uninstall`.
 2. Restore the frozen Python checkout at `8b7bb76`.
-3. Register it and invoke `install`. TypeScript-written `state.json` and restore records remain readable by that Python (`tests/unit/state.test.ts`). Python `sidebar-remove` restored TypeScript-installed `users_real` config bytes in `tests/cli/sidebar.test.ts`. Python `uninstall` restored a TypeScript-installed fixture, and TypeScript `uninstall` restored a Python-installed fixture (`tests/cli/differential.test.ts`).
+3. Register it and invoke `install`. TypeScript-written `state.json` and restore records remain readable by that Python (`tests/unit/state.test.ts`). Python `sidebar-remove` restored TypeScript-installed `users_real` config bytes in `tests/cli/sidebar.test.ts`. Python `uninstall` restored a TypeScript-installed fixture in FakeHerdr sandboxes and on a disposable Herdr 0.9.0 server.
 4. Keep Chromatic/Window Manager source directories; do not apply Chromatic `sidebar_backup` / `theme_backup` / `last_written`.
 
 Do not run install, doctor, or uninstall against the default session until cutover is approved.
