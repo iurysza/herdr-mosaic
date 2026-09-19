@@ -243,5 +243,15 @@ Validation (Linux x86_64, `77d5f9a`): typecheck pass, lint pass, `bun run test` 
 
 Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
 
+## 2026-09-19 step 7 worker RSS and Python rollback
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+`scripts/bench.ts` now samples `/proc/<pid>/status` VmRSS and `/proc/<pid>/stat` after the first refresh-worker heartbeat. Python `sidebar-remove` restores TypeScript-installed config bytes.
+
+Validation (Linux x86_64, `27efbe4`): typecheck pass, lint pass, `bun run test` 281, `bun run test:runtime` 25, `bun run test:artifact` 4, parity 105, Python unittest 280, Herdr 0.9.0 transport pass. Worker RSS Python 21_260 KB vs compiled 44_188 KB; round 5.9 ms vs 4.3 ms. Evidence: `evidence/step-7-bench.json`, `evidence/step-7-package.md`.
+
+Next: owner-run macOS native proofs after the PR. Live cutover remains out of scope. Still no success-returning stubs.
+
 
 

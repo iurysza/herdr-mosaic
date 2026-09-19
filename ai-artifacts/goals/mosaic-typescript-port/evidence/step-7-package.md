@@ -2,7 +2,7 @@
 
 Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default Herdr session unused. macOS native proofs remain owner-run after the PR is open. Step 2 is not marked complete.
 
-Candidate: `77d5f9ae77f2ebb919e0acbbd425deb7c7f4a566`
+Candidate: `27efbe400bf63080341c5666e95ab5d0b6ce426c` (artifact hash unchanged from `77d5f9a`)
 
 ## Artifact
 
@@ -47,7 +47,7 @@ Linux x86_64 outcomes:
 | --- | --- |
 | typecheck | pass |
 | lint | pass |
-| `bun run test` | 280 pass |
+| `bun run test` | 281 pass |
 | `bun run test:runtime` | 25 pass |
 | `bun run test:parity` | 105 entrypoints |
 | `bun run test:artifact` | 4 pass |
@@ -59,17 +59,23 @@ Standalone receipt: `evidence/step-7-standalone-receipt.json`. Install, view/sor
 
 ## Benches
 
-Eight samples each, isolated HOME/socket, `PATH=/usr/bin:/bin` for the compiled binary. Medians:
+Eight samples each, isolated HOME/socket, `PATH=/usr/bin:/bin` for the compiled binary. Worker samples use one FakeHerdr pane, wait for the first heartbeat, read `/proc/<pid>/status` VmRSS and `/proc/<pid>/stat` (CLK_TCK=100), then SIGTERM. `MOSAIC_TEST_ISOLATED` is unset so the worker stays alive after the round. Raw output: `evidence/step-7-bench.json`.
 
-| Run | median ms | exit |
-| --- | --- | --- |
-| python `--help` | 35.4 | 0 |
-| bun source `--help` | 95.2 | 0 |
-| `dist/mosaic --help` | 33.6 | 0 |
-| python malformed event | 36.8 | 0 |
-| `dist/mosaic` malformed event | 33.9 | 0 |
+Medians and worker resources:
 
-Source bun is slower because it loads TypeScript. The compiled binary matches Python startup on this host. Worker CPU/memory was not sampled beyond standalone round duration (0.3–0.4 s for one pane).
+| Run | result |
+| --- | --- |
+| python `--help` | 35.8 ms, exit 0 |
+| bun source `--help` | 96.2 ms, exit 0 |
+| `dist/mosaic --help` | 33.7 ms, exit 0 |
+| python malformed event | 51.7 ms, exit 0 |
+| `dist/mosaic` malformed event | 33.8 ms, exit 0 |
+| python `refresh-worker` | 21_260 KB RSS; 5.9 ms round; 0.03 s user CPU; 1 agent |
+| `dist/mosaic refresh-worker` | 44_188 KB RSS; 4.3 ms round; 0.03 s user + 0.01 s system CPU; 1 agent |
+
+Source bun is slower because it loads TypeScript. The compiled binary matches Python startup on this host. The compiled worker holds about twice Python's RSS because Bun embeds its runtime; round wall-time and CPU ticks stay in the same range. TypeScript is not required to outperform Python.
+
+Python `sidebar-remove` restored TypeScript-installed `users_real` config bytes in `tests/cli/sidebar.test.ts`.
 
 ## Remaining
 
