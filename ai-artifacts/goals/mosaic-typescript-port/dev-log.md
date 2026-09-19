@@ -75,3 +75,13 @@ Open in this slice: crash-injection for atomic writes; doctor `rows_by_agent` wa
 
 Next: step 4 full install, identity, migration, doctor, uninstall. Do not add success-returning stubs. macOS proofs remain required for completion.
 
+## 2026-09-19 step 4 identity and label core
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated cloud checkout. Default session unused. macOS remains an open step-2 gate. Step 2 and step 4 are not complete.
+
+Ported `src/spaces/identity.ts` (allocate, ensureAll, slot/hex resolve, close pairs) and `src/spaces/labels.ts` with settings load. `setIdentity` / `identityOf` live on `src/state/store.ts`. CLI apply-identity, metadata publish, migrate, doctor, and uninstall are not wired yet.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 114 pass, parity inventory 105.
+
+Next: metadata publish and apply-identity/auto-assign through production CLI, then migrate/keybinds/install/uninstall. No success-returning stubs.
+

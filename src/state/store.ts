@@ -9,7 +9,9 @@ export const SCHEMA_VERSION = 1
 
 type Json = typeof Schema.Json.Type
 
-type JsonObject = typeof Schema.JsonObject.Type
+export type JsonObject = typeof Schema.JsonObject.Type
+
+export type MutableJsonObject = { [key: string]: Json }
 
 export type ViewMode = "all" | "current"
 
@@ -27,7 +29,7 @@ export type BackupRecord = {
 export interface PluginState {
   [key: string]: Json
   version: number
-  identities: JsonObject
+  identities: MutableJsonObject
   alloc_cursor: number
   tint_enabled: boolean
   view_mode: ViewMode
@@ -37,7 +39,7 @@ export interface PluginState {
   theme_backup: Json
   sidebar_backup: Json
   ownership_baseline: Json
-  last_written: JsonObject
+  last_written: MutableJsonObject
   last_tint: Json
   window_title_set: boolean
   keybind_installed: boolean
@@ -54,7 +56,7 @@ export interface PluginState {
   promote_pane_keybind_key: Json
   pending_pane_move: Json
   idle_cycle_last_pane_id: Json
-  agent_settled: JsonObject
+  agent_settled: MutableJsonObject
 }
 
 const PALETTE_HEX = new Set<string>(PALETTE.map(([, hex]) => hex))
@@ -121,6 +123,27 @@ export function load(path: string): PluginState {
 
 export function save(path: string, data: PluginState): void {
   atomicWrite(path, `${JSON.stringify(sortJsonKeys(data), null, 2)}\n`)
+}
+
+export function identityOf(data: PluginState, workspaceId: string): JsonObject | undefined {
+  const value = data.identities[workspaceId]
+
+  if (value === undefined) return undefined
+
+  return jsonObject(value)
+}
+
+export function setIdentity(
+  data: PluginState,
+  workspaceId: string,
+  colour: string,
+  origin = "manual",
+): JsonObject {
+  const record: JsonObject = { colour, origin }
+
+  data.identities[workspaceId] = record
+
+  return record
 }
 
 function mergeLoaded(loaded: JsonObject): PluginState {
