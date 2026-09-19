@@ -6,7 +6,11 @@ import { resolveHostHerdrBin } from "./host-herdr.ts"
 
 const root = mkdtempSync(join(tmpdir(), "mosaic-test-"))
 
-const hostHerdr = resolveHostHerdrBin(process.env)
+const hostHerdr = resolveHostHerdrBin({
+  MOSAIC_HERDR_BIN: process.env.MOSAIC_HERDR_BIN,
+  HERDR_BIN_PATH: process.env.HERDR_BIN_PATH,
+  HOME: process.env.HOME,
+})
 
 const home = join(root, "home")
 
