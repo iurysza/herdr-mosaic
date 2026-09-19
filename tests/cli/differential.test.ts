@@ -4,6 +4,7 @@ import { join } from "node:path"
 import { describe, expect, test } from "bun:test"
 import { Result, Schema } from "effect"
 
+import { PLUGIN_ID } from "../../src/ids.ts"
 import { FakeHerdr } from "../support/fake-herdr.ts"
 import { installFakeHerdr, makeSandbox } from "../support/sandbox.ts"
 
@@ -258,7 +259,68 @@ describe("python and typescript differential cases", () => {
       await tsFake.close()
     }
   })
+
+  test("install then uninstall restores the same fixture bytes", async () => {
+    const pair = pairEnv()
+    const pythonConfig = pair.python.HERDR_CONFIG_PATH
+    const tsConfig = pair.typescript.HERDR_CONFIG_PATH
+    const pythonSocket = pair.python.HERDR_SOCKET_PATH
+    const tsSocket = pair.typescript.HERDR_SOCKET_PATH
+
+    if (
+      pythonConfig === undefined || tsConfig === undefined
+      || pythonSocket === undefined || tsSocket === undefined
+    ) {
+      throw new Error("missing sandbox paths")
+    }
+
+    await Bun.write(pythonConfig, USERS_REAL)
+    await Bun.write(tsConfig, USERS_REAL)
+
+    const pythonFake = new FakeHerdr(pythonSocket)
+    const tsFake = new FakeHerdr(tsSocket)
+
+    attachInstall(pythonFake)
+    attachInstall(tsFake)
+    await pythonFake.listen()
+    await tsFake.listen()
+
+    try {
+      const pythonInstalled = await spawnCli("python", ["install"], pair.python)
+      const tsInstalled = await spawnCli("typescript", ["install"], pair.typescript)
+
+      expect(pythonInstalled.code).toBe(0)
+      expect(tsInstalled.code).toBe(0)
+      expect(readFileSync(pythonConfig, "utf8")).not.toBe(USERS_REAL)
+      expect(readFileSync(tsConfig, "utf8")).toBe(readFileSync(pythonConfig, "utf8"))
+
+      const pythonRemoved = await spawnCli("python", ["uninstall"], pair.python)
+      const tsRemoved = await spawnCli("typescript", ["uninstall"], pair.typescript)
+
+      expect(pythonRemoved.code).toBe(0)
+      expect(tsRemoved.code).toBe(0)
+      expect(readFileSync(pythonConfig, "utf8")).toBe(USERS_REAL)
+      expect(readFileSync(tsConfig, "utf8")).toBe(USERS_REAL)
+    } finally {
+      await pythonFake.close()
+      await tsFake.close()
+    }
+  })
 })
+
+function attachInstall(fake: FakeHerdr): void {
+  fake.on("ping", () => ({ version: "0.9.0", protocol: 22 }))
+  fake.on("workspace.list", () => ({ workspaces: [] }))
+  fake.on("agent.list", () => ({ agents: [] }))
+  fake.on("server.reload_config", () => ({ status: "applied", diagnostics: [] }))
+  fake.on("agent.view.set", () => ({ active: true, source: PLUGIN_ID, label: "Spaces" }))
+  fake.on("agent.view.clear", () => ({ active: false }))
+  fake.on("workspace.report_metadata", () => ({}))
+  fake.on("pane.report_metadata", () => ({}))
+  fake.on("client.window_title.set", () => ({}))
+  fake.on("client.window_title.clear", () => ({}))
+  fake.on("tab.list", () => ({ tabs: [] }))
+}
 
 function attachTint(fake: FakeHerdr): void {
   fake.on("workspace.list", () => ({
