@@ -195,6 +195,19 @@ export const listAgents = Effect.fnUntraced(function*() {
   return out
 })
 
+export const listTabs = Effect.fnUntraced(function*() {
+  const payload = yield* rpcCall("tab.list")
+  const out: JsonObject[] = []
+
+  for (const item of jsonList(payload.tabs)) {
+    const object = asObject(item)
+
+    if (object !== undefined) out.push(object)
+  }
+
+  return out
+})
+
 export const focusedWorkspace = Effect.fnUntraced(function*() {
   const workspaces = yield* listWorkspaces()
 

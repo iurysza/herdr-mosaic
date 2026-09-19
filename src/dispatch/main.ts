@@ -26,6 +26,7 @@ import {
   runView,
   runViewClear,
 } from "../agents/view.ts"
+import { runElapsedPublish } from "../agents/sidebar-publish.ts"
 import { runDoctor } from "../lifecycle/doctor.ts"
 import { runInstall } from "../lifecycle/install.ts"
 import { runReconcile } from "../lifecycle/reconcile.ts"
@@ -214,6 +215,10 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command === "state") {
     return yield* runState(rewritten.slice(1))
+  }
+
+  if (command === "elapsed-publish") {
+    return yield* runElapsedPublish(rewritten.slice(1))
   }
 
   if (command === "refresh-worker") {

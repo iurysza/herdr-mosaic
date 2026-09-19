@@ -42,6 +42,7 @@ function identityEnv() {
   fake.on("agent.list", () => ({ agents: [] }))
   fake.on("workspace.report_metadata", () => ({}))
   fake.on("pane.report_metadata", () => ({}))
+  fake.on("tab.list", () => ({ tabs: [] }))
 
   return { sandbox, fake, env: sandbox.env, socketPath }
 }

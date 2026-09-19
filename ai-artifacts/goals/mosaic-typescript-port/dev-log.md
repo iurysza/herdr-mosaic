@@ -141,4 +141,17 @@ Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun r
 
 Next: title/elapsed publish and a real refresh worker loop before wiring `publish_once`/`startRefreshWorker` in `runCli`. Then events, TUI, layouts. Still no success-returning stubs.
 
+## 2026-09-19 step 5 titles, elapsed, refresh loop
+
+Worktree: `/workspace` on `cursor/mosaic-typescript-port-1529`. Isolated checkout. Default session unused. macOS native proofs will be run by the owner after the PR is open. Step 2 is not marked complete.
+
+Wired elapsed rendering (3-cell U+2800 pad, `now`/`Nm`/`Nh`/`Nd`/`99d`), `elapsed-publish`, and sidebar title+elapsed publish. Titles have no TTL; elapsed uses 45000. `$themed_model_tier` is never written. `runCli` calls `publishOnce` after successful install, reconcile, apply-identity, and repalette. The refresh worker loop publishes under the generation lock. `refresh.start` is not wired from `runCli` so CLI tests do not spawn detached 30-second workers.
+
+File placement: `src/agents/elapsed.ts`, `src/agents/sidebar-publish.ts`, `src/runtime/worker.ts` loop, `src/cli.ts` post-success publish.
+
+Validation (Linux x86_64): `bun run typecheck` pass, `bun run lint` pass, `bun run test` 177 pass, `bun run test:runtime` 11 pass, parity inventory 105.
+
+Next: event dispatcher, then TUI and layouts. Wire `refresh.start` once CLI fixtures can own a short-lived worker. Still no success-returning stubs.
+
+
 

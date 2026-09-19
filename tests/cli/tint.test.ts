@@ -84,6 +84,7 @@ function tintEnv(config = USERS_REAL) {
   fake.on("pane.report_metadata", () => ({}))
   fake.on("client.window_title.set", () => ({}))
   fake.on("client.window_title.clear", () => ({}))
+  fake.on("tab.list", () => ({ tabs: [] }))
 
   writeFileSync(required(sandbox.env, "HERDR_CONFIG_PATH"), config)
 
