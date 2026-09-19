@@ -46,3 +46,7 @@ export class TomlEditError extends Schema.TaggedError<TomlEditError>()("TomlEdit
 export class ConfigError extends Schema.TaggedError<ConfigError>()("ConfigError", {
   message: Schema.String,
 }) {}
+
+export class LabelRulesError extends Schema.TaggedError<LabelRulesError>()("LabelRulesError", {
+  message: Schema.String,
+}) {}

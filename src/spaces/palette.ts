@@ -19,6 +19,16 @@ export const SLOT_NAMES = PALETTE.map(([name]) => name)
 
 export const TOKEN_PREFIX = "sd_"
 
+export const DEFAULT_MARKER = "●"
+
+export function paletteHex(name: string): string | undefined {
+  for (const [slot, hex] of PALETTE) {
+    if (slot === name) return hex
+  }
+
+  return undefined
+}
+
 export function slotToken(slotName: string): string {
   return `${TOKEN_PREFIX}${slotName}`
 }
