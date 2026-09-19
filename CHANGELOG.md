@@ -8,6 +8,15 @@
 - Clarify menu labels while preserving every existing action ID and binding. No new menu entries or binding migration.
 - Make `-h` and `--help` print help without running a command, including after the command name.
 
+## [0.5.0](https://github.com/iurysza/herdr-mosaic/compare/v0.4.0...v0.5.0) (2026-09-19)
+
+
+### Features
+
+* **agent-triage:** cycle idle agents and prune stale sessions ([79df0be](https://github.com/iurysza/herdr-mosaic/commit/79df0be0d42250285dc647022a94370116410bc8))
+* improve pane and agent workflows ([8e99178](https://github.com/iurysza/herdr-mosaic/commit/8e9917859088f97408b345da76d319f2bf532d31))
+* **pane-move:** add pick-and-place pane moves ([8172013](https://github.com/iurysza/herdr-mosaic/commit/817201391cec3eae3943361909c810558b7416cc))
+
 ## [0.4.0](https://github.com/iurysza/herdr-mosaic/compare/v0.3.0...v0.4.0) (2026-09-16)
 
 
