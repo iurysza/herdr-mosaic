@@ -1,6 +1,7 @@
 import { Effect } from "effect"
 
 import { COMMAND_SET, helpText, rewriteArgv, wantsHelp } from "./catalog.ts"
+import { runApplyIdentity } from "../spaces/apply-identity.ts"
 import { runSidebarInstall, runSidebarRemove } from "../config/sidebar.ts"
 import { PLUGIN_ID } from "../ids.ts"
 import { windowManagerPending } from "../migrate/pending.ts"
@@ -34,6 +35,10 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command !== "migrate" && command !== "install" && windowManagerPending(paths)) {
     return yield* new WindowManagerPending({ command })
+  }
+
+  if (command === "apply-identity") {
+    return yield* runApplyIdentity(rewritten.slice(1))
   }
 
   if (command === "sidebar-install") {

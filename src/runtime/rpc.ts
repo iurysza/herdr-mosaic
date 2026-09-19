@@ -8,6 +8,8 @@ import { PluginPaths } from "./paths.ts"
 
 export type JsonObject = typeof Schema.JsonObject.Type
 
+type Json = typeof Schema.Json.Type
+
 const RpcErrorBody = Schema.Struct({
   code: Schema.optionalKey(Schema.String),
   message: Schema.optionalKey(Schema.String),
@@ -135,3 +137,71 @@ export const rpcCall = Effect.fnUntraced(function*(
     }),
   )
 })
+
+export type RpcTryOutcome = {
+  readonly result?: JsonObject
+  readonly error?: RpcTransportError
+}
+
+export const rpcTryCall = Effect.fnUntraced(function*(
+  method: string,
+  params: JsonObject = {},
+  timeoutMs = 10_000,
+) {
+  const outcome = yield* rpcCall(method, params, timeoutMs).pipe(Effect.result)
+
+  if (Result.isFailure(outcome)) {
+    return { error: outcome.failure } satisfies RpcTryOutcome
+  }
+
+  return { result: outcome.success } satisfies RpcTryOutcome
+})
+
+function jsonList(value: Json | undefined): readonly Json[] {
+  return Array.isArray(value) ? value : []
+}
+
+function asObject(value: Json): JsonObject | undefined {
+  const decoded = Schema.decodeUnknownResult(Schema.JsonObject)(value)
+
+  if (Result.isFailure(decoded)) return undefined
+
+  return decoded.success
+}
+
+export const listWorkspaces = Effect.fnUntraced(function*() {
+  const payload = yield* rpcCall("workspace.list")
+  const out: JsonObject[] = []
+
+  for (const item of jsonList(payload.workspaces)) {
+    const object = asObject(item)
+
+    if (object !== undefined) out.push(object)
+  }
+
+  return out
+})
+
+export const listAgents = Effect.fnUntraced(function*() {
+  const payload = yield* rpcCall("agent.list")
+  const out: JsonObject[] = []
+
+  for (const item of jsonList(payload.agents)) {
+    const object = asObject(item)
+
+    if (object !== undefined) out.push(object)
+  }
+
+  return out
+})
+
+export const focusedWorkspace = Effect.fnUntraced(function*() {
+  const workspaces = yield* listWorkspaces()
+
+  for (const workspace of workspaces) {
+    if (workspace.focused === true) return workspace
+  }
+
+  return undefined
+})
+
