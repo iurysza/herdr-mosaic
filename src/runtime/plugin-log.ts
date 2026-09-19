@@ -18,6 +18,12 @@ export type CapturedOutput = {
   stderr: string[]
 }
 
+export type CommandResult = {
+  readonly code: number
+  readonly stdout: string
+  readonly stderr: string
+}
+
 export function emptyOutput(): CapturedOutput {
   return { stdout: [], stderr: [] }
 }
@@ -26,6 +32,14 @@ export function joinOutput(lines: readonly string[]): string {
   if (lines.length === 0) return ""
 
   return `${lines.join("\n")}\n`
+}
+
+export function appendCommand(acc: CommandResult, next: CommandResult): CommandResult {
+  return {
+    code: next.code,
+    stdout: acc.stdout + next.stdout,
+    stderr: acc.stderr + next.stderr,
+  }
 }
 
 export const pluginLog = Effect.fnUntraced(function*(
