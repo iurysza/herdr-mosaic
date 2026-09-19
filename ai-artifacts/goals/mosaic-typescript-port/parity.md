@@ -1,0 +1,304 @@
+# Parity inventory
+
+Frozen Python reference: `8b7bb76cf88e9be0452f126209aa58f84be0b0ed`  
+Manifest version: `0.5.0`  
+Plugin id: `iurysza.mosaic`  
+Minimum Herdr: `0.8.0` protocol 19  
+Platforms: macOS and Linux
+
+This inventory is the execution checklist for the TypeScript port. Status is
+`pending` until a candidate check cites evidence. Add rows when discovery finds
+more existing behavior. Removing a required behavior needs approval.
+
+## Reference extraction
+
+```sh
+git show 8b7bb76cf88e9be0452f126209aa58f84be0b0ed:src/main.py
+git show 8b7bb76cf88e9be0452f126209aa58f84be0b0ed:herdr-plugin.toml
+git archive --format=tar 8b7bb76cf88e9be0452f126209aa58f84be0b0ed -- src tests docs herdr-plugin.toml
+```
+
+On this branch, `src/`, `tests/`, and `herdr-plugin.toml` match the freeze
+(`git diff 8b7bb76 -- src tests herdr-plugin.toml` is empty). Keep Python
+source in the repo as an isolated reference. Do not import those modules until
+the process environment is isolated. Do not ship Python as a runtime of the
+TypeScript artifact.
+
+Coverage: `python3 scripts/check-parity-inventory.py`
+
+## Documented disagreements
+
+Preserve existing Python behavior unless it conflicts with an accepted safety
+fact. Escalate such conflicts instead of choosing silently.
+
+| Topic | Docs / tests / code |
+| --- | --- |
+| Plugin version | `AGENTS.md` still says `0.1.0`. Manifest, `ctx.PLUGIN_VERSION`, and this freeze use `0.5.0`. Use the freeze. |
+| `rows_by_agent` | Findings note Herdr can patch those entries with `rows`. Mosaic never creates or rewrites them. Doctor warns they hide the template. |
+| Settings defaults | `docs/settings.md` lists `prune_stale_after`, `label_identities_file`, `label_identities`. `DEFAULT_SETTINGS` omits them; they are optional overlays. |
+| Default marker | Settings default is `■` (`U+25A0`). `identity.DEFAULT_MARKER` is `●` when marker is missing or falsy. |
+| `ownership_baseline` | Captured at first ownership. Uninstall restores from `sidebar_backup` / `theme_backup`, not from the baseline. |
+| `action_renames` | Written by install and restored by uninstall. Absent from `default_state()`. |
+| Byte-exact restore | Promised when backup apply runs and there is no conflict skip. Equal parsed values skip rewrite to keep formatting. |
+| Chromatic paths | Window Manager dirs follow Mosaic env siblings. Chromatic/layouts defaults hardcode `ctx.HOME`. They diverge if `HERDR_PLUGIN_STATE_DIR` is nonstandard. |
+| Agent row tokens | `AGENTS.md` lists `$elapsed` + 12 `$title_*` + `$themed_model_tier`. Code also includes leading `state_icon` in the same 15-token template. |
+| `install --dry-run` | HELP, `docs/actions.md`, and tests: previews migration only. Does not install sidebar, keybinds, view, or start refresh. |
+| Interactive UIs | Picker, board, prune, and pane-move have logic and keybind tests, not Python PTY coverage. TypeScript must add scripted terminal tests. |
+| Layout recovery | `layout_actions.reshape` recovers or reports incomplete recovery. No dedicated unit test for the failure path. |
+
+## Critical safety guarantees
+
+| ID | Behavior | Python evidence | Scenario | Expected observations | Comparison rule | TS evidence | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `safety-lock` | Every mutation uses ctx.Lock fcntl flock exclusive nonblocking with 20ms retry, default timeout 10s. Path state_dir/plugin.lock. | src/ctx.py Lock; tests/test_layouts.py test_run_uses_plugin_lock; tests/test_settled.py test_adapter_takes_plugin_lock | Two processes contend; holder dies; interrupt during wait | Second waits or times out with RuntimeError; death releases lock; worker uses refresh-<sha256>.lock | eligibility + native macOS/Linux execution |  | pending |
+| `safety-atomic-write` | Writes go through temp + fsync + os.replace. | src/ctx.py atomic_write | Crash during write | Readers never see partial JSON/TOML | eligibility |  | pending |
+| `safety-config-validate` | Candidates run herdr config check against HERDR_CONFIG_PATH. Parse errors and new diagnostics reject. Pre-existing diagnostics tolerated. Invalid candidate leaves live file unchanged. | src/config_patch.py; tests/test_plugin.py TestConfigPatch | Invalid TOML; warning already in baseline; new warning | Live bytes unchanged on reject; backup copy in state dir, keep last 10 | exact bytes on reject |  | pending |
+| `safety-surgical-toml` | TomlDoc rewrites only targeted byte ranges. Comments, order, CRLF, missing trailing newline, emoji, dotted keys survive. | src/toml_edit.py; tests/test_toml_edit.py | Edit one key in a real fixture | Untouched regions exact | exact bytes |  | pending |
+| `safety-ownership-conflict` | Restore compares live config to last_written. Absent vs expected or value mismatch is a conflict. Skip without --force. | src/config_patch.py; src/main.py restore helpers; tests/test_plugin.py test_restore_skips_user_modified_key | User edited a owned key | Key kept; --force overwrites | eligibility + exact bytes for untouched keys |  | pending |
+| `safety-rows-by-agent` | Never create or rewrite ui.sidebar.agents.rows_by_agent. Owned keys are ui.sidebar.spaces.rows and ui.sidebar.agents.rows. | src/config_patch.py install_sidebar; tests/test_bundle.py TestUnifiedSidebar | Pre-existing rows_by_agent table | Subsection byte-stable; doctor warns it fully replaces rows | exact bytes for that table |  | pending |
+| `safety-token-limits` | MAX_ROWS 16, MAX_TOKENS_PER_ROW 16. Agent template is 15 tokens. refuse_agent_dots blocks combining $sd_* with the title row. | src/config_patch.py; tests/test_plugin.py test_row_limits; tests/test_bundle.py TestUnifiedSidebar | Attempt 17th token or add $sd_* to agent row | Reject | exact token list / rejection |  | pending |
+| `safety-themed-tier` | Mosaic never writes or clears $themed_model_tier. Uninstall nulls only Mosaic title slots and elapsed. | src/sidebar.py; tests/test_sidebar.py; tests/test_settled.py test_optional_themed_fields_are_ignored_not_written | Publish, elapsed-publish, uninstall, settle | No themed_model_tier in Mosaic RPC writes | exact source names |  | pending |
+| `safety-title-ttl` | Title source agent-sidebar-title has no ttl_ms. Elapsed source agent-elapsed has ttl_ms 45000. Refresh interval 30s. | src/sidebar.py; src/elapsed.py; src/refresh.py; tests/test_sidebar.py test_publish_preserves_durable_titles_and_external_model_tier | Publish titles and clocks | Title durable; elapsed TTL 45000; interval 30 | exact source/TTL/constants |  | pending |
+| `safety-uninstall-restore` | Uninstall restores theme_backup and sidebar_backup including present vs absent. Keeps identities. Single commit. action_renames restored only if binding still matches recorded after. | src/main.py cmd_uninstall; tests/test_plugin.py exact restoration; tests/test_mosaic.py lifecycle | Install then uninstall on fixtures including absent keys | Restored bytes match backup apply rules; identities remain | exact bytes where promised |  | pending |
+| `safety-migrate-wm` | Window Manager import copies complete state and restore records without rewriting them. Existing Mosaic data is never overwritten, even with --force. Source files stay. | src/migrate.py; tests/test_mosaic.py test_import_preserves; test_existing_mosaic_state_wins_on_repeat_even_with_force | WM state present; Mosaic state present | Byte-exact copy when Mosaic absent; no overwrite when present | exact bytes / eligibility |  | pending |
+| `safety-migrate-chromatic` | Older Chromatic imports never apply sidebar_backup, theme_backup, or last_written. Snapshot ownership from live config. Source retained. Tint not auto-enabled. | src/migrate.py ignored_stale_backups; tests/test_bundle.py TestMigration; tests/test_mosaic.py | Chromatic state with stale backups | Backups listed ignored; identities imported; backups unused | eligibility |  | pending |
+| `safety-prune-confirm` | Prune requires confirmation. Protected agents stay. Recheck liveness and eligibility immediately before close. Became-ineligible after selection is not closed. | src/agent_triage.py; tests/test_agent_triage.py test_confirmation_rechecks_liveness_and_eligibility_before_closing | Select then status changes to working | That pane not closed | eligibility + outcomes |  | pending |
+| `safety-layout-recovery` | Partial reshape failure recovers panes to the original tab or reports incomplete recovery. Does not silently drop panes. | src/layout_actions.py reshape/recover | Injected pane.move failure mid-plan | Panes on original tab or stderr recovery failed; panes remain in … | eligibility + documented recovery |  | pending |
+| `safety-worker-singleton` | One effective refresh publisher per socket generation (realpath + st_dev/st_ino/st_ctime_ns). start() requires sidebar_installed and registration. Worker exits on generation change, unlink, or sidebar ownership end. | src/refresh.py; tests/test_sidebar.py TestRefresh; scripts/check-standalone.py | Second worker; reused inode; disable | Second does not publish; start without sidebar does not spawn | eligibility |  | pending |
+| `safety-pending-import` | Commands other than migrate and install exit 1 if window_manager_pending. Wrong HERDR_PLUGIN_ID exits 1. Help skips both guards. | src/main.py main(); tests/test_public_api.py; tests/test_mosaic.py startup_and_events_wait | Pending WM import; foreign plugin id; --help | Exit 1 without handler; help exit 0 | eligibility / exit code |  | pending |
+| `safety-isolation` | Default TypeScript suite must not fall back to the user socket, config, state, credentials, or background services. HOME, env, tmp, bunfig, .env, and descendants are controlled. | scripts/check-standalone.py isolation; plan fact-15 | Poisoned ambient HOME/socket/.env/bunfig.toml | Tests fail closed; no live writes | eligibility |  | pending |
+
+## Commands
+
+Dispatcher: `/usr/bin/python3 $HERDR_PLUGIN_ROOT/src/main.py <command> [args]`.
+Manifest wraps that in `/bin/sh -c` with `exec` so `$HERDR_PLUGIN_ROOT` expands
+when the pane cwd is not the plugin root. Worker start uses `Popen` of python3
+directly, not `/bin/sh`.
+
+Global: empty argv or `-h`/`--help` anywhere prints HELP and alias map, exit 0,
+no dispatch. Unknown command: stderr `unknown command %r`, exit 2. Caught
+`OSError`, `rpc.RpcError`, `cp.ConfigError`, `RuntimeError`: warn, exit 1.
+Handler `None` becomes 0. Post-success `sidebar.publish_once` + `refresh.start`
+for install, reconcile, apply-identity, repalette, and events tab.renamed,
+pane.agent_detected, pane.moved, pane.agent_status_changed, unless `--dry-run`.
+
+Environment: `HERDR_PLUGIN_ID`, `HERDR_PLUGIN_ROOT`, `HERDR_PLUGIN_STATE_DIR`,
+`HERDR_PLUGIN_CONFIG_DIR`, `HERDR_CONFIG_PATH`, `HERDR_SOCKET_PATH`,
+`HERDR_BIN_PATH`, `HERDR_PLUGIN_EVENT`, `HERDR_PLUGIN_EVENT_JSON`,
+`HERDR_PLUGIN_CONTEXT_JSON`, `HERDR_PANE_ID`, `HERDR_TAB_ID`,
+`HERDR_WORKSPACE_ID`, `HERDR_PLUGIN_ENTRYPOINT_ID`, `HERDR_PLUGIN_ACTION_ID`.
+Plugin-owned popup env: `SPACE_IDENTITY_TARGET`, `MOSAIC_PRUNE_PROTECTED_PANE`,
+`MOSAIC_PANE_MOVE_SOURCE`, `MOSAIC_PANE_MOVE_DESTINATION`.
+
+| ID | Behavior | Python evidence | Scenario | Expected observations | Comparison rule | TS evidence | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `cmd-reconcile` | Command `reconcile`. Startup hook. Lock, republish metadata, reapply view/tint/title. Always exit 0. Then publish+refresh. | src/main.py cmd_reconcile; tests/test_plugin.py TestMetadata | Invoke `reconcile` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-event` | Command `event`. Event dispatcher. argv or HERDR_PLUGIN_EVENT. Unhandled warns, still 0. Most paths lock. | src/main.py cmd_event; tests/test_settled.py | Invoke `event` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-install` | Command `install`. migrate → sidebar → keybinds → view → reconcile. --dry-run previews migrate only. | src/main.py cmd_install; tests/test_bundle.py TestInstallLifecycle; tests/test_mosaic.py | Invoke `install` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-migrate` | Command `migrate`. --force --dry-run. JSON report. Exempt from pending-import guard. Exit 1 on MigrationError. | src/migrate.py; tests/test_mosaic.py TestMosaicMigration; tests/test_bundle.py TestMigration | Invoke `migrate` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-layout` | Command `layout`. equalize|cycle|resize-*. Lock via layout_actions.run. stderr mosaic: prefix. Exit 1 on LayoutError. | src/layout_actions.py; tests/test_layouts.py; tests/test_bundle.py TestLayoutDispatch | Invoke `layout` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-set-identity` | Command `set-identity`. Opens picker popup with SPACE_IDENTITY_TARGET. No lock in opener. | src/main.py; src/picker.py | Invoke `set-identity` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-apply-identity` | Command `apply-identity`. --workspace --colour/--color. Lock. Invalid colour: no save, no refresh, exit 1. Post-success refresh. | tests/test_public_api.py TestPublicCLI | Invoke `apply-identity` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-auto-assign` | Command `auto-assign`. --force clears focused identity then ensure_all. Lock. | src/main.py; src/identity.py; tests/test_plugin.py TestIdentity | Invoke `auto-assign` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-tint-enable` | Command `tint-enable`. --force. Exit 1 if apply status skip. | src/main.py; tests/test_plugin.py TestTintEfficiency TestConfigPatch | Invoke `tint-enable` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-tint-disable` | Command `tint-disable`. --force. Restore theme backup. Same fn as theme-restore. | tests/test_plugin.py theme restore tests | Invoke `tint-disable` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-theme-restore` | Command `theme-restore`. Alias of tint-disable handler. | same as tint-disable | Invoke `theme-restore` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-sidebar-install` | Command `sidebar-install`. Lock. Preserve rows_by_agent. Record sidebar_backup once. Exit 1 ConfigError. | tests/test_plugin.py TestConfigPatch; tests/test_bundle.py TestUnifiedSidebar | Invoke `sidebar-install` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-sidebar-remove` | Command `sidebar-remove`. --force. Restore backup. Exit 1 commit fail. | tests/test_plugin.py restore tests | Invoke `sidebar-remove` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-repalette` | Command `repalette`. --dry-run previews snaps only, not later close-pair reallocations. Refresh unless dry-run. | src/main.py; docs/actions.md | Invoke `repalette` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-intensity` | Command `intensity`. subtle|medium|bold. No-arg prints current. Exit 1 unknown. Does not enable tint. | tests/test_plugin.py TestIntensity | Invoke `intensity` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-marker` | Command `marker`. preset or glyph len<=8. Exit 1 if too long. | src/main.py; src/identity.py | Invoke `marker` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-announce` | Command `announce`. on/off; no args → True. | src/main.py; src/ctx.py settings | Invoke `announce` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-preview` | Command `preview`. Print swatches. No mutate. | src/main.py; tests/test_plugin.py swatch test | Invoke `preview` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-keybind-install` | Command `keybind-install`. Default prefix+i → set-identity. Occupied keys not claimed. | tests/test_mosaic.py occupied picker key | Invoke `keybind-install` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-keybind-remove` | Command `keybind-remove`. Managed remover requires Mosaic-owned flag. | src/main.py _managed_keybind_remove | Invoke `keybind-remove` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-sort-keybind-install` | Command `sort-keybind-install`. Default prefix+shift+s → toggle-agent-sort. | tests/test_plugin.py TestAgentViewCommands | Invoke `sort-keybind-install` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-sort-keybind-remove` | Command `sort-keybind-remove`. Managed sort keybind remove. | tests/test_plugin.py | Invoke `sort-keybind-remove` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-idle-keybind-install` | Command `idle-keybind-install`. Default prefix+. → next-idle-agent. | tests/test_agent_triage.py | Invoke `idle-keybind-install` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-idle-keybind-remove` | Command `idle-keybind-remove`. Managed idle keybind remove. | tests/test_agent_triage.py | Invoke `idle-keybind-remove` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-prune-keybind-install` | Command `prune-keybind-install`. Default prefix+alt+x → prune-stale-agents. | tests/test_agent_triage.py | Invoke `prune-keybind-install` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-prune-keybind-remove` | Command `prune-keybind-remove`. Managed prune keybind remove. | tests/test_agent_triage.py | Invoke `prune-keybind-remove` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-view` | Command `view`. current → current else all. Exit 1 install error. | tests/test_plugin.py TestAgentView | Invoke `view` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-toggle-agent-focus` | Command `toggle-agent-focus`. No args. Exit 1 if argv nonempty. | tests/test_plugin.py TestAgentViewCommands | Invoke `toggle-agent-focus` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-toggle-agent-sort` | Command `toggle-agent-sort`. No args. Exit 1 if argv nonempty. | tests/test_plugin.py TestAgentViewCommands | Invoke `toggle-agent-sort` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-next-idle-agent` | Command `next-idle-agent`. No args. Exit 0 if none. Exit 1 focus fail. Writes idle_cycle_last_pane_id. | tests/test_agent_triage.py | Invoke `next-idle-agent` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-prune-stale-agents` | Command `prune-stale-agents`. Opens prune popup. Sets MOSAIC_PRUNE_PROTECTED_PANE. | tests/test_agent_triage.py | Invoke `prune-stale-agents` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-prune` | Command `prune`. Pane entry. Requires TTY. Env MOSAIC_PRUNE_PROTECTED_PANE. | src/prune.py; tests/test_agent_triage.py | Invoke `prune` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-move-pane` | Command `move-pane`. Two-step capture then confirm popup. | tests/test_pane_move.py | Invoke `move-pane` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-promote-pane` | Command `promote-pane`. Move focused pane to new tab. Does not consume pending_pane_move. | tests/test_pane_move.py | Invoke `promote-pane` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-pane-move` | Command `pane-move`. Confirm popup. Env MOSAIC_PANE_MOVE_SOURCE/DESTINATION. | src/pane_move.py; tests/test_pane_move.py | Invoke `pane-move` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-pane-move-keybind-install` | Command `pane-move-keybind-install`. Default prefix+/ → move-pane. | tests/test_pane_move.py | Invoke `pane-move-keybind-install` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-pane-move-keybind-remove` | Command `pane-move-keybind-remove`. Managed pane-move keybind remove. | tests/test_pane_move.py | Invoke `pane-move-keybind-remove` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-promote-pane-keybind-install` | Command `promote-pane-keybind-install`. Default prefix+shift+m → promote-pane. | tests/test_pane_move.py | Invoke `promote-pane-keybind-install` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-promote-pane-keybind-remove` | Command `promote-pane-keybind-remove`. Managed promote keybind remove. | tests/test_pane_move.py | Invoke `promote-pane-keybind-remove` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-sort` | Command `sort`. Print or set activity|spaces. Unknown does not write. Exit 1. | tests/test_plugin.py TestAgentViewCommands | Invoke `sort` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-view-clear` | Command `view-clear`. Clear owned agent view. Exit 0 if not owned. | tests/test_plugin.py | Invoke `view-clear` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-picker` | Command `picker`. Pane entry. SPACE_IDENTITY_TARGET. Non-TTY exit 1. | src/picker.py; herdr-plugin.toml [[panes]] | Invoke `picker` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-board` | Command `board`. Pane entry. --once dumps. Non-TTY/curses fail exit 1. | src/board.py | Invoke `board` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-board-open` | Command `board-open`. Opens board pane. Read-only focus on select. | src/main.py cmd_board_open | Invoke `board-open` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-doctor` | Command `doctor`. Read-only. Always exit 0 even with problems. | tests/test_bundle.py doctor rows_by_agent; src/main.py cmd_doctor | Invoke `doctor` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-uninstall` | Command `uninstall`. --force. Restore theme/sidebar/keybinds. Keep identities. Single commit. | tests/test_mosaic.py lifecycle; tests/test_bundle.py ownership cycle | Invoke `uninstall` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-list` | Command `list`. Print identities. No mutate. | src/main.py cmd_list | Invoke `list` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-state` | Command `state`. Pretty JSON of state.json. No mutate. | src/main.py cmd_state; tests/test_plugin.py TestState | Invoke `state` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-elapsed-publish` | Command `elapsed-publish`. Publish elapsed tokens only. Does not write themed_model_tier. State unchanged. | tests/test_elapsed.py | Invoke `elapsed-publish` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+| `cmd-refresh-worker` | Command `refresh-worker`. Exactly one generation argv. Singleton lock. Exit 0 on race. Exit 1 OSError/socket. | src/refresh.py; tests/test_sidebar.py TestRefresh; scripts/check-standalone.py | Invoke `refresh-worker` through production CLI | Exit codes, stdout/stderr, lock, and mutations match the reference | compatible values + exit code |  | pending |
+
+## Aliases
+
+CLI only. Not Herdr action IDs. Rewrite happens before lookup so aliases keep
+registration and pending-import guards and post-dispatch refresh.
+
+| ID | Behavior | Python evidence | Scenario | Expected observations | Comparison rule | TS evidence | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `alias-pick-color` | `pick-color` expands to `set-identity` plus remaining argv | src/main.py CLI_ALIASES; tests/test_public_api.py ALIASES | `pick-color --example value` | Same handler argv and exit as the target | compatible values + exit code |  | pending |
+| `alias-set-color` | `set-color` expands to `apply-identity` plus remaining argv | src/main.py CLI_ALIASES; tests/test_public_api.py ALIASES | `set-color --example value` | Same handler argv and exit as the target | compatible values + exit code |  | pending |
+| `alias-list-colors` | `list-colors` expands to `list` plus remaining argv | src/main.py CLI_ALIASES; tests/test_public_api.py ALIASES | `list-colors --example value` | Same handler argv and exit as the target | compatible values + exit code |  | pending |
+| `alias-assign-colors` | `assign-colors` expands to `auto-assign` plus remaining argv | src/main.py CLI_ALIASES; tests/test_public_api.py ALIASES | `assign-colors --example value` | Same handler argv and exit as the target | compatible values + exit code |  | pending |
+| `alias-tint-intensity` | `tint-intensity` expands to `intensity` plus remaining argv | src/main.py CLI_ALIASES; tests/test_public_api.py ALIASES | `tint-intensity --example value` | Same handler argv and exit as the target | compatible values + exit code |  | pending |
+| `alias-tint-preview` | `tint-preview` expands to `preview` plus remaining argv | src/main.py CLI_ALIASES; tests/test_public_api.py ALIASES | `tint-preview --example value` | Same handler argv and exit as the target | compatible values + exit code |  | pending |
+| `alias-agents` | `agents` expands to `view` plus remaining argv | src/main.py CLI_ALIASES; tests/test_public_api.py ALIASES | `agents --example value` | Same handler argv and exit as the target | compatible values + exit code |  | pending |
+| `alias-agent-board` | `agent-board` expands to `board-open` plus remaining argv | src/main.py CLI_ALIASES; tests/test_public_api.py ALIASES | `agent-board --example value` | Same handler argv and exit as the target | compatible values + exit code |  | pending |
+| `alias-arrange-columns` | `arrange-columns` expands to `layout equalize` plus remaining argv | src/main.py CLI_ALIASES; tests/test_public_api.py ALIASES | `arrange-columns --example value` | Same handler argv and exit as the target | compatible values + exit code |  | pending |
+| `alias-next-layout` | `next-layout` expands to `layout cycle` plus remaining argv | src/main.py CLI_ALIASES; tests/test_public_api.py ALIASES | `next-layout --example value` | Same handler argv and exit as the target | compatible values + exit code |  | pending |
+
+## Manifest actions
+
+Public invoke ids are `iurysza.mosaic.<id>`. Herdr actions take no extra CLI
+args. Action wrappers are not extra COMMANDS keys.
+
+| ID | Behavior | Python evidence | Scenario | Expected observations | Comparison rule | TS evidence | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `action-set-identity` | Action `set-identity` runs `main.py set-identity` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.set-identity` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-auto-assign` | Action `auto-assign` runs `main.py auto-assign` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.auto-assign` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-tint-enable` | Action `tint-enable` runs `main.py tint-enable` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.tint-enable` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-tint-disable` | Action `tint-disable` runs `main.py tint-disable` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.tint-disable` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-theme-restore` | Action `theme-restore` runs `main.py theme-restore` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.theme-restore` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-toggle-agent-focus` | Action `toggle-agent-focus` runs `main.py toggle-agent-focus` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.toggle-agent-focus` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-toggle-agent-sort` | Action `toggle-agent-sort` runs `main.py toggle-agent-sort` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.toggle-agent-sort` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-show-all-agents` | Action `show-all-agents` runs `main.py view all` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.show-all-agents` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-show-current-space-agents` | Action `show-current-space-agents` runs `main.py view current` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.show-current-space-agents` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-open-agent-board` | Action `open-agent-board` runs `main.py board-open` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.open-agent-board` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-next-idle-agent` | Action `next-idle-agent` runs `main.py next-idle-agent` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.next-idle-agent` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-prune-stale-agents` | Action `prune-stale-agents` runs `main.py prune-stale-agents` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.prune-stale-agents` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-move-pane` | Action `move-pane` runs `main.py move-pane` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.move-pane` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-promote-pane` | Action `promote-pane` runs `main.py promote-pane` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.promote-pane` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-install` | Action `install` runs `main.py install` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.install` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-migrate` | Action `migrate` runs `main.py migrate` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.migrate` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-equalize` | Action `equalize` runs `main.py layout equalize` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.equalize` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-cycle` | Action `cycle` runs `main.py layout cycle` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.cycle` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-resize-left` | Action `resize-left` runs `main.py layout resize-left` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.resize-left` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-resize-down` | Action `resize-down` runs `main.py layout resize-down` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.resize-down` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-resize-up` | Action `resize-up` runs `main.py layout resize-up` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.resize-up` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-resize-right` | Action `resize-right` runs `main.py layout resize-right` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.resize-right` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-intensity-subtle` | Action `intensity-subtle` runs `main.py intensity subtle` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.intensity-subtle` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-intensity-medium` | Action `intensity-medium` runs `main.py intensity medium` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.intensity-medium` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-intensity-bold` | Action `intensity-bold` runs `main.py intensity bold` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.intensity-bold` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-preview-tint` | Action `preview-tint` runs `main.py preview` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.preview-tint` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-bind-picker-key` | Action `bind-picker-key` runs `main.py keybind-install` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.bind-picker-key` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-unbind-picker-key` | Action `unbind-picker-key` runs `main.py keybind-remove` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.unbind-picker-key` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-doctor` | Action `doctor` runs `main.py doctor` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.doctor` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+| `action-uninstall` | Action `uninstall` runs `main.py uninstall` | herdr-plugin.toml; tests/test_public_api.py TestPublicManifest | `herdr plugin action invoke iurysza.mosaic.uninstall` in isolated env | Command string and contexts remain compatible | exact action id + command argv |  | pending |
+
+## Startup, events, and panes
+
+| ID | Behavior | Python evidence | Scenario | Expected observations | Comparison rule | TS evidence | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `startup-reconcile` | `[[startup]]` runs `main.py reconcile` | herdr-plugin.toml; src/main.py cmd_reconcile | Session restore | Idempotent republish from state.json | compatible values |  | pending |
+| `event-workspace.focused` | Hook `workspace.focused`. _on_workspace_focused uses live rpc.focused_workspace(), not event payload. Tint no-op skips write. | herdr-plugin.toml [[events]]; src/main.py cmd_event | Deliver event in isolated fake socket | Handler and refresh kick match the reference | compatible values + eligibility |  | pending |
+| `event-workspace.created` | Hook `workspace.created`. _on_workspace_changed | herdr-plugin.toml [[events]]; src/main.py cmd_event | Deliver event in isolated fake socket | Handler and refresh kick match the reference | compatible values + eligibility |  | pending |
+| `event-workspace.renamed` | Hook `workspace.renamed`. _on_workspace_changed. Identity survives rename. | herdr-plugin.toml [[events]]; src/main.py cmd_event | Deliver event in isolated fake socket | Handler and refresh kick match the reference | compatible values + eligibility |  | pending |
+| `event-workspace.closed` | Hook `workspace.closed`. _on_workspace_closed. Closed workspace keeps identity. | herdr-plugin.toml [[events]]; src/main.py cmd_event | Deliver event in isolated fake socket | Handler and refresh kick match the reference | compatible values + eligibility |  | pending |
+| `event-tab.renamed` | Hook `tab.renamed`. Handler no-op return 0; post-dispatch may refresh. | herdr-plugin.toml [[events]]; src/main.py cmd_event | Deliver event in isolated fake socket | Handler and refresh kick match the reference | compatible values + eligibility |  | pending |
+| `event-pane.moved` | Hook `pane.moved`. _on_pane_changed; post-dispatch refresh | herdr-plugin.toml [[events]]; src/main.py cmd_event | Deliver event in isolated fake socket | Handler and refresh kick match the reference | compatible values + eligibility |  | pending |
+| `event-pane.agent_detected` | Hook `pane.agent_detected`. _on_pane_changed; initialises a new clock; post-dispatch refresh | herdr-plugin.toml [[events]]; src/main.py cmd_event | Deliver event in isolated fake socket | Handler and refresh kick match the reference | compatible values + eligibility |  | pending |
+| `event-pane.agent_status_changed` | Hook `pane.agent_status_changed`. _on_agent_status_changed; post-dispatch refresh | herdr-plugin.toml [[events]]; src/main.py cmd_event | Deliver event in isolated fake socket | Handler and refresh kick match the reference | compatible values + eligibility |  | pending |
+| `event-pane.closed` | Hook `pane.closed`. _on_pane_gone drops settled occupancy so reused pane ids cannot inherit clocks | herdr-plugin.toml [[events]]; src/main.py cmd_event | Deliver event in isolated fake socket | Handler and refresh kick match the reference | compatible values + eligibility |  | pending |
+| `event-pane.exited` | Hook `pane.exited`. _on_pane_gone | herdr-plugin.toml [[events]]; src/main.py cmd_event | Deliver event in isolated fake socket | Handler and refresh kick match the reference | compatible values + eligibility |  | pending |
+| `pane-picker` | Pane id `picker`. popup 62x20. cmd picker. Opens from set-identity. | herdr-plugin.toml [[panes]]; corresponding src module | Launch pane command | Public pane id and size remain | exact pane id |  | pending |
+| `pane-board` | Pane id `board`. popup 80%x80%. cmd board. Opens from board-open. | herdr-plugin.toml [[panes]]; corresponding src module | Launch pane command | Public pane id and size remain | exact pane id |  | pending |
+| `pane-prune` | Pane id `prune`. popup 80%x80%. cmd prune. Opens from prune-stale-agents. | herdr-plugin.toml [[panes]]; corresponding src module | Launch pane command | Public pane id and size remain | exact pane id |  | pending |
+| `pane-pane-move` | Pane id `pane-move`. popup 76x14. cmd pane-move. Opens from move-pane second press. | herdr-plugin.toml [[panes]]; corresponding src module | Launch pane command | Public pane id and size remain | exact pane id |  | pending |
+
+Code-only events (no manifest hook, still handled if invoked): `workspace.updated`,
+`workspace.moved`, `workspace.reordered`, `pane.created`. Manifest omits
+`pane.created` on purpose.
+
+## Capability slices
+
+Detailed scenarios grow when each slice starts. These rows are the required
+product surface from fact-04.
+
+| ID | Behavior | Python evidence | Scenario | Expected observations | Comparison rule | TS evidence | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `space-alloc-deterministic` | Default palette allocation is deterministic | tests/test_plugin.py TestIdentity.test_default_allocation_is_deterministic; src/identity.py | Same workspace set | Same colours | compatible values |  | pending |
+| `space-alloc-neighbours` | Adjacent spaces get distant colours | test_adjacent_spaces_get_different_colours; test_allocation_maximises_distance_from_neighbours | Allocate many spaces | Distinct slots; close-pair reporting | compatible values |  | pending |
+| `space-palette-contract` | 12 pastel slots, metadata-safe tokens, row cap | test_palette_*; test_slot_tokens_are_valid_metadata_names | Inspect palette | 12 slots; tokens fit agent-row cap | exact token names + compatible hex |  | pending |
+| `space-slot-nearest` | Exact palette colour maps to own slot; custom hex borrows nearest | test_exact_palette_colour_maps_to_own_slot; test_custom_hex_borrows_nearest_slot; tests/test_sidebar.py test_custom_colour_uses_nearest_slot | Set palette colour and custom hex | Slot matches reference | compatible values |  | pending |
+| `space-identity-rename-stable` | Identity survives workspace rename | test_identity_stable_across_rename | Rename after assign | Same colour and origin | compatible values |  | pending |
+| `space-ensure-idempotent` | ensure_all / auto-assign is idempotent; manual not overwritten | test_ensure_all_is_idempotent; test_manual_identity_not_overwritten | Repeat auto-assign | origin=manual kept | eligibility + compatible values |  | pending |
+| `space-legacy-emoji-drop` | Migration drops emoji, keeps manual colour | test_migration_drops_emoji_and_keeps_manual_colour | Legacy identity with emoji | No emoji field; colour kept | compatible values |  | pending |
+| `space-resolve-colour` | Invalid colour rejected | test_resolve_colour; tests/test_public_api.py test_invalid_color_does_not_save_or_start_refresh | set-color invalid | No state write; exit 1; no refresh | eligibility / exit code |  | pending |
+| `space-set-color-publish` | apply-identity / set-color save, publish titles, start refresh | test_exact_color_alias_saves_and_publishes_like_existing_setter | --color and --colour | Identity #aabbcc; title source published | compatible values + RPC source |  | pending |
+| `label-rules-assign` | Label rules assign colour; skip manual | tests/test_bundle.py TestLabelRules; src/labels.py | Matching label | origin=label; manual untouched | compatible values |  | pending |
+| `label-invalid-rules` | Invalid rules fail clearly | test_invalid_rules_fail_clearly | Bad rules file | Clear error; no silent apply | documented error shape |  | pending |
+| `label-side-effect-publish` | Label apply can republish other workspaces | test_label_side_effect_publishes_other_workspace | Rule hits another workspace | Other workspace metadata updated | compatible values / RPC |  | pending |
+| `theme-blend-surfaces` | Blend endpoints; dark ordered surfaces | tests/test_plugin.py TestBlending | Blend at each intensity | Surfaces dark + ordered; no semantic/text slots | compatible hex |  | pending |
+| `theme-intensity-ceilings` | Luminance ceilings solved exactly at bold | TestIntensity.test_luminance_cap_is_solved_exactly; test_every_pastel_reaches_its_ceiling_at_bold | Bold intensity every pastel | Exact ceiling math; semantics untouched | compatible values |  | pending |
+| `theme-tint-focus-noop` | Duplicate workspace.focused is a no-op | TestTintEfficiency.test_duplicate_focus_event_is_a_noop | Repeat focus with same theme | No write, no reload | eligibility |  | pending |
+| `theme-tint-byte-restore` | Tint then restore is byte-exact; conflict and --force | test_tint_then_restore_is_byte_exact; test_conflict_blocks_overwrite; test_force_overrides_conflict | Enable then disable; user edit | Absent vs present distinguished; user red kept | exact bytes |  | pending |
+| `sidebar-title-tokens` | 12 title slots; one coloured; fallback name | tests/test_sidebar.py TestSidebar | Publish with and without tab label | Exactly one non-null colour slot; fallback chain | compatible values |  | pending |
+| `sidebar-blank-clock-width` | Missing clock is a 3-cell blank | test_publish_keeps_three_cells_when_clock_is_missing; tests/test_elapsed.py | Missing / short clock | Width 3; blank PAD×3 | exact string |  | pending |
+| `sidebar-uninstalled-noop` | Uninstalled sidebar does not publish | test_uninstalled_sidebar_does_not_publish | sidebar_installed false | No RPC | eligibility |  | pending |
+| `elapsed-format-rounding` | Rounding, padding, saturation of elapsed labels | tests/test_elapsed.py TestElapsed | Age table | Labels match reference strings | exact strings |  | pending |
+| `elapsed-status-independent` | Status does not change age | test_status_does_not_change_age | Same age, different statuses | Same label | exact |  | pending |
+| `agent-settled-transitions` | Launch and completion rules for five statuses | tests/test_settled.py | working→idle/done; blocked/unknown; pane reuse | Completion recorded; blocked not completion; close drops occupancy | compatible values + eligibility |  | pending |
+| `metadata-reconcile` | Reconcile republishes workspace and pane metadata after loss | tests/test_plugin.py TestMetadata | Metadata wiped then reconcile | Publish RPC set; pane inherits space | compatible values / RPC |  | pending |
+| `view-axes-independent` | Scope and sort are independent | tests/test_plugin.py TestAgentView.test_two_sorts_times_two_filters | Toggle each axis | Four combinations; other axis preserved | compatible values + RPC params |  | pending |
+| `view-fallbacks` | Unknown scope/sort fall back; legacy sort→spaces | test_unknown_scope_and_sort_fall_back; test_legacy_state_defaults_sort_to_spaces | Bad or missing fields | Defaults | compatible values |  | pending |
+| `view-install-atomic` | View install failure does not persist | test_view_install_failure_does_not_persist | RPC fail during view | No durable install flag | eligibility |  | pending |
+| `idle-cycle-order` | Newest first, wrap, skip focused, untracked last | tests/test_agent_triage.py TestSelection | Cycle table | Ordering matches | meaningful ordering |  | pending |
+| `idle-cycle-cmd` | Focus then cursor; no cursor on focus fail | test_next_idle_agent_* | Focus RPC fail | State cursor unchanged | eligibility |  | pending |
+| `prune-eligibility` | Oldest-first; protect current; no threshold → none eligible | test_prune_rows_*; test_prune_never_marks | Threshold null vs set | eligible/protected flags | eligibility + ordering |  | pending |
+| `pane-move-two-step` | First capture+notify; second opens confirm | tests/test_pane_move.py | Two invocations | Pending source; confirm popup env | compatible values |  | pending |
+| `pane-move-stale-clear` | Missing source clears selection | test_missing_source_clears_stale_selection | Source pane gone | Pending cleared | eligibility |  | pending |
+| `pane-move-confirm-split` | Confirmed split right of dest; clears selection | test_confirmed_split_moves_right_of_destination_and_clears_selection | Confirm split | Destination shape; pending clear | compatible RPC params |  | pending |
+| `pane-move-same-pane` | Same pane refuses split, allows new tab | test_same_pane_refuses_split_but_allows_new_tab | Source equals dest | Placement rules | eligibility |  | pending |
+| `pane-promote-fast` | Promote focused without touching selection | test_fast_promote_moves_focused_pane_without_touching_selection | Promote with pending set | Pending unchanged | compatible values |  | pending |
+| `layout-pure-presets` | Balanced trees; unique presets; parent-before-child plan | tests/test_layouts.py LayoutTreesTest; src/layouts.py | Pure layout core | Preset names and plan order | compatible values / ordering |  | pending |
+| `layout-resize-2pct` | Resize needs pane context; amount 0.02; under lock | TestLayoutDispatch | resize-* | pane.resize amount/direction | exact amount |  | pending |
+| `layout-equalize-noop-single` | Single pane equalize is a no-op | test_equalize_single_pane_is_noop | One pane | Only layout.export | eligibility |  | pending |
+| `layout-zoomed-fail` | Zoomed tab fails | test_zoomed_tab_fails | Zoomed | Exit 1; no moves | eligibility |  | pending |
+| `layout-equalize-staging` | Equalize via staging new_tab then reinsert | test_equalize_moves_through_staging_tab | Several panes | Move sequence types/ratios | compatible values / ordering |  | pending |
+| `layout-error-prefix` | Errors prefixed mosaic: | test_layout_error_prefix_is_mosaic | LayoutError | stderr prefix | exact prefix |  | pending |
+| `config-sidebar-install` | Merge real fixtures; preserve comments and unrelated keys; idempotent | tests/test_plugin.py TestConfigPatch | users_real and empty fixtures | Template order; spaces dots; agents title template | exact restoration / compatible TOML |  | pending |
+| `install-dry-run-quirk` | install --dry-run previews migration only | TestInstallLifecycle; TestMosaicMigration.test_install_dry_run_never_starts_refresh | --dry-run | Config/state unchanged; refresh not started | exact bytes + eligibility |  | pending |
+| `install-lifecycle` | Install records last_written; keeps migrated view_mode | test_idempotent_sidebar_install; test_install_keeps_migrated_view_mode | Repeat install | Flags and RPC view mode | compatible values |  | pending |
+| `install-ownership-cycle` | Second install/uninstall uses current pre-plugin rows | test_second_ownership_cycle_restores_current_preplugin_rows | Two ownership cycles | Restored file equals cycle_b | exact bytes |  | pending |
+| `state-roundtrip` | Serialization; corrupt fallback; unknown keys preserved | tests/test_plugin.py TestState | Roundtrip and corrupt file | Future keys kept | compatible values |  | pending |
+| `public-help` | Help never dispatches or checks live state | tests/test_public_api.py test_help_never_dispatches_or_checks_live_state | [] and --help on every command | Exit 0; no migrate/rpc | eligibility |  | pending |
+| `ui-picker-pty` | Picker navigation, custom hex, cancel, resize, restore TTY | src/picker.py | Scripted PTY | Visible cells, keys, exit, terminal restored | terminal |  | pending |
+| `ui-board-pty` | Board groups, select to focus, cancel, resize, restore TTY | src/board.py | Scripted PTY | Read-only focus; terminal restored | terminal |  | pending |
+| `ui-prune-pty` | Prune select, confirm, cancel, small terminals, restore TTY | src/prune.py | Scripted PTY | Confirmation required; terminal restored | terminal |  | pending |
+| `ui-pane-move-pty` | Pane-move confirm keys, cancel, restore TTY | src/pane_move.py | Scripted PTY | Placement keys; terminal restored | terminal |  | pending |
+| `cli-unknown-exit-2` | Unknown command exits 2 | src/main.py main() | mosaic nosuch | stderr unknown command; exit 2 | exact exit code |  | pending |
+| `cli-compiled-min-path` | Compiled artifact runs with minimal PATH and unrelated cwd; no Python; no ambient .env or bunfig | plan fact-19 | bun compile; PATH=/usr/bin; cwd=/tmp | Command still dispatches | eligibility |  | pending |
+
+## Comparison rules
+
+- **exact bytes**: promised configuration restoration and untouched content
+- **compatible values**: durable state and ownership records
+- **eligibility**: destructive-operation outcomes and meaningful ordering
+- **terminal**: visible cells, keys, focus, cancellation, exit, restoration
+- **documented normalization**: incidental paths, transport IDs, proven nondeterminism only
+
+Do not normalize meaningful timestamps, ownership, operation ordering, or
+conflicting configuration changes. Do not compute expected results with the
+code under test.
+
+## Evidence
+
+Store bounded captures under `ai-artifacts/goals/mosaic-typescript-port/evidence/`.
+Record exit status, stdout and stderr, relevant file bytes, observed Herdr
+requests, fake-server state, and terminal captures where applicable. Exclude
+credentials and unrelated user data. Tie each passing row to a revision or
+diff fingerprint.
