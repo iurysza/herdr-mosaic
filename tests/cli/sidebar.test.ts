@@ -229,4 +229,34 @@ describe("sidebar CLI", () => {
     expect(code).toBe(0)
     expect(stdout.trim()).toBe("ok")
   })
+
+  test("python sidebar-remove restores typescript-installed config bytes", async () => {
+    const { env } = sandboxEnv()
+    const configPath = env.HERDR_CONFIG_PATH
+
+    if (configPath === undefined) throw new Error("missing config path")
+
+    await Bun.write(configPath, USERS_REAL)
+    expect((await run(["sidebar-install"], env)).code).toBe(0)
+    expect(readFileSync(configPath, "utf8")).not.toBe(USERS_REAL)
+
+    const proc = Bun.spawn(
+      ["/usr/bin/python3", join(import.meta.dir, "..", "..", "src", "main.py"), "sidebar-remove"],
+      {
+        cwd: join(import.meta.dir, "..", ".."),
+        env: { ...process.env, ...env },
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    )
+
+    const stdout = await new Response(proc.stdout).text()
+    const stderr = await new Response(proc.stderr).text()
+    const code = await proc.exited
+
+    expect(code).toBe(0)
+    expect(stdout).toContain("restored")
+    expect(stderr).not.toContain("could not run `herdr config check`")
+    expect(readFileSync(configPath, "utf8")).toBe(USERS_REAL)
+  })
 })
