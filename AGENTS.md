@@ -5,6 +5,21 @@ it. Read `docs/herdr-api-findings.md` before touching anything that talks to Her
 — it records what was verified against the binary, and several findings cost real
 effort to discover.
 
+## ai-artifacts
+
+Agent docs that describe how the project works live under `ai-artifacts/`.
+`goals/` is already there. When you change architecture or behavior, update the
+matching docs in the same change. When one of those docs needs a fact verified
+against the Herdr binary, point at `docs/herdr-api-findings.md`.
+
+## Closed loop
+
+```sh
+bun run typecheck && bun run lint && bun run test
+bun run test:runtime && bun run build && bun run test:artifact
+bun run test:herdr
+```
+
 ## What it is
 
 Mosaic is an experimental Herdr plugin for space colours, agent grouping,
@@ -78,11 +93,7 @@ Each of these was a real bug, not a hypothetical:
 
 ## Testing
 
-```sh
-bun run typecheck && bun run lint && bun run test
-bun run test:runtime && bun run build && bun run test:artifact
-bun run test:herdr
-```
+Run the commands in Closed loop.
 
 Config fixtures are validated by the real `herdr config check` binary. The suite
 covers state serialisation, identity stability across rename, default allocation,
