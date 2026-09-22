@@ -137,8 +137,13 @@ describe("worker ownership", () => {
     let pid = 0
 
     try {
+      // Preload sets MOSAIC_TEST_ISOLATED so most tests' workers exit after one
+      // round. This check needs the process alive for ps and SIGKILL, so clear
+      // the flag in the child only.
       pid = await Effect.runPromise(
-        startRefreshWorker(process.execPath, join(pluginRoot, "src", "cli.ts")).pipe(
+        startRefreshWorker(process.execPath, join(pluginRoot, "src", "cli.ts"), {
+          env: { MOSAIC_TEST_ISOLATED: "" },
+        }).pipe(
           Effect.provideService(PluginPaths, paths),
         ),
       )
@@ -155,8 +160,26 @@ describe("worker ownership", () => {
       await proc.exited
       const parts = text.split(/\s+/).filter(Boolean)
       expect(parts[0]).toBe(String(pid))
-      expect(parts[1]).toBeDefined()
-      expect(parts[1]).not.toBe("")
+      // detached: true → setsid; the worker is its own session leader
+      expect(parts[1]).toBe(String(pid))
+
+      process.kill(pid, "SIGKILL")
+
+      let gone = false
+
+      for (let i = 0; i < 50; i++) {
+        try {
+          process.kill(pid, 0)
+        } catch {
+          gone = true
+          break
+        }
+
+        await Bun.sleep(10)
+      }
+
+      expect(gone).toBe(true)
+      pid = 0
     } finally {
       if (pid > 0) {
         try {
