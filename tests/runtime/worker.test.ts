@@ -160,8 +160,15 @@ describe("worker ownership", () => {
       await proc.exited
       const parts = text.split(/\s+/).filter(Boolean)
       expect(parts[0]).toBe(String(pid))
-      // detached: true → setsid; the worker is its own session leader
-      expect(parts[1]).toBe(String(pid))
+      expect(parts[1]).toBeDefined()
+      expect(parts[1]).not.toBe("")
+
+      // Linux ps sid equals pid for a setsid session leader. Darwin's sess
+      // column often reports 0 for the same process, so only require leader
+      // identity where the platform surfaces it.
+      if (process.platform !== "darwin") {
+        expect(parts[1]).toBe(String(pid))
+      }
 
       process.kill(pid, "SIGKILL")
 
