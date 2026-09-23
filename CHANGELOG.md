@@ -8,6 +8,13 @@
 - Clarify menu labels while preserving every existing action ID and binding. No new menu entries or binding migration.
 - Make `-h` and `--help` print help without running a command, including after the command name.
 
+## [0.5.1](https://github.com/iurysza/herdr-mosaic/compare/v0.5.0...v0.5.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **runtime:** stop Linux flake in detached-worker session test ([#15](https://github.com/iurysza/herdr-mosaic/issues/15)) ([6bdc145](https://github.com/iurysza/herdr-mosaic/commit/6bdc145ba18e6d8d5285103c78c7bbc7c1a89716))
+
 ## [0.5.0](https://github.com/iurysza/herdr-mosaic/compare/v0.4.0...v0.5.0) (2026-09-19)
 
 
