@@ -232,15 +232,20 @@ const refreshRoundLocked = Effect.fnUntraced(function*(paths: PluginPathValues, 
   return undefined
 })
 
+export type StartRefreshWorkerOptions = {
+  readonly env?: NodeJS.ProcessEnv
+}
+
 export const startRefreshWorker = Effect.fnUntraced(function*(
   execPath: string,
   cliPath: string,
+  options?: StartRefreshWorkerOptions,
 ) {
   const paths = yield* PluginPaths
 
   return yield* withExclusiveLock(
     pluginLockPath(paths.stateDir),
-    tryStart(paths, execPath, cliPath),
+    tryStart(paths, execPath, cliPath, options),
   )
 })
 
@@ -248,6 +253,7 @@ const tryStart = Effect.fnUntraced(function*(
   paths: PluginPathValues,
   execPath: string,
   cliPath: string,
+  options?: StartRefreshWorkerOptions,
 ) {
   if (!sidebarInstalled(paths.stateDir)) return 0
 
@@ -275,6 +281,7 @@ const tryStart = Effect.fnUntraced(function*(
     HERDR_CONFIG_PATH: paths.herdrConfigPath,
     HERDR_SOCKET_PATH: paths.socketPath,
     HERDR_BIN_PATH: paths.herdrBin,
+    ...options?.env,
   }
 
   return spawnDetachedWorker({
