@@ -35,26 +35,35 @@ describe("settled transition", () => {
       { status: working.status, last_settled_at: working.last_settled_at },
       "idle",
       50,
-    )).toEqual({ status: "idle", last_settled_at: 50 })
+    )).toEqual({ status: "idle", last_settled_at: 50, last_blocked_at: null })
     expect(transition(
       { status: working.status, last_settled_at: working.last_settled_at },
       "done",
       60,
-    )).toEqual({ status: "done", last_settled_at: 60 })
+    )).toEqual({ status: "done", last_settled_at: 60, last_blocked_at: null })
   })
 
   test("done to idle and duplicate settled keep the clock", () => {
     expect(transition({ status: "done", last_settled_at: 40 }, "idle", 99)).toEqual({
       status: "idle",
       last_settled_at: 40,
+      last_blocked_at: null,
     })
     expect(transition({ status: "idle", last_settled_at: 40 }, "idle", 99).last_settled_at).toBe(40)
     expect(transition({ status: "done", last_settled_at: 40 }, "done", 99).last_settled_at).toBe(40)
   })
 
   test("first idle or done initialises launch and does not backfill", () => {
-    expect(transition(undefined, "idle", 5)).toEqual({ status: "idle", last_settled_at: 5 })
-    expect(transition(undefined, "done", 6)).toEqual({ status: "done", last_settled_at: 6 })
+    expect(transition(undefined, "idle", 5)).toEqual({
+      status: "idle",
+      last_settled_at: 5,
+      last_blocked_at: null,
+    })
+    expect(transition(undefined, "done", 6)).toEqual({
+      status: "done",
+      last_settled_at: 6,
+      last_blocked_at: null,
+    })
     expect(transition({}, "idle", 5).last_settled_at).toBeNull()
   })
 
@@ -62,13 +71,13 @@ describe("settled transition", () => {
     const working = { status: "working" as const, last_settled_at: 1 }
     const blocked = transition(working, "blocked", 2)
 
-    expect(blocked).toEqual({ status: "blocked", last_settled_at: 1 })
+    expect(blocked).toEqual({ status: "blocked", last_settled_at: 1, last_blocked_at: 2 })
     expect(transition(blocked, "idle", 3).last_settled_at).toBe(1)
     expect(transition(blocked, "done", 4).last_settled_at).toBe(1)
 
     const unknown = transition(working, "unknown", 2)
 
-    expect(unknown).toEqual({ status: "unknown", last_settled_at: 1 })
+    expect(unknown).toEqual({ status: "unknown", last_settled_at: 1, last_blocked_at: null })
     expect(transition(unknown, "idle", 3).last_settled_at).toBe(1)
     expect(transition(unknown, "done", 4).last_settled_at).toBe(1)
   })
@@ -78,7 +87,17 @@ describe("settled transition", () => {
 
     rec = transition({ status: rec.status, last_settled_at: rec.last_settled_at }, "blocked", 2)
     rec = transition({ status: rec.status, last_settled_at: rec.last_settled_at }, "idle", 3)
-    expect(rec).toEqual({ status: "idle", last_settled_at: 1 })
+    expect(rec).toEqual({ status: "idle", last_settled_at: 1, last_blocked_at: null })
+  })
+
+  test("entering blocked records the observation time without moving settlement", () => {
+    const working = transition(undefined, "working", 1)
+    const blocked = transition(working, "blocked", 8)
+
+    expect(blocked).toEqual({ status: "blocked", last_settled_at: 1, last_blocked_at: 8 })
+    expect(transition(blocked, "blocked", 9).last_blocked_at).toBe(8)
+    expect(transition(undefined, "blocked", 4).last_blocked_at).toBeNull()
+    expect(transition({ status: null, last_settled_at: 3 }, "blocked", 4).last_blocked_at).toBeNull()
   })
 
   test("blocked-working-idle does count", () => {
@@ -112,12 +131,13 @@ describe("settled transition", () => {
   test("launch initialises once and does not backfill", () => {
     const first = launch(undefined, 10)
 
-    expect(first).toEqual({ status: null, last_settled_at: 10 })
+    expect(first).toEqual({ status: null, last_settled_at: 10, last_blocked_at: null })
     expect(launch({ status: first.status, last_settled_at: first.last_settled_at }, 99)).toEqual(first)
     expect(launch({ status: "idle", last_settled_at: null }, 50).last_settled_at).toBeNull()
     expect(launch({ status: "working", last_settled_at: 40 }, 50)).toEqual({
       status: "working",
       last_settled_at: 40,
+      last_blocked_at: null,
     })
   })
 
@@ -125,16 +145,16 @@ describe("settled transition", () => {
     let rec = launch(undefined, 10)
 
     rec = transition({ status: rec.status, last_settled_at: rec.last_settled_at }, "working", 11)
-    expect(rec).toEqual({ status: "working", last_settled_at: 10 })
+    expect(rec).toEqual({ status: "working", last_settled_at: 10, last_blocked_at: null })
     rec = transition({ status: rec.status, last_settled_at: rec.last_settled_at }, "idle", 20)
-    expect(rec).toEqual({ status: "idle", last_settled_at: 20 })
+    expect(rec).toEqual({ status: "idle", last_settled_at: 20, last_blocked_at: null })
   })
 
   test("status then detection keeps status and launch time", () => {
     let rec = transition(undefined, "working", 7)
 
     rec = launch({ status: rec.status, last_settled_at: rec.last_settled_at }, 9)
-    expect(rec).toEqual({ status: "working", last_settled_at: 7 })
+    expect(rec).toEqual({ status: "working", last_settled_at: 7, last_blocked_at: null })
   })
 })
 
@@ -171,6 +191,22 @@ describe("state apply", () => {
     expect(applyToState(state, "w1:p1", "idle", 11)).toBe(true)
     expect(applyToState(state, "w1:p1", "idle", 99)).toBe(false)
     expect(state.agent_settled["w1:p1"]).toEqual({ status: "idle", last_settled_at: 11 })
+
+    const blocked = defaultState()
+
+    expect(applyToState(blocked, "w1:p9", "working", 1)).toBe(true)
+    expect(applyToState(blocked, "w1:p9", "blocked", 4)).toBe(true)
+    expect(blocked.agent_settled["w1:p9"]).toEqual({
+      status: "blocked",
+      last_settled_at: 1,
+      last_blocked_at: 4,
+    })
+    expect(applyToState(blocked, "w1:p9", "blocked", 9)).toBe(false)
+
+    const firstSeen = defaultState()
+
+    expect(applyToState(firstSeen, "w1:p8", "blocked", 4)).toBe(true)
+    expect(firstSeen.agent_settled["w1:p8"]).toEqual({ status: "blocked", last_settled_at: 4 })
 
     state.agent_settled["w1:p1"] = { status: "idle", last_settled_at: 11, extra: true }
     expect(applyLaunchToState(state, "w1:p1", 50)).toBe(true)

@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Add an Age-of-Empires-style `prefix+.` shortcut to cycle through idle and done agents by observed completion time.
+- Bind `ctrl+[`, `ctrl+]`, `ctrl+shift+[`, and `ctrl+shift+]` to Herdr's tab and agent cycling when those actions and chords are free.
+- Cycle eligible agents newest-first with `ctrl+.` and oldest-first with `ctrl+,`. Each press advances; new activity at the front takes priority. Blocked agents rank ahead of idle and done.
 - Add a `prefix+alt+x` stale-agent pruner with a persistent threshold, multi-selection, explicit `x` confirmation, and live eligibility checks before closing panes.
 - Group documentation and CLI help by task, with clearer color, tint, agent view, and layout command aliases.
 - Clarify menu labels while preserving every existing action ID and binding. No new menu entries or binding migration.

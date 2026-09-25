@@ -119,73 +119,132 @@ export function settledAt(state: PluginState, paneId: string): number | undefine
   return undefined
 }
 
-export function idleCycleCandidates(
+export type EligibleEnd = "newest" | "oldest"
+
+function blockedAt(state: PluginState, paneId: string): number | undefined {
+  const record = asObject(state.agent_settled[paneId])
+  const value = record === undefined ? undefined : record.last_blocked_at
+
+  if (Predicate.isNumber(value) && Number.isInteger(value) && value >= 0) return value
+
+  return undefined
+}
+
+function activitySequence(agent: JsonObject): number | undefined {
+  const value = agent.state_change_seq
+
+  if (Predicate.isNumber(value) && Number.isSafeInteger(value) && value >= 0) return value
+
+  return undefined
+}
+
+function comparePaneId(left: string, right: string): number {
+  if (left < right) return -1
+
+  if (left > right) return 1
+
+  return 0
+}
+
+function eligibilityGroup(
+  status: string,
+  blocked: number | undefined,
+  settled: number | undefined,
+): number | undefined {
+  if (status === "blocked") return blocked === undefined ? 1 : 0
+
+  if (SETTLED.has(status)) return settled === undefined ? 3 : 2
+
+  return undefined
+}
+
+export function eligibleAgents(
   agents: readonly JsonObject[],
   state: PluginState,
 ): JsonObject[] {
-  const settled = settledAgents(agents)
+  const ranked: Array<{
+    readonly agent: JsonObject
+    readonly group: number
+    readonly time: number
+    readonly paneId: string
+  }> = []
 
-  settled.sort((left, right) => {
-    const leftId = paneIdOf(left) ?? ""
-    const rightId = paneIdOf(right) ?? ""
-    const leftObserved = settledAt(state, leftId)
-    const rightObserved = settledAt(state, rightId)
-    const leftMissing = leftObserved === undefined ? 1 : 0
-    const rightMissing = rightObserved === undefined ? 1 : 0
+  // Sequence numbers share a clock; do not compare them with wall-clock timestamps.
+  const useSequences = agents.every((agent) => activitySequence(agent) !== undefined)
 
-    if (leftMissing !== rightMissing) return leftMissing - rightMissing
+  for (const agent of agents) {
+    const paneId = paneIdOf(agent)
+    const status = agent.agent_status
 
-    const leftRank = -(leftObserved ?? 0)
-    const rightRank = -(rightObserved ?? 0)
+    if (paneId === undefined || !Predicate.isString(status)) continue
 
-    if (leftRank !== rightRank) return leftRank - rightRank
+    const blocked = useSequences ? activitySequence(agent) : blockedAt(state, paneId)
+    const settled = useSequences ? activitySequence(agent) : settledAt(state, paneId)
+    const group = eligibilityGroup(status, blocked, settled)
 
-    if (leftId < rightId) return -1
+    if (group === undefined) continue
 
-    if (leftId > rightId) return 1
+    ranked.push({
+      agent,
+      group,
+      time: group === 0 ? blocked ?? 0 : settled ?? 0,
+      paneId,
+    })
+  }
 
-    return 0
+  ranked.sort((left, right) => {
+    if (left.group !== right.group) return left.group - right.group
+
+    if ((left.group === 0 || left.group === 2) && left.time !== right.time) {
+      return right.time - left.time
+    }
+
+    return comparePaneId(left.paneId, right.paneId)
   })
 
-  return settled
+  return ranked.map((row) => row.agent)
 }
 
-export function nextIdleAgent(
+function activityStamp(agent: JsonObject, state: PluginState): string {
+  const paneId = paneIdOf(agent) ?? ""
+
+  const observed = agent.agent_status === "blocked"
+    ? blockedAt(state, paneId)
+    : settledAt(state, paneId)
+
+  return JSON.stringify([paneId, agent.agent_status, activitySequence(agent) ?? observed ?? null])
+}
+
+function eligibleStep(agents: readonly JsonObject[], state: PluginState, end: EligibleEnd) {
+  const ranked = eligibleAgents(agents, state)
+  const ordered = end === "newest" ? ranked : ranked.toReversed()
+  const first = ordered[0]
+
+  if (first === undefined) return undefined
+
+  const head = activityStamp(first, state)
+  const focused = ordered.findIndex((agent) => agent.focused === true)
+  const previousHeads = asObject(state.idle_navigation_heads)
+  const previousHead = previousHeads?.[end]
+
+  // A new front wins immediately. Otherwise advance from live focus, not a saved index.
+  const index = previousHead !== head && first.focused !== true
+    ? 0
+    : (focused + 1) % ordered.length
+
+  const chosen = ordered[index]
+
+  if (chosen === undefined || chosen.focused === true) return undefined
+
+  return { chosen, head }
+}
+
+export function selectEligibleAgent(
   agents: readonly JsonObject[],
   state: PluginState,
-  previousPaneId: Json | undefined,
+  end: EligibleEnd,
 ): JsonObject | undefined {
-  const candidates = idleCycleCandidates(agents, state)
-
-  if (candidates.length === 0) return undefined
-
-  let focused: string | undefined
-
-  for (const agent of candidates) {
-    if (agent.focused === true) {
-      focused = paneIdOf(agent)
-      break
-    }
-  }
-
-  const paneIds = candidates.map((agent) => paneIdOf(agent) ?? "")
-  let start = 0
-
-  if (Predicate.isString(previousPaneId)) {
-    const index = paneIds.indexOf(previousPaneId)
-
-    if (index >= 0) start = (index + 1) % candidates.length
-  }
-
-  for (let offset = 0; offset < candidates.length; offset++) {
-    const candidate = candidates[(start + offset) % candidates.length]
-
-    if (candidate === undefined) continue
-
-    if (paneIdOf(candidate) !== focused) return candidate
-  }
-
-  return undefined
+  return eligibleStep(agents, state, end)?.chosen
 }
 
 export function pruneRows(
@@ -251,24 +310,27 @@ function envObject(focused: string | undefined): JsonObject {
   return decoded.success
 }
 
-const nextIdleLocked = Effect.fnUntraced(function*(
+const focusEligibleLocked = Effect.fnUntraced(function*(
   paths: PluginPathValues,
   output: CapturedOutput,
+  end: EligibleEnd,
 ) {
   const state = load(statePath(paths.stateDir))
   const agents = yield* listAgents()
-  const agent = nextIdleAgent(agents, state, state.idle_cycle_last_pane_id)
+  const step = eligibleStep(agents, state, end)
+  const label = `${end}-first`
 
-  if (agent === undefined) {
-    output.stdout.push("no other idle agent is available")
+  if (step === undefined) {
+    output.stdout.push("no other eligible agent is available")
 
     return 0
   }
 
-  const paneId = paneIdOf(agent)
+  const { chosen, head } = step
+  const paneId = paneIdOf(chosen)
 
   if (paneId === undefined) {
-    output.stdout.push("no other idle agent is available")
+    output.stdout.push("no eligible agent is available")
 
     return 0
   }
@@ -279,19 +341,19 @@ const nextIdleLocked = Effect.fnUntraced(function*(
     yield* pluginWarn(
       paths,
       output,
-      `could not focus idle agent ${paneId}: ${focused.error.code}: ${focused.error.message}`,
+      `could not focus ${label} eligible agent ${paneId}: ${focused.error.code}: ${focused.error.message}`,
     )
 
     return 1
   }
 
-  state.idle_cycle_last_pane_id = paneId
+  state.idle_navigation_heads = { ...asObject(state.idle_navigation_heads), [end]: head }
   save(statePath(paths.stateDir), state)
 
-  const title = agent.terminal_title_stripped
+  const title = chosen.terminal_title_stripped
 
   output.stdout.push(
-    `focused idle agent: ${Predicate.isString(title) && title !== "" ? title : paneId}`,
+    `focused next eligible agent (${label}): ${Predicate.isString(title) && title !== "" ? title : paneId}`,
   )
 
   return 0
@@ -389,19 +451,23 @@ const pruneStaleLocked = Effect.fnUntraced(function*(
   return 0
 })
 
-export const runNextIdleAgent = Effect.fnUntraced(function*(argv: readonly string[]) {
+const runEligibleAgent = Effect.fnUntraced(function*(
+  argv: readonly string[],
+  command: string,
+  end: EligibleEnd,
+) {
   const paths = yield* PluginPaths
   const output = emptyOutput()
 
   if (argv.length > 0) {
-    yield* pluginWarn(paths, output, "usage: next-idle-agent")
+    yield* pluginWarn(paths, output, `usage: ${command}`)
 
     return commandResult(1, output)
   }
 
   const code = yield* withExclusiveLock(
     pluginLockPath(paths.stateDir),
-    nextIdleLocked(paths, output),
+    focusEligibleLocked(paths, output, end),
   ).pipe(
     Effect.catchTag("LockTimeout", () =>
       pluginWarn(paths, output, "timed out waiting for plugin lock").pipe(Effect.as(1)),
@@ -409,6 +475,14 @@ export const runNextIdleAgent = Effect.fnUntraced(function*(argv: readonly strin
   )
 
   return commandResult(code, output)
+})
+
+export const runNextIdleAgent = Effect.fnUntraced(function*(argv: readonly string[]) {
+  return yield* runEligibleAgent(argv, "next-idle-agent", "newest")
+})
+
+export const runOldestIdleAgent = Effect.fnUntraced(function*(argv: readonly string[]) {
+  return yield* runEligibleAgent(argv, "oldest-idle-agent", "oldest")
 })
 
 export const runPruneStaleAgents = Effect.fnUntraced(function*(argv: readonly string[]) {

@@ -17,6 +17,7 @@ const SETTLED: ReadonlySet<string> = new Set(["idle", "done"])
 export type SettledRecord = {
   readonly status: AgentStatus | null
   readonly last_settled_at: number | null
+  readonly last_blocked_at: number | null
 }
 
 export type StatusEvent = {
@@ -49,10 +50,18 @@ function nonEmptyId(value: Json | undefined): string | undefined {
 }
 
 function settledJson(record: SettledRecord): JsonObject {
-  const decoded = Schema.decodeUnknownResult(Schema.JsonObject)({
-    status: record.status,
-    last_settled_at: record.last_settled_at,
-  })
+  const payload = record.last_blocked_at === null
+    ? {
+      status: record.status,
+      last_settled_at: record.last_settled_at,
+    }
+    : {
+      status: record.status,
+      last_settled_at: record.last_settled_at,
+      last_blocked_at: record.last_blocked_at,
+    }
+
+  const decoded = Schema.decodeUnknownResult(Schema.JsonObject)(payload)
 
   if (Result.isFailure(decoded)) return { status: null, last_settled_at: null }
 
@@ -64,9 +73,13 @@ function sameSettled(stored: Json | undefined, next: SettledRecord): boolean {
 
   if (object === undefined) return false
 
-  if (Object.keys(object).length !== 2) return false
+  for (const key of Object.keys(object)) {
+    if (key !== "status" && key !== "last_settled_at" && key !== "last_blocked_at") return false
+  }
 
-  return object.status === next.status && object.last_settled_at === next.last_settled_at
+  return object.status === next.status
+    && object.last_settled_at === next.last_settled_at
+    && timestamp(object.last_blocked_at) === next.last_blocked_at
 }
 
 export function parseStatusEvent(data: Json): StatusEvent | undefined {
@@ -110,12 +123,13 @@ export function launch(previous: Json | undefined, now: number): SettledRecord {
   const object = asObject(previous)
 
   if (object === undefined) {
-    return { status: null, last_settled_at: now }
+    return { status: null, last_settled_at: now, last_blocked_at: null }
   }
 
   return {
     status: isAgentStatus(object.status) ? object.status : null,
     last_settled_at: timestamp(object.last_settled_at),
+    last_blocked_at: timestamp(object.last_blocked_at),
   }
 }
 
@@ -126,18 +140,28 @@ export function transition(
 ): SettledRecord {
   const object = asObject(previous)
   let lastSettledAt: number | null = now
+  let lastBlockedAt: number | null = null
   let prevStatus: Json | undefined
 
   if (object !== undefined) {
     prevStatus = object.status
     lastSettledAt = timestamp(object.last_settled_at)
+    lastBlockedAt = timestamp(object.last_blocked_at)
   }
 
   if (prevStatus === "working" && SETTLED.has(status)) {
     lastSettledAt = now
   }
 
-  return { status, last_settled_at: lastSettledAt }
+  if (status === "blocked" && isAgentStatus(prevStatus) && prevStatus !== "blocked") {
+    lastBlockedAt = now
+  }
+
+  return {
+    status,
+    last_settled_at: lastSettledAt,
+    last_blocked_at: lastBlockedAt,
+  }
 }
 
 export function applyLaunchToState(state: PluginState, paneId: string, now: number): boolean {

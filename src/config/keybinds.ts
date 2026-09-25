@@ -1,6 +1,6 @@
 import { join } from "node:path"
 
-import { Effect, Result } from "effect"
+import { Effect, Predicate, Result } from "effect"
 
 import { flagString, parseKv } from "../dispatch/flags.ts"
 import { PLUGIN_ID } from "../ids.ts"
@@ -15,10 +15,14 @@ import {
 import type { PluginPathValues } from "../runtime/paths.ts"
 import { PluginPaths } from "../runtime/paths.ts"
 import { load, save, type PluginState } from "../state/store.ts"
+import { TomlDoc } from "./toml-edit.ts"
 import {
+  chordHolder,
   commitDoc,
+  findKeybind,
   installKeybind,
   loadDoc,
+  nativeKeyValue,
   removeKeybind,
   snapshotConfig,
 } from "./patch.ts"
@@ -28,7 +32,11 @@ export const DEFAULT_KEYBIND = "prefix+i"
 
 export const DEFAULT_SORT_KEYBIND = "prefix+shift+s"
 
-export const DEFAULT_IDLE_KEYBIND = "prefix+."
+export const DEFAULT_IDLE_KEYBIND = "ctrl+."
+
+export const OWNED_IDLE_KEYBIND = "prefix+."
+
+export const DEFAULT_OLDEST_IDLE_KEYBIND = "ctrl+,"
 
 export const DEFAULT_PRUNE_KEYBIND = "prefix+alt+x"
 
@@ -42,6 +50,15 @@ export const SORT_TOGGLE_COMMAND = `${PLUGIN_ID}.toggle-agent-sort`
 
 export const IDLE_NEXT_COMMAND = `${PLUGIN_ID}.next-idle-agent`
 
+export const IDLE_OLDEST_COMMAND = `${PLUGIN_ID}.oldest-idle-agent`
+
+export const NATIVE_NAV_BINDINGS = [
+  { action: "previous_tab", chord: "ctrl+[" },
+  { action: "next_tab", chord: "ctrl+]" },
+  { action: "previous_agent", chord: "ctrl+shift+[" },
+  { action: "next_agent", chord: "ctrl+shift+]" },
+] as const
+
 export const PRUNE_COMMAND = `${PLUGIN_ID}.prune-stale-agents`
 
 export const PANE_MOVE_COMMAND = `${PLUGIN_ID}.move-pane`
@@ -52,6 +69,7 @@ type InstalledField =
   | "keybind_installed"
   | "sort_keybind_installed"
   | "idle_keybind_installed"
+  | "oldest_idle_keybind_installed"
   | "prune_keybind_installed"
   | "pane_move_keybind_installed"
   | "promote_pane_keybind_installed"
@@ -60,6 +78,7 @@ type KeyField =
   | "keybind_key"
   | "sort_keybind_key"
   | "idle_keybind_key"
+  | "oldest_idle_keybind_key"
   | "prune_keybind_key"
   | "pane_move_keybind_key"
   | "promote_pane_keybind_key"
@@ -354,6 +373,12 @@ const managedInstallLocked = Effect.fnUntraced(function*(
   const result = installKeybind(doc, key, spec.command, spec.description)
 
   if (result.status === "exists") {
+    if (spec.command === IDLE_NEXT_COMMAND) {
+      const retargeted = yield* retargetOwnedIdle(paths, output, doc, st, key, result.bound)
+
+      if (retargeted !== undefined) return retargeted
+    }
+
     output.stdout.push(`already bound to ${boundText(result.bound)} (leaving your choice alone)`)
 
     return 0
@@ -456,13 +481,67 @@ const runManagedRemove = Effect.fnUntraced(function*(
   return commandResult(code, output)
 })
 
+const retargetOwnedIdle = Effect.fnUntraced(function*(
+  paths: PluginPathValues,
+  output: CapturedOutput,
+  doc: TomlDoc,
+  state: PluginState,
+  requested: string,
+  bound: string | undefined,
+) {
+  if (state.idle_keybind_installed !== true) return undefined
+
+  if (bound !== OWNED_IDLE_KEYBIND || requested !== DEFAULT_IDLE_KEYBIND) return undefined
+
+  const holder = chordHolder(doc, DEFAULT_IDLE_KEYBIND)
+
+  if (holder !== undefined) {
+    output.stdout.push(
+      `key ${DEFAULT_IDLE_KEYBIND} is already bound to ${holder}; leaving ${OWNED_IDLE_KEYBIND}`,
+    )
+
+    return 0
+  }
+
+  const section = findKeybind(doc, IDLE_NEXT_COMMAND)
+
+  if (section === undefined) return 0
+
+  doc.setSectionScalar(section, "key", DEFAULT_IDLE_KEYBIND)
+
+  if (!(yield* commitOrWarn(paths, output, doc))) return 1
+
+  setClaim(state, "idle_keybind_installed", "idle_keybind_key", DEFAULT_IDLE_KEYBIND)
+  save(statePath(paths.stateDir), state)
+  yield* reloadConfig(paths, output)
+  yield* pluginLog(
+    paths,
+    output,
+    `keybinding retargeted: ${OWNED_IDLE_KEYBIND} -> ${DEFAULT_IDLE_KEYBIND}`,
+  )
+  output.stdout.push(
+    `retargeted idle agent shortcut from ${OWNED_IDLE_KEYBIND} to ${DEFAULT_IDLE_KEYBIND}`,
+  )
+
+  return 0
+})
+
 const IDLE_SPEC: ManagedSpec = {
   command: IDLE_NEXT_COMMAND,
   defaultKey: DEFAULT_IDLE_KEYBIND,
   installedField: "idle_keybind_installed",
   keyField: "idle_keybind_key",
-  description: "Mosaic: next idle agent",
-  label: "Next idle agent",
+  description: "Mosaic: cycle eligible agents newest-first",
+  label: "Eligible agents newest-first",
+}
+
+const OLDEST_SPEC: ManagedSpec = {
+  command: IDLE_OLDEST_COMMAND,
+  defaultKey: DEFAULT_OLDEST_IDLE_KEYBIND,
+  installedField: "oldest_idle_keybind_installed",
+  keyField: "oldest_idle_keybind_key",
+  description: "Mosaic: cycle eligible agents oldest-first",
+  label: "Eligible agents oldest-first",
 }
 
 const PRUNE_SPEC: ManagedSpec = {
@@ -498,6 +577,130 @@ export const runIdleKeybindInstall = Effect.fnUntraced(function*(argv: readonly 
 
 export const runIdleKeybindRemove = Effect.fnUntraced(function*(argv: readonly string[]) {
   return yield* runManagedRemove(argv, IDLE_SPEC)
+})
+
+export const runOldestIdleKeybindInstall = Effect.fnUntraced(function*(argv: readonly string[]) {
+  return yield* runManagedInstall(argv, OLDEST_SPEC)
+})
+
+export const runOldestIdleKeybindRemove = Effect.fnUntraced(function*(argv: readonly string[]) {
+  return yield* runManagedRemove(argv, OLDEST_SPEC)
+})
+
+function recordedChord(state: PluginState, action: string): string | undefined {
+  const value = state.nav_keybinds[action]
+
+  if (!Predicate.isString(value) || value === "") return undefined
+
+  return value
+}
+
+export function removeRecordedNavigationKeys(doc: TomlDoc, state: PluginState): readonly string[] {
+  const removed: string[] = []
+
+  for (const binding of NATIVE_NAV_BINDINGS) {
+    const chord = recordedChord(state, binding.action)
+
+    if (chord === undefined) continue
+
+    if (nativeKeyValue(doc, binding.action) === chord) {
+      doc.unset(["keys", binding.action])
+      removed.push(binding.action)
+    }
+  }
+
+  if (removed.length > 0) dropVacantKeysTable(doc)
+
+  state.nav_keybinds = {}
+
+  return removed
+}
+
+function dropVacantKeysTable(doc: TomlDoc): void {
+  if (!doc.tableIsEmpty(["keys"])) return
+
+  const sections = doc.sectionsFor(["keys"])
+
+  if (sections.length !== 1) return
+
+  const section = sections[0]
+
+  if (section === undefined) return
+
+  for (let index = section.headerIdx + 1; index < section.end; index++) {
+    if ((doc.lines[index] ?? "").trim().startsWith("#")) return
+  }
+
+  doc.removeTable(["keys"])
+}
+
+const navigationInstallLocked = Effect.fnUntraced(function*(
+  paths: PluginPathValues,
+  output: CapturedOutput,
+) {
+  const state = load(statePath(paths.stateDir))
+  const doc = loadDoc(paths.herdrConfigPath)
+
+  yield* snapshotConfig(paths.herdrConfigPath, paths.stateDir)
+
+  let changed = false
+
+  for (const binding of NATIVE_NAV_BINDINGS) {
+    const current = nativeKeyValue(doc, binding.action)
+
+    if (current !== undefined) {
+      output.stdout.push(`${binding.action} already set to ${current}; leaving it`)
+      continue
+    }
+
+    const holder = chordHolder(doc, binding.chord)
+
+    if (holder !== undefined) {
+      output.stdout.push(
+        `key ${binding.chord} is already bound to ${holder}; not binding ${binding.action}`,
+      )
+      continue
+    }
+
+    doc.set(["keys", binding.action], binding.chord)
+    state.nav_keybinds[binding.action] = binding.chord
+    changed = true
+    output.stdout.push(`bound ${binding.chord} to ${binding.action}`)
+  }
+
+  if (!changed) return 0
+
+  if (!(yield* commitOrWarn(paths, output, doc))) return 1
+
+  save(statePath(paths.stateDir), state)
+  yield* reloadConfig(paths, output)
+  yield* pluginLog(paths, output, "navigation keybindings installed")
+
+  return 0
+})
+
+export const runNavigationKeybindInstall = Effect.fnUntraced(function*(argv: readonly string[]) {
+  const paths = yield* PluginPaths
+  const output = emptyOutput()
+
+  if (argv.length > 0) {
+    yield* pluginWarn(paths, output, "usage: navigation-keybind-install")
+
+    return commandResult(1, output)
+  }
+
+  const code = yield* withExclusiveLock(
+    pluginLockPath(paths.stateDir),
+    navigationInstallLocked(paths, output),
+  ).pipe(
+    Effect.catchTag("LockTimeout", () =>
+      pluginWarn(paths, output, "keybind-install: timed out waiting for plugin lock").pipe(
+        Effect.as(1),
+      )
+    ),
+  )
+
+  return commandResult(code, output)
 })
 
 export const runPruneKeybindInstall = Effect.fnUntraced(function*(argv: readonly string[]) {

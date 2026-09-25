@@ -1,0 +1,110 @@
+{
+  "stage": "interview",
+  "title": "Mosaic keyboard navigation",
+  "goalSlug": "mosaic-keyboard-navigation",
+  "questions": [
+    {
+      "id": "outcome",
+      "prompt": "Does this outcome match the feature you want?",
+      "description": "Mosaic users move between tabs, through the sidebar's displayed agent list, and to the next idle agent without the mouse. The shortcuts are Ctrl+[ and Ctrl+] for tabs, Ctrl+Shift+[ and Ctrl+Shift+] for agents in the current sidebar order, and Ctrl+. for the next idle agent. All three modes wrap. This does not add a sort mode, an agent picker, or live config changes during planning.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "Yes. Keep the captured shortcuts, wrapping, and non-goals.",
+      "recommendedOptionIds": ["matches"],
+      "options": [
+        {
+          "id": "matches",
+          "label": "Yes, that is the outcome"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "activity-order",
+      "prompt": "If the Activity list changes between presses, which order should the next agent shortcut follow?",
+      "description": "Activity sorts by attention, then state-change sequence, then workspace, tab, and pane. Focusing an agent might reshuffle that list; that effect is not verified yet. A frozen sequence also needs reset rules that are not decided. The sidebar the user sees after each move is the live list.",
+      "answerMode": "single",
+      "recommendedAnswer": "Follow the live sidebar order on every press.",
+      "recommendedOptionIds": ["live"],
+      "options": [
+        {
+          "id": "live",
+          "label": "Follow the live order on every press"
+        },
+        {
+          "id": "frozen",
+          "label": "Freeze the order for a navigation sequence"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "idle-binding",
+      "prompt": "How should Ctrl+. relate to the existing prefix+. idle shortcut?",
+      "description": "next-idle-agent currently defaults to prefix+.. User-owned bindings stay untouched, and an occupied Ctrl+. must not be replaced.",
+      "answerMode": "single",
+      "recommendedAnswer": "Retarget only a Mosaic-owned prefix+. binding to ctrl+.. Leave a customized or user-owned binding alone. If ctrl+. is already taken, keep the existing binding and warn.",
+      "recommendedOptionIds": ["replace-owned"],
+      "options": [
+        {
+          "id": "replace-owned",
+          "label": "Replace a Mosaic-owned prefix+. with ctrl+."
+        },
+        {
+          "id": "add-alongside",
+          "label": "Keep prefix+. and add ctrl+. when it is free"
+        },
+        {
+          "id": "fresh-only",
+          "label": "Use ctrl+. only as the default for new installs"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "idle-semantics",
+      "prompt": "Which agents does Ctrl+. visit, and in what order?",
+      "description": "The current command treats idle and done as eligible, orders them by most recently settled, skips the focused agent, and wraps. Agent list shortcuts are separate and follow the sidebar order.",
+      "answerMode": "single",
+      "recommendedAnswer": "Keep idle and done in the existing settled-time order. Change only the shortcut.",
+      "recommendedOptionIds": ["retain"],
+      "options": [
+        {
+          "id": "retain",
+          "label": "Keep idle and done, in settled-time order"
+        },
+        {
+          "id": "idle-only",
+          "label": "Visit status idle only, still in settled-time order"
+        },
+        {
+          "id": "sidebar-idle",
+          "label": "Visit idle agents in the current sidebar order"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "navigation-bounds",
+      "prompt": "Are these navigation bounds right?",
+      "description": "These were provisional assumptions. They decide whether a shortcut can leave the current workspace and what happens when there is nowhere else to go.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "Tabs stay in the current workspace. Agent shortcuts follow the sidebar's active workspace filter and sort. An empty list, or a list containing only the current item, leaves focus unchanged.",
+      "recommendedOptionIds": ["accept"],
+      "options": [
+        {
+          "id": "accept",
+          "label": "Accept those bounds"
+        },
+        {
+          "id": "all-workspaces-tabs",
+          "label": "Tab shortcuts should also cross workspaces"
+        },
+        {
+          "id": "always-all-agents",
+          "label": "Agent shortcuts should ignore the workspace filter"
+        }
+      ],
+      "required": true
+    }
+  ]
+}

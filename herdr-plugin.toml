@@ -184,10 +184,17 @@ command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" board-open"
 
 [[actions]]
 id = "next-idle-agent"
-title = "Mosaic: Next idle agent"
+title = "Mosaic: Next eligible agent, newest-first"
 contexts = ["global", "workspace", "pane"]
-description = "Focus the next idle or done agent, newest observed completion first, and wrap around."
+description = "Cycle blocked, idle, and done agents newest-first. Each press advances; new activity at the front takes priority."
 command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" next-idle-agent"]
+
+[[actions]]
+id = "oldest-idle-agent"
+title = "Mosaic: Next eligible agent, oldest-first"
+contexts = ["global", "workspace", "pane"]
+description = "Cycle blocked, idle, and done agents oldest-first. Each press advances and wraps using the live list."
+command = ["/bin/sh", "-c", "exec \"$HERDR_PLUGIN_ROOT/dist/mosaic\" oldest-idle-agent"]
 
 [[actions]]
 id = "prune-stale-agents"

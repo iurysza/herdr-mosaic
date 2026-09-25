@@ -69,18 +69,34 @@ These actions change the view, not agent status. The board is a separate popup, 
 
 Use `dist/mosaic agents current`, `dist/mosaic agents all`, or `dist/mosaic agent-board` directly. Use `dist/mosaic sort activity` or `dist/mosaic sort spaces` to set a sort. The focus and sort settings persist independently. There is no third sort.
 
-## Cycle idle agents and prune stale sessions
+## Move between tabs, agents, and eligible sessions
+
+| Chord | Effect |
+|---|---|
+| `ctrl+[` | Herdr `previous_tab`. Previous tab in the current workspace, wrapping. |
+| `ctrl+]` | Herdr `next_tab`. Next tab in the current workspace, wrapping. |
+| `ctrl+shift+[` | Herdr `previous_agent`. Previous agent in the live sidebar order, wrapping. |
+| `ctrl+shift+]` | Herdr `next_agent`. Next agent in the live sidebar order, wrapping. |
+| `ctrl+.` | `next-idle-agent`. Next eligible agent, newest-first. |
+| `ctrl+,` | `oldest-idle-agent`. Next eligible agent, oldest-first. |
+
+Tab and agent-list wrapping belongs to Herdr. Agent-list order is the sidebar's current sort and workspace filter. A terminal that reports Ctrl+[ only as Escape will not run `previous_tab`.
+
+Both shortcuts advance through the live eligible list and wrap. Blocked agents rank ahead of idle and done. Live activity sequence numbers determine recency, with observed blocked and settlement times as a fallback. Agents outside the sidebar filter remain eligible. The focused agent is skipped when another exists.
+
+When an update changes the first candidate in the chosen direction, the next press visits that candidate before continuing the cycle. Each direction remembers only its last first candidate and activity revision. It does not freeze the list. Focus failures leave that progress unchanged. With no other eligible agent, focus stays unchanged.
 
 | Action suffix | Effect |
 |---|---|
-| `next-idle-agent` | Focus the next idle or done agent, ordered by most recent observed completion and wrapping after the oldest. |
+| `next-idle-agent` | Advance through eligible agents newest-first. |
+| `oldest-idle-agent` | Advance through eligible agents oldest-first. |
 | `prune-stale-agents` | Open the popup for reviewing and confirming closure of stale idle and done agent panes. |
 
-Setup binds `next-idle-agent` to `prefix+.` and `prune-stale-agents` to `prefix+alt+x` when each key is free. Neither binding replaces an occupied key.
+Setup binds `next-idle-agent` to `ctrl+.` and `oldest-idle-agent` to `ctrl+,` when each chord is free. It retargets a Mosaic-owned `prefix+.` idle binding to `ctrl+.` when that chord is free, and leaves a customized idle binding unchanged. It binds the four Herdr actions above only when both the action and the chord are free. None of these bindings replace an occupied key. Setup binds `prune-stale-agents` to `prefix+alt+x` when that key is free.
 
 The pruner lists settled agents oldest first. Use `t` to set its file-backed stale threshold, Space to select eligible rows, then `x` to review and `x` again to confirm. It protects the focused agent that opened the popup, excludes working, blocked, unknown, and untracked agents, and rereads live state before every close. A close ends the agent process and pane. It does not delete agent session history.
 
-Use `dist/mosaic next-idle-agent` or `dist/mosaic prune-stale-agents` directly. The popup command itself is internal.
+Use `dist/mosaic next-idle-agent`, `dist/mosaic oldest-idle-agent`, or `dist/mosaic prune-stale-agents` directly. The popup command itself is internal.
 
 ## Arrange panes
 
@@ -167,8 +183,11 @@ These existing actions remain callable and visible in Herdr's flat list. They ar
 | `unbind-picker-key` | `keybind-remove` | Remove the picker action binding |
 | — | `sort-keybind-install` | Bind `prefix+shift+s` if free |
 | — | `sort-keybind-remove` | Remove Mosaic's sorting shortcut |
-| — | `idle-keybind-install` | Bind `prefix+.` if free |
-| — | `idle-keybind-remove` | Remove Mosaic's idle-agent shortcut |
+| — | `idle-keybind-install` | Bind `ctrl+.` if free, or retarget a Mosaic-owned `prefix+.` |
+| — | `idle-keybind-remove` | Remove Mosaic's newest-agent shortcut |
+| — | `oldest-idle-keybind-install` | Bind `ctrl+,` if free |
+| — | `oldest-idle-keybind-remove` | Remove Mosaic's oldest-agent shortcut |
+| — | `navigation-keybind-install` | Bind free tab and agent-list chords |
 | — | `prune-keybind-install` | Bind `prefix+alt+x` if free |
 | — | `prune-keybind-remove` | Remove Mosaic's stale-agent shortcut |
 | — | `pane-move-keybind-install` | Bind `prefix+/` if free |

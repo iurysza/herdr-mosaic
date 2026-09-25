@@ -6,10 +6,12 @@ import { clearView } from "../agents/view.ts"
 import { actionRenamesOf, storeActionRenames } from "../config/action-renames.ts"
 import {
   IDLE_NEXT_COMMAND,
+  IDLE_OLDEST_COMMAND,
   PANE_MOVE_COMMAND,
   PICKER_COMMAND,
   PROMOTE_PANE_COMMAND,
   PRUNE_COMMAND,
+  removeRecordedNavigationKeys,
   SORT_TOGGLE_COMMAND,
 } from "../config/keybinds.ts"
 import {
@@ -269,6 +271,10 @@ const uninstallLocked = Effect.fnUntraced(function*(
     notes.push("idle-agent keybinding removed")
   }
 
+  if (state.oldest_idle_keybind_installed && removeKeybind(doc, IDLE_OLDEST_COMMAND)) {
+    notes.push("oldest-agent keybinding removed")
+  }
+
   if (state.prune_keybind_installed && removeKeybind(doc, PRUNE_COMMAND)) {
     notes.push("prune keybinding removed")
   }
@@ -281,12 +287,19 @@ const uninstallLocked = Effect.fnUntraced(function*(
     notes.push("promote pane keybinding removed")
   }
 
+  if (removeRecordedNavigationKeys(doc, state).length > 0) {
+    notes.push("navigation keybindings removed")
+  }
+
   state.keybind_installed = false
   state.keybind_key = null
   state.sort_keybind_installed = false
   state.sort_keybind_key = null
   state.idle_keybind_installed = false
   state.idle_keybind_key = null
+  state.oldest_idle_keybind_installed = false
+  state.oldest_idle_keybind_key = null
+  state.nav_keybinds = {}
   state.prune_keybind_installed = false
   state.prune_keybind_key = null
   state.pane_move_keybind_installed = false
@@ -294,6 +307,7 @@ const uninstallLocked = Effect.fnUntraced(function*(
   state.promote_pane_keybind_installed = false
   state.promote_pane_keybind_key = null
   state.idle_cycle_last_pane_id = null
+  state.idle_navigation_heads = {}
   state.pending_pane_move = null
 
   const committed = yield* commitDoc(doc, paths.herdrConfigPath).pipe(Effect.result)

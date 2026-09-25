@@ -721,6 +721,32 @@ export function findBindingForKey(doc: TomlDoc, key: string): TomlSection | unde
   return undefined
 }
 
+export function chordHolder(doc: TomlDoc, chord: string): string | undefined {
+  const command = findBindingForKey(doc, chord)
+
+  if (command !== undefined) {
+    return optionalScalar(doc.sectionScalar(command, "command")) ?? "keys.command"
+  }
+
+  for (const name of doc.tableKeys(["keys"])) {
+    const value = doc.get(["keys", name])
+
+    if (!isMissing(value) && isTomlString(value) && value === chord) return `keys.${name}`
+  }
+
+  return undefined
+}
+
+export function nativeKeyValue(doc: TomlDoc, action: string): string | undefined {
+  const value = doc.get(["keys", action])
+
+  if (isMissing(value)) return undefined
+
+  if (isTomlString(value)) return value
+
+  return String(value)
+}
+
 export function keybindKey(doc: TomlDoc, command: string): string | undefined {
   const section = findKeybind(doc, command)
 

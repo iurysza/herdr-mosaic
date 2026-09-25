@@ -48,6 +48,9 @@ export interface PluginState {
   sort_keybind_key: Json
   idle_keybind_installed: boolean
   idle_keybind_key: Json
+  oldest_idle_keybind_installed: boolean
+  oldest_idle_keybind_key: Json
+  nav_keybinds: MutableJsonObject
   prune_keybind_installed: boolean
   prune_keybind_key: Json
   pane_move_keybind_installed: boolean
@@ -56,6 +59,7 @@ export interface PluginState {
   promote_pane_keybind_key: Json
   pending_pane_move: Json
   idle_cycle_last_pane_id: Json
+  idle_navigation_heads: Json
   agent_settled: MutableJsonObject
 }
 
@@ -83,6 +87,9 @@ export function defaultState(): PluginState {
     sort_keybind_key: null,
     idle_keybind_installed: false,
     idle_keybind_key: null,
+    oldest_idle_keybind_installed: false,
+    oldest_idle_keybind_key: null,
+    nav_keybinds: {},
     prune_keybind_installed: false,
     prune_keybind_key: null,
     pane_move_keybind_installed: false,
@@ -91,6 +98,7 @@ export function defaultState(): PluginState {
     promote_pane_keybind_key: null,
     pending_pane_move: null,
     idle_cycle_last_pane_id: null,
+    idle_navigation_heads: {},
     agent_settled: {},
   }
 }
@@ -161,6 +169,9 @@ function mergeLoaded(loaded: JsonObject): PluginState {
 
   const settled = jsonObject(base.agent_settled)
   base.agent_settled = settled === undefined ? {} : settled
+
+  const navigation = jsonObject(base.nav_keybinds)
+  base.nav_keybinds = navigation === undefined ? {} : navigation
 
   base.view_mode = normalizeScope(base.view_mode)
   base.sort_mode = normalizeSort(base.sort_mode)

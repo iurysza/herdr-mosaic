@@ -52,7 +52,7 @@ function agent(paneId: string, status = "idle", focused = false): JsonObject {
 }
 
 describe("next-idle-agent CLI", () => {
-  test("focuses the newest settled agent then records the cursor", async () => {
+  test("focuses the first eligible agent and remembers the activity head", async () => {
     const sandbox = makeSandbox()
     const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
     const statePath = join(required(sandbox.env, "HERDR_PLUGIN_STATE_DIR"), "state.json")
@@ -61,10 +61,17 @@ describe("next-idle-agent CLI", () => {
     state.agent_settled = {
       p1: { status: "idle", last_settled_at: 20 },
       p2: { status: "done", last_settled_at: 10 },
+      "p-blocked": { status: "blocked", last_settled_at: 1, last_blocked_at: 4 },
     }
     save(statePath, state)
 
-    fake.on("agent.list", () => ({ agents: [agent("p1"), agent("p2")] }))
+    fake.on("agent.list", () => ({
+      agents: [
+        agent("p1"),
+        agent("p2", "done"),
+        { ...agent("p-blocked", "blocked"), workspace_id: "w2" },
+      ],
+    }))
     fake.on("agent.focus", () => ({}))
     await fake.listen()
 
@@ -72,11 +79,35 @@ describe("next-idle-agent CLI", () => {
       const result = await run(["next-idle-agent"], sandbox.env)
 
       expect(result.code).toBe(0)
-      expect(result.stdout).toContain("focused idle agent: Task p1")
+      expect(result.stdout).toContain("focused next eligible agent (newest-first): Task p-blocked")
       expect(fake.requests.some((request) =>
-        request.method === "agent.focus" && request.params.target === "p1"
+        request.method === "agent.focus" && request.params.target === "p-blocked"
       )).toBe(true)
-      expect(load(statePath).idle_cycle_last_pane_id).toBe("p1")
+      expect(load(statePath).idle_navigation_heads).toEqual({ newest: '["p-blocked","blocked",4]' })
+    } finally {
+      await fake.close()
+    }
+  })
+
+  test("does not focus when the only eligible agent is already focused", async () => {
+    const sandbox = makeSandbox()
+    const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
+    const statePath = join(required(sandbox.env, "HERDR_PLUGIN_STATE_DIR"), "state.json")
+    const state = defaultState()
+
+    state.agent_settled = { p1: { status: "idle", last_settled_at: 20 } }
+    save(statePath, state)
+
+    fake.on("agent.list", () => ({ agents: [agent("p1", "idle", true)] }))
+    fake.on("agent.focus", () => ({}))
+    await fake.listen()
+
+    try {
+      const result = await run(["next-idle-agent"], sandbox.env)
+
+      expect(result.code).toBe(0)
+      expect(result.stdout).toContain("no other eligible agent is available")
+      expect(fake.requests.some((request) => request.method === "agent.focus")).toBe(false)
     } finally {
       await fake.close()
     }
@@ -99,14 +130,14 @@ describe("next-idle-agent CLI", () => {
       const result = await run(["next-idle-agent"], sandbox.env)
 
       expect(result.code).toBe(1)
-      expect(result.stderr).toContain("could not focus idle agent p1")
-      expect(load(statePath).idle_cycle_last_pane_id).toBeNull()
+      expect(result.stderr).toContain("could not focus newest-first eligible agent p1")
+      expect(load(statePath).idle_navigation_heads).toEqual({})
     } finally {
       await fake.close()
     }
   })
 
-  test("prints a message when no other idle agent is available", async () => {
+  test("prints a message when no eligible agent is available", async () => {
     const sandbox = makeSandbox()
     const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
 
@@ -117,7 +148,134 @@ describe("next-idle-agent CLI", () => {
       const result = await run(["next-idle-agent"], sandbox.env)
 
       expect(result.code).toBe(0)
-      expect(result.stdout).toBe("no other idle agent is available\n")
+      expect(result.stdout).toBe("no other eligible agent is available\n")
+    } finally {
+      await fake.close()
+    }
+  })
+
+  test("oldest-idle-agent focuses the other end of the same list", async () => {
+    const sandbox = makeSandbox()
+    const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
+    const statePath = join(required(sandbox.env, "HERDR_PLUGIN_STATE_DIR"), "state.json")
+    const state = defaultState()
+
+    state.agent_settled = {
+      p1: { status: "idle", last_settled_at: 20 },
+      p2: { status: "done", last_settled_at: 10 },
+    }
+    save(statePath, state)
+
+    fake.on("agent.list", () => ({ agents: [agent("p1"), agent("p2", "done")] }))
+    fake.on("agent.focus", () => ({}))
+    await fake.listen()
+
+    try {
+      const result = await run(["oldest-idle-agent"], sandbox.env)
+
+      expect(result.code).toBe(0)
+      expect(result.stdout).toContain("focused next eligible agent (oldest-first): Task p2")
+      expect(fake.requests.some((request) =>
+        request.method === "agent.focus" && request.params.target === "p2"
+      )).toBe(true)
+    } finally {
+      await fake.close()
+    }
+  })
+
+  for (const [command, expected] of [
+    ["next-idle-agent", ["p1", "p2", "p3", "p1"]],
+    ["oldest-idle-agent", ["p3", "p2", "p1", "p3"]],
+  ] as const) {
+    test(`${command} advances on every press and wraps using live focus`, async () => {
+      const sandbox = makeSandbox()
+      const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
+      const statePath = join(required(sandbox.env, "HERDR_PLUGIN_STATE_DIR"), "state.json")
+      let focused = "shell"
+      const visited: string[] = []
+
+      fake.on("agent.list", () => ({ agents: [
+        { ...agent("p1", "idle", focused === "p1"), state_change_seq: 30 },
+        { ...agent("p2", "done", focused === "p2"), state_change_seq: 20 },
+        { ...agent("p3", "idle", focused === "p3"), state_change_seq: 10 },
+      ] }))
+      fake.on("agent.focus", (_method, params) => {
+        focused = String(params.target)
+        visited.push(focused)
+
+        return {}
+      })
+      await fake.listen()
+
+      try {
+        for (const target of expected) {
+          expect((await run([command], sandbox.env)).code).toBe(0)
+          expect(focused).toBe(target)
+        }
+
+        expect(visited).toEqual([...expected])
+        expect(load(statePath).idle_navigation_heads).not.toEqual({})
+      } finally {
+        await fake.close()
+      }
+    })
+  }
+
+  test("a newly updated agent at the front interrupts the walk, then cycling resumes", async () => {
+    const sandbox = makeSandbox()
+    const fake = new FakeHerdr(required(sandbox.env, "HERDR_SOCKET_PATH"))
+    const statePath = join(required(sandbox.env, "HERDR_PLUGIN_STATE_DIR"), "state.json")
+    let focused = "shell"
+    let fourthStatus = "working"
+    let fourthSequence = 5
+    let firstSequence = 30
+    let failFocus = false
+
+    fake.on("agent.list", () => ({ agents: [
+      { ...agent("p1", "idle", focused === "p1"), state_change_seq: firstSequence },
+      { ...agent("p2", "done", focused === "p2"), state_change_seq: 20 },
+      { ...agent("p3", "idle", focused === "p3"), state_change_seq: 10 },
+      { ...agent("p4", fourthStatus, focused === "p4"), state_change_seq: fourthSequence },
+    ] }))
+    fake.on("agent.focus", (_method, params): JsonObject => {
+      if (failFocus) return { error: { code: "unavailable", message: "retry" } }
+
+      focused = String(params.target)
+
+      return {}
+    })
+    await fake.listen()
+
+    try {
+      for (const target of ["p1", "p2", "p3"]) {
+        expect((await run(["next-idle-agent"], sandbox.env)).code).toBe(0)
+        expect(focused).toBe(target)
+      }
+
+      fourthStatus = "idle"
+      fourthSequence = 40
+      failFocus = true
+      const beforeFailure = load(statePath).idle_navigation_heads
+
+      expect((await run(["next-idle-agent"], sandbox.env)).code).toBe(1)
+      expect(load(statePath).idle_navigation_heads).toEqual(beforeFailure)
+      failFocus = false
+
+      for (const target of ["p4", "p1", "p2"]) {
+        expect((await run(["next-idle-agent"], sandbox.env)).code).toBe(0)
+        expect(focused).toBe(target)
+      }
+
+      firstSequence = 50
+      expect((await run(["next-idle-agent"], sandbox.env)).code).toBe(0)
+      expect(focused).toBe("p1")
+      expect((await run(["next-idle-agent"], sandbox.env)).code).toBe(0)
+      expect(focused).toBe("p4")
+
+      // External focus is the anchor; the saved head is not a saved position.
+      focused = "p1"
+      expect((await run(["next-idle-agent"], sandbox.env)).code).toBe(0)
+      expect(focused).toBe("p4")
     } finally {
       await fake.close()
     }

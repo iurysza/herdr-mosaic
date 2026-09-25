@@ -1,0 +1,64 @@
+{
+  "stage": "interview",
+  "title": "Idle shortcut follow-up",
+  "goalSlug": "mosaic-keyboard-navigation",
+  "questions": [
+    {
+      "id": "ctrl-dot",
+      "prompt": "What should Ctrl+. do when several eligible agents exist?",
+      "description": "The accepted fact cycles through idle and done agents, skipping the focused one and wrapping. Your note asks every press to jump to the most recent eligible agent. Those are different: a cycle walks the list, and a jump stays on the newest agent until a newer one appears.",
+      "answerMode": "single",
+      "recommendedAnswer": "Every press focuses the most recently settled eligible agent. If focus is already there, it stays.",
+      "recommendedOptionIds": ["jump-latest"],
+      "options": [
+        {
+          "id": "jump-latest",
+          "label": "Always jump to the most recent eligible agent"
+        },
+        {
+          "id": "cycle",
+          "label": "Keep the accepted wrap cycle"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "interrupted",
+      "prompt": "Which agents are interrupted, and how do they rank?",
+      "description": "Mosaic records idle, working, blocked, done, and unknown. There is no interrupted status. Blocked means the agent is waiting on you. Settlement time is recorded when an agent leaves working for idle or done, not when it becomes blocked.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "Treat blocked as interrupted. Any blocked agent outranks idle and done. Among blocked agents, Ctrl+. uses the most recently observed blocked agent and Ctrl+, uses the oldest. Idle and done keep their settled-time order behind blocked.",
+      "recommendedOptionIds": ["blocked-first"],
+      "options": [
+        {
+          "id": "blocked-first",
+          "label": "Blocked outranks idle and done"
+        },
+        {
+          "id": "idle-done-only",
+          "label": "Keep idle and done only"
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "ctrl-comma",
+      "prompt": "Should Ctrl+, jump to the oldest eligible agent?",
+      "description": "Herdr accepts the chord ctrl+,. This is a direct jump to the oldest eligible agent, not a previous-step shortcut. The same ownership rules apply: install it only when the chord is free, leave a user binding alone, and restore the previous value on uninstall.",
+      "answerMode": "single",
+      "recommendedAnswer": "Add Ctrl+, for the oldest eligible agent, using the same ranking as Ctrl+. and the same free-chord ownership rules.",
+      "recommendedOptionIds": ["add-oldest"],
+      "options": [
+        {
+          "id": "add-oldest",
+          "label": "Add Ctrl+, for the oldest eligible agent"
+        },
+        {
+          "id": "no-comma",
+          "label": "Do not add Ctrl+,"
+        }
+      ],
+      "required": true
+    }
+  ]
+}

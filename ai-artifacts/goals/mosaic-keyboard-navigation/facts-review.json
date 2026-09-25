@@ -1,0 +1,104 @@
+{
+  "stage": "facts",
+  "title": "Mosaic keyboard navigation",
+  "goalSlug": "mosaic-keyboard-navigation",
+  "facts": [
+    {
+      "id": "fact-1",
+      "text": "Ctrl+[ focuses the previous tab in the current workspace and wraps. Ctrl+] focuses the next tab in the current workspace and wraps. A workspace whose only tab is the current tab leaves focus unchanged.",
+      "comment": "Herdr previous_tab and next_tab already do this. Mosaic can prove the chords are installed. A unit test cannot press the client keybinding.",
+      "accepted": true,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-2",
+      "text": "Tab shortcuts stay inside the current workspace.",
+      "accepted": true,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-3",
+      "text": "Ctrl+Shift+[ focuses the previous agent in the sidebar's live order and wraps. Ctrl+Shift+] focuses the next agent in that same order and wraps. Each press uses the order the sidebar is showing after the previous move.",
+      "comment": "While Mosaic's labelled view is active, Herdr previous_agent and next_agent follow that view, including Activity and Spaces.",
+      "accepted": true,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-4",
+      "text": "Agent-list shortcuts follow the sidebar's current sort and its workspace filter. Activity and Spaces, and all workspaces or the current workspace, each produce their own displayed list.",
+      "accepted": true,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-5",
+      "text": "An empty agent list, or a list containing only the focused agent, leaves focus unchanged. When the focused pane is outside the displayed list, Ctrl+Shift+] focuses the first displayed agent and Ctrl+Shift+[ focuses the last.",
+      "comment": "This matches Herdr's next_agent and previous_agent when the focused pane is missing from the panel.",
+      "accepted": true,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": false
+    },
+    {
+      "id": "fact-6",
+      "text": "Ctrl+. focuses the newest eligible agent. Eligible agents are blocked, idle, and done, including agents outside the sidebar filter. Blocked agents rank ahead of idle and done. A blocked agent that entered blocked more recently ranks ahead of one observed earlier. An idle or done agent that settled more recently ranks ahead of an older one. An agent with no observed time ranks after timed agents in its own group. Pane id breaks remaining ties. Working and unknown agents are excluded. If the newest agent is already focused, or there is no eligible agent, focus stays unchanged.",
+      "comment": "Revised after the follow-up. This replaces the wrap cycle. Blocked observation time is new; settlement time already exists for idle and done.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-7",
+      "text": "Ctrl+, focuses the oldest eligible agent in the same order as Ctrl+.. If that agent is already focused, focus stays unchanged. There is no shortcut that steps backward through the eligible agents.",
+      "comment": "Replaces the earlier statement that there is no second idle shortcut. Ctrl+, is the oldest end of the same list, not a previous step.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-8",
+      "text": "When Mosaic owns the idle binding and that binding is prefix+., setup changes it to ctrl+. if ctrl+. is free. A user-customized or user-owned idle binding is left unchanged. If ctrl+. is already bound, Mosaic keeps the existing idle binding and reports that the chord is taken.",
+      "comment": "The current installer leaves an existing command binding in place, so this retarget is new.",
+      "accepted": true,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-9",
+      "text": "Setup binds the four tab and agent shortcuts only when both the Herdr action and the chord are free. An existing user binding for that action, or another binding already using the chord, is left in place and reported. Uninstall restores the previous value of every key Mosaic changed, including a key that was absent, and does not delete a binding Mosaic did not create.",
+      "comment": "Avoids the picker defect that marks a pre-existing binding as Mosaic-owned and then deletes it.",
+      "accepted": true,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-10",
+      "text": "The chords are the Herdr strings ctrl+[, ctrl+], ctrl+shift+[, ctrl+shift+], ctrl+., and ctrl+,. Config edits go through the existing config patch under the plugin lock. The goal does not add a sort mode or an agent picker. The two idle shortcuts share one eligibility order.",
+      "comment": "herdr 0.8.2 config check accepts these strings, including ctrl+,. ctrl+[ is Control+[ in Herdr's key model, distinct from Escape.",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    },
+    {
+      "id": "fact-11",
+      "text": "Setup binds ctrl+, only when that chord is free. If it is already bound, Mosaic leaves that binding in place and reports that the chord is taken. Uninstall removes the oldest-agent binding only when Mosaic created it and restores the previous value when one existed.",
+      "comment": "",
+      "accepted": false,
+      "removed": false,
+      "recommendedAutomatedVerification": true,
+      "automatedVerification": true
+    }
+  ]
+}

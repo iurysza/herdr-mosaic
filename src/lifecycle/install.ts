@@ -7,6 +7,8 @@ import { actionRenamesOf, findRename, sameRename, storeActionRenames } from "../
 import {
   runIdleKeybindInstall,
   runKeybindInstall,
+  runNavigationKeybindInstall,
+  runOldestIdleKeybindInstall,
   runPaneMoveKeybindInstall,
   runPromotePaneKeybindInstall,
   runPruneKeybindInstall,
@@ -75,9 +77,11 @@ export const runInstall = Effect.fnUntraced(function*(argv: readonly string[]) {
     runKeybindInstall,
     runSortKeybindInstall,
     runIdleKeybindInstall,
+    runOldestIdleKeybindInstall,
     runPruneKeybindInstall,
     runPaneMoveKeybindInstall,
     runPromotePaneKeybindInstall,
+    runNavigationKeybindInstall,
   ] as const
 
   for (const step of ordered) {

@@ -9,6 +9,9 @@ import {
   runIdleKeybindRemove,
   runKeybindInstall,
   runKeybindRemove,
+  runNavigationKeybindInstall,
+  runOldestIdleKeybindInstall,
+  runOldestIdleKeybindRemove,
   runPaneMoveKeybindInstall,
   runPaneMoveKeybindRemove,
   runPromotePaneKeybindInstall,
@@ -28,7 +31,7 @@ import {
 } from "../agents/view.ts"
 import { runEvent } from "../agents/events.ts"
 import { runElapsedPublish } from "../agents/sidebar-publish.ts"
-import { runNextIdleAgent, runPruneStaleAgents } from "../agents/triage.ts"
+import { runNextIdleAgent, runOldestIdleAgent, runPruneStaleAgents } from "../agents/triage.ts"
 import { runBoard, runBoardOpen } from "../agents/board.ts"
 import { runPrune } from "../agents/prune-ui.ts"
 import { runLayout } from "../panes/layout-actions.ts"
@@ -118,6 +121,18 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command === "idle-keybind-remove") {
     return yield* runIdleKeybindRemove(rewritten.slice(1))
+  }
+
+  if (command === "oldest-idle-keybind-install") {
+    return yield* runOldestIdleKeybindInstall(rewritten.slice(1))
+  }
+
+  if (command === "oldest-idle-keybind-remove") {
+    return yield* runOldestIdleKeybindRemove(rewritten.slice(1))
+  }
+
+  if (command === "navigation-keybind-install") {
+    return yield* runNavigationKeybindInstall(rewritten.slice(1))
   }
 
   if (command === "prune-keybind-install") {
@@ -234,6 +249,10 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
 
   if (command === "next-idle-agent") {
     return yield* runNextIdleAgent(rewritten.slice(1))
+  }
+
+  if (command === "oldest-idle-agent") {
+    return yield* runOldestIdleAgent(rewritten.slice(1))
   }
 
   if (command === "prune-stale-agents") {

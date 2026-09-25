@@ -18,7 +18,8 @@ Agent view:
   toggle-agent-sort                  Toggle Activity and Spaces sorting
   sort [activity|spaces]             Set or show the sort without changing focus
   agent-board                        Open collapsible agent groups
-  next-idle-agent                    Focus the next idle/done agent and wrap
+  next-idle-agent                    Cycle eligible agents newest-first
+  oldest-idle-agent                  Cycle eligible agents oldest-first
   prune-stale-agents                 Open confirmed stale-agent termination UI
 
 Pane moves:
@@ -35,7 +36,8 @@ Pane layouts:
 Advanced setup and maintenance:
   install [--dry-run], uninstall [--force], doctor, migrate [--dry-run]
   keybind-install [--key KEY], keybind-remove, theme-restore [--force]
-  idle-keybind-install [--key KEY], prune-keybind-install [--key KEY]
+  idle-keybind-install [--key KEY], oldest-idle-keybind-install [--key KEY]
+  navigation-keybind-install, prune-keybind-install [--key KEY]
   pane-move-keybind-install [--key KEY], promote-pane-keybind-install [--key KEY]
   repalette [--dry-run], marker [GLYPH], announce on|off, view-clear, state
   install --dry-run previews saved-state import only.
@@ -73,12 +75,16 @@ export const COMMANDS = [
   "sort-keybind-remove",
   "idle-keybind-install",
   "idle-keybind-remove",
+  "oldest-idle-keybind-install",
+  "oldest-idle-keybind-remove",
+  "navigation-keybind-install",
   "prune-keybind-install",
   "prune-keybind-remove",
   "view",
   "toggle-agent-focus",
   "toggle-agent-sort",
   "next-idle-agent",
+  "oldest-idle-agent",
   "prune-stale-agents",
   "prune",
   "move-pane",

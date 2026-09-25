@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test"
 
 import {
-  idleCycleCandidates,
-  nextIdleAgent,
+  eligibleAgents,
   parseDuration,
   pruneRows,
+  selectEligibleAgent,
 } from "../../src/agents/triage.ts"
 import { defaultState, type PluginState } from "../../src/state/store.ts"
 import type { JsonObject } from "../../src/runtime/rpc.ts"
@@ -53,39 +53,113 @@ describe("parseDuration", () => {
   })
 })
 
-describe("idle cycle", () => {
-  test("starts with newest then wraps", () => {
-    const agents = [agent("p-old"), agent("p-new"), agent("p-mid")]
+describe("eligible agents", () => {
+  test("ranks blocked ahead of idle and done, newest first inside each timed group", () => {
+    const agents = [
+      agent("p-idle-new"),
+      agent("p-blocked-old", "blocked"),
+      agent("p-done-old"),
+      agent("p-blocked-new", "blocked"),
+      agent("p-work", "working"),
+      agent("p-unknown", "unknown"),
+    ]
 
     const state = withSettled(
-      ["p-old", "idle", 10],
-      ["p-mid", "done", 20],
-      ["p-new", "idle", 30],
+      ["p-idle-new", "idle", 100],
+      ["p-done-old", "done", 10],
+      ["p-blocked-old", "blocked", 5],
+      ["p-blocked-new", "blocked", 9],
     )
 
-    const first = nextIdleAgent(agents, state, undefined)
-    const second = nextIdleAgent(agents, state, first?.pane_id)
-    const third = nextIdleAgent(agents, state, second?.pane_id)
-    const fourth = nextIdleAgent(agents, state, third?.pane_id)
+    state.agent_settled["p-blocked-old"] = {
+      status: "blocked",
+      last_settled_at: 1,
+      last_blocked_at: 5,
+    }
+    state.agent_settled["p-blocked-new"] = {
+      status: "blocked",
+      last_settled_at: 1,
+      last_blocked_at: 9,
+    }
 
-    expect([first?.pane_id, second?.pane_id, third?.pane_id, fourth?.pane_id]).toEqual([
-      "p-new",
-      "p-mid",
-      "p-old",
-      "p-new",
+    expect(eligibleAgents(agents, state).map((item) => item.pane_id)).toEqual([
+      "p-blocked-new",
+      "p-blocked-old",
+      "p-idle-new",
+      "p-done-old",
+    ])
+    expect(selectEligibleAgent(agents, state, "newest")?.pane_id).toBe("p-blocked-new")
+    expect(selectEligibleAgent(agents, state, "oldest")?.pane_id).toBe("p-done-old")
+  })
+
+  test("places missing times after timed agents and breaks ties by pane id", () => {
+    const agents = [
+      agent("p-b", "blocked"),
+      agent("p-a", "blocked"),
+      agent("p-idle-b"),
+      agent("p-idle-a"),
+      agent("p-tie-b", "done"),
+      agent("p-tie-a", "idle"),
+    ]
+
+    const state = withSettled(
+      ["p-idle-b", "idle", 4],
+      ["p-tie-b", "done", 8],
+      ["p-tie-a", "idle", 8],
+    )
+
+    state.agent_settled["p-b"] = { status: "blocked", last_settled_at: null, last_blocked_at: 3 }
+    state.agent_settled["p-idle-a"] = { status: "idle", last_settled_at: null }
+
+    expect(eligibleAgents(agents, state).map((item) => item.pane_id)).toEqual([
+      "p-b",
+      "p-a",
+      "p-tie-a",
+      "p-tie-b",
+      "p-idle-b",
+      "p-idle-a",
     ])
   })
 
-  test("skips the focused agent and places untracked last", () => {
-    const agents = [agent("p-current", "idle", true), agent("p-known"), agent("p-untracked")]
-    const state = withSettled(["p-current", "idle", 30], ["p-known", "done", 20])
+  test("uses fresh timestamps and live membership rather than a frozen list", () => {
+    const state = withSettled(["p1", "idle", 30], ["p2", "done", 20], ["p3", "idle", 10])
+    const agents = [agent("p1"), agent("p2", "done", true), agent("p3")]
 
-    expect(nextIdleAgent(agents, state, undefined)?.pane_id).toBe("p-known")
-    expect(idleCycleCandidates(agents, state).map((item) => item.pane_id)).toEqual([
-      "p-current",
-      "p-known",
-      "p-untracked",
-    ])
+    state.idle_navigation_heads = { newest: '["p1","idle",30]' }
+    expect(selectEligibleAgent(agents, state, "newest")?.pane_id).toBe("p3")
+    state.agent_settled.p3 = { status: "idle", last_settled_at: 40 }
+    expect(selectEligibleAgent(agents, state, "newest")?.pane_id).toBe("p3")
+    expect(selectEligibleAgent([agent("p2", "done", true)], state, "newest")).toBeUndefined()
+    expect(selectEligibleAgent([agent("p3")], state, "newest")?.pane_id).toBe("p3")
+    state.idle_navigation_heads = "invalid saved progress"
+    expect(selectEligibleAgent(agents, state, "newest")?.pane_id).toBe("p3")
+  })
+
+  test("live activity sequence wins over delayed status-hook timestamps", () => {
+    const state = withSettled(["p1", "idle", 100], ["p2", "done", 200])
+
+    const agents = [
+      { ...agent("p1"), state_change_seq: 30 },
+      { ...agent("p2", "done"), state_change_seq: 20 },
+    ]
+
+    expect(eligibleAgents(agents, state).map((item) => item.pane_id)).toEqual(["p1", "p2"])
+    state.idle_navigation_heads = { oldest: '["p2","done",20]' }
+    expect(selectEligibleAgent([
+      { ...agent("p1"), state_change_seq: 30 },
+      { ...agent("p2", "done", true), state_change_seq: 20 },
+    ], state, "oldest")?.pane_id).toBe("p1")
+  })
+
+  test("skips the focused agent and stays put only without another candidate", () => {
+    const newestFocused = [agent("p-new", "idle", true), agent("p-old")]
+    const state = withSettled(["p-new", "idle", 30], ["p-old", "done", 10])
+
+    expect(selectEligibleAgent(newestFocused, state, "newest")?.pane_id).toBe("p-old")
+    expect(selectEligibleAgent(newestFocused, state, "oldest")?.pane_id).toBe("p-old")
+    expect(selectEligibleAgent([agent("p-old", "done", true)], state, "oldest")).toBeUndefined()
+    expect(selectEligibleAgent([agent("p-work", "working")], state, "newest")).toBeUndefined()
+    expect(eligibleAgents([], state)).toEqual([])
   })
 })
 

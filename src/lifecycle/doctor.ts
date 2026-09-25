@@ -6,6 +6,9 @@ import { Effect, Predicate, Result, Schema } from "effect"
 
 import { normalizeScope, normalizeSort } from "../agents/view.ts"
 import {
+  IDLE_NEXT_COMMAND,
+  IDLE_OLDEST_COMMAND,
+  NATIVE_NAV_BINDINGS,
   PICKER_COMMAND,
   SORT_TOGGLE_COMMAND,
 } from "../config/keybinds.ts"
@@ -16,6 +19,7 @@ import {
   hasDots,
   keybindKey,
   loadDoc,
+  nativeKeyValue,
   sidebarTargets,
   tokenName,
   validate,
@@ -452,6 +456,8 @@ export const runDoctor = Effect.fnUntraced(function*(_argv: readonly string[]) {
 
   const bound = keybindKey(doc, PICKER_COMMAND)
   const sortBound = keybindKey(doc, SORT_TOGGLE_COMMAND)
+  const idleBound = keybindKey(doc, IDLE_NEXT_COMMAND)
+  const oldestBound = keybindKey(doc, IDLE_OLDEST_COMMAND)
 
   lines.push(doctorRow(
     "picker keybinding",
@@ -461,6 +467,24 @@ export const runDoctor = Effect.fnUntraced(function*(_argv: readonly string[]) {
     "sort keybinding",
     sortBound === undefined ? "not bound (run sort-keybind-install)" : sortBound,
   ))
+  lines.push(doctorRow(
+    "newest agent keybinding",
+    idleBound === undefined ? "not bound (run idle-keybind-install)" : idleBound,
+  ))
+  lines.push(doctorRow(
+    "oldest agent keybinding",
+    oldestBound === undefined ? "not bound (run oldest-idle-keybind-install)" : oldestBound,
+  ))
+
+  for (const binding of NATIVE_NAV_BINDINGS) {
+    const chord = nativeKeyValue(doc, binding.action)
+
+    lines.push(doctorRow(
+      binding.action,
+      chord === undefined || chord === "" ? "not bound (run navigation-keybind-install)" : chord,
+    ))
+  }
+
   lines.push(doctorRow("agent view owned", state.view_installed ? "yes" : "no"))
   lines.push(doctorRow(
     "agent focus",

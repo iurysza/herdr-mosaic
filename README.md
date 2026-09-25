@@ -29,7 +29,8 @@ The setup action is Mosaic's consent boundary. It records the values it must res
 - adds colored space markers and colored agent titles to the sidebar
 - shows every agent grouped by space, with attention inside each group
 - starts title and elapsed-label refresh
-- binds `prefix+i` to the color picker, `prefix+shift+s` to sorting, `prefix+.` to the next idle agent, and `prefix+alt+x` to the stale-agent pruner when those keys are free
+- binds `prefix+i` to the color picker, `prefix+shift+s` to sorting, `ctrl+.` to cycle eligible agents newest-first, `ctrl+,` to cycle oldest-first, and `prefix+alt+x` to the stale-agent pruner when those keys are free
+- binds `ctrl+[`, `ctrl+]`, `ctrl+shift+[`, and `ctrl+shift+]` to Herdr's tab and agent cycling when those actions and chords are free
 - leaves window tint off
 
 You do not need to configure individual agents.
@@ -145,9 +146,28 @@ herdr plugin action invoke iurysza.mosaic.open-agent-board
 
 The board reads Herdr's agent state. Selecting an agent focuses it.
 
-## Cycle idle agents and prune stale sessions
+## Move between tabs and agents
 
-Press `prefix+.` to focus the most recently settled idle or done agent. Press it again to move through the remaining settled agents and wrap around. Mosaic uses observed `working` to `idle` or `done` transitions, so opening or focusing a tab never makes it look newly idle.
+Setup binds Herdr's tab and agent cycling when both the action and the chord are free:
+
+| Chord | Herdr action |
+| --- | --- |
+| `Ctrl + [` | Previous tab in the current workspace |
+| `Ctrl + ]` | Next tab in the current workspace |
+| `Ctrl + Shift + [` | Previous agent in the sidebar order |
+| `Ctrl + Shift + ]` | Next agent in the sidebar order |
+
+Herdr wraps those four. Each agent press uses the sidebar order on screen, including Activity or Spaces and the current workspace filter. A terminal that reports Ctrl+[ only as Escape will not run the previous-tab chord.
+
+`Ctrl + .` cycles eligible agents newest-first. `Ctrl + ,` cycles oldest-first. Each press advances from the focused agent and wraps, skipping that agent when another is available. Blocked agents rank ahead of idle and done. Both shortcuts use live activity sequence numbers, falling back to Mosaic's observed times when those numbers are unavailable. These cycles include agents outside the sidebar filter.
+
+If an agent updates and becomes the first candidate in the chosen direction, the next press visits it immediately. For example, after visiting 1, 2, and 3, an update that moves agent 4 to the front makes the next `Ctrl + .` visit 4. Without an update, the next press wraps to 1. Empty lists and a lone focused agent leave focus unchanged.
+
+Setup changes a Mosaic-owned `prefix+.` idle binding to `ctrl+.` when that chord is free. A customized idle binding stays as it is. An occupied chord is left alone.
+
+## Prune stale sessions
+
+Mosaic uses observed `working` to `idle` or `done` transitions for settlement time, so opening or focusing a tab never makes an agent look newly idle. Entering `blocked` records a separate observation time and is not a completion.
 
 Press `prefix+alt+x` to open **Prune stale agent sessions**. The popup lists idle and done agents oldest first. Set the stale threshold with `t`, move with the arrow keys or `j`/`k`, and use Space to select eligible agents. Press `x` to review the selection, then press `x` again to confirm closure.
 

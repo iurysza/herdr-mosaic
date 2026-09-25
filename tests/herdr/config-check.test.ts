@@ -74,4 +74,51 @@ describe("real Herdr config check", () => {
 
     expect(code, `${stdout}\n${stderr}`).toBe(0)
   }, 20_000)
+
+  test("accepts the keyboard navigation chords", async () => {
+    const bin = herdrBin()
+    const sandbox = makeSandbox()
+    const configPath = sandbox.env.HERDR_CONFIG_PATH
+
+    if (configPath === undefined) throw new Error("missing config path")
+
+    const text = `${USERS_REAL}
+[keys]
+previous_tab = "ctrl+["
+next_tab = "ctrl+]"
+previous_agent = "ctrl+shift+["
+next_agent = "ctrl+shift+]"
+
+[[keys.command]]
+key = "ctrl+."
+type = "plugin_action"
+command = "iurysza.mosaic.next-idle-agent"
+description = "newest"
+
+[[keys.command]]
+key = "ctrl+,"
+type = "plugin_action"
+command = "iurysza.mosaic.oldest-idle-agent"
+description = "oldest"
+`
+
+    await Bun.write(configPath, text)
+
+    const checked = Bun.spawn([bin, "config", "check"], {
+      env: {
+        ...sandbox.env,
+        HERDR_BIN_PATH: bin,
+        HERDR_CONFIG_PATH: configPath,
+        PATH: `${dirname(bin)}:/usr/bin:/bin`,
+      },
+      stdout: "pipe",
+      stderr: "pipe",
+    })
+
+    const stdout = await new Response(checked.stdout).text()
+    const stderr = await new Response(checked.stderr).text()
+    const code = await checked.exited
+
+    expect(code, `${stdout}\n${stderr}`).toBe(0)
+  }, 20_000)
 })
