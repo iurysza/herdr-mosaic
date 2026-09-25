@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process"
-import { mkdtempSync, writeFileSync } from "node:fs"
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -8,7 +8,15 @@ import { Effect } from "effect"
 
 import { PLUGIN_ID } from "../../src/ids.ts"
 import { PluginPaths, pathsFromEnv } from "../../src/runtime/paths.ts"
-import { readSocketGeneration, refreshWorkerArgs, resolveSocketPath, startRefreshWorker } from "../../src/runtime/worker.ts"
+import {
+  readSocketGeneration,
+  refreshWorkerArgs,
+  resolveSocketPath,
+  startRefreshWorker,
+  workerHeartbeatPath,
+  workerIsStale,
+  workerRecordPath,
+} from "../../src/runtime/worker.ts"
 import { FakeHerdr } from "../support/fake-herdr.ts"
 
 function waitExit(child: ReturnType<typeof spawn>): Promise<{
@@ -30,6 +38,17 @@ function waitExit(child: ReturnType<typeof spawn>): Promise<{
 }
 
 describe("worker ownership", () => {
+  test("worker age follows the current PID, not an old heartbeat", () => {
+    const now = 1_000_000
+    const old = { pid: 1, published_at: (now - 100_000) / 1000 }
+    const recent = { pid: 2, started_at: (now - 5_000) / 1000 }
+
+    expect(workerIsStale(recent, old, now)).toBe(false)
+    expect(workerIsStale(recent, { pid: 2, published_at: (now - 91_000) / 1000 }, now)).toBe(false)
+    expect(workerIsStale({ pid: 2, started_at: (now - 100_000) / 1000 }, old, now)).toBe(true)
+    expect(workerIsStale(undefined, old, now)).toBe(true)
+  })
+
   test("compiled binaries omit the source path from worker argv", () => {
     expect(refreshWorkerArgs("/usr/bin/bun", "/plugin/src/cli.ts", "gen")).toEqual([
       "--no-env-file",
@@ -66,6 +85,103 @@ describe("worker ownership", () => {
     first.kill("SIGKILL")
     await waitExit(first)
   }, 10_000)
+
+  test("a separate watchdog replaces a stale worker in an isolated socket", async () => {
+    const stateDir = mkdtempSync(join(tmpdir(), "mosaic-watchdog-"))
+    const socketPath = join(stateDir, "herdr.sock")
+    const fake = new FakeHerdr(socketPath)
+    const pluginRoot = join(import.meta.dir, "..", "..")
+    const cliPath = join(pluginRoot, "src", "cli.ts")
+    const execPath = process.env.MOSAIC_TEST_REFRESH_BIN ?? process.execPath
+
+    fake.on("plugin.list", () => ({
+      plugins: [{ plugin_id: PLUGIN_ID, enabled: true, plugin_root: pluginRoot }],
+    }))
+    fake.on("agent.list", () => ({ agents: [] }))
+    fake.on("tab.list", () => ({ tabs: [] }))
+    await fake.listen()
+
+    writeFileSync(join(stateDir, "state.json"), JSON.stringify({ sidebar_installed: true }))
+
+    const paths = PluginPaths.of(pathsFromEnv({
+      HOME: stateDir,
+      HERDR_PLUGIN_STATE_DIR: stateDir,
+      HERDR_SOCKET_PATH: socketPath,
+      HERDR_PLUGIN_ROOT: pluginRoot,
+    }))
+
+    const key = readSocketGeneration(socketPath)
+    let workerPid = 0
+
+    try {
+      workerPid = await Effect.runPromise(
+        startRefreshWorker(execPath, cliPath, {
+          env: { MOSAIC_TEST_ISOLATED: "" },
+        }).pipe(Effect.provideService(PluginPaths, paths)),
+      )
+      expect(workerPid).toBeGreaterThan(0)
+
+      const heartbeatPath = workerHeartbeatPath(stateDir, key)
+      const recordPath = workerRecordPath(stateDir, key)
+      let firstPublished = false
+
+      for (let attempt = 0; attempt < 50; attempt++) {
+        try {
+          firstPublished = JSON.parse(readFileSync(heartbeatPath, "utf8")).pid === workerPid
+        } catch {
+          // The first round has not completed yet.
+        }
+
+        if (firstPublished) break
+        await Bun.sleep(100)
+      }
+
+      expect(firstPublished).toBe(true)
+      const stale = (Date.now() - 120_000) / 1000
+
+      writeFileSync(recordPath, JSON.stringify({ pid: workerPid, started_at: stale }))
+      writeFileSync(heartbeatPath, JSON.stringify({ pid: workerPid, published_at: stale }))
+      let replacement = 0
+
+      for (let attempt = 0; attempt < 150; attempt++) {
+        await Bun.sleep(100)
+
+        try {
+          const record = JSON.parse(readFileSync(recordPath, "utf8"))
+
+          if (record.pid !== workerPid) {
+            replacement = record.pid
+            break
+          }
+        } catch {
+          // The watchdog may still be starting.
+        }
+      }
+
+      expect(replacement).toBeGreaterThan(0)
+
+      workerPid = replacement
+      expect(fake.unexpected).toEqual([])
+    } finally {
+      try {
+        const record = JSON.parse(readFileSync(workerRecordPath(stateDir, key), "utf8"))
+
+        process.kill(record.pid, "SIGTERM")
+      } catch {
+        // The worker did not finish its first round.
+      }
+
+      if (workerPid > 0) {
+        try {
+          process.kill(workerPid, "SIGTERM")
+        } catch {
+          // The watchdog already stopped the worker.
+        }
+      }
+
+      await fake.close()
+    }
+  }, 25_000)
 
   test("generation uses realpath, device, inode, and ctime", async () => {
     const stateDir = mkdtempSync(join(tmpdir(), "mosaic-worker-"))

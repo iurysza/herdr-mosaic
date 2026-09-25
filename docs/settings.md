@@ -94,9 +94,11 @@ Mosaic publishes tab titles in the space's color. If a tab has no label, it uses
 
 Elapsed labels show time since launch or the latest observed `working` to `idle` or `done` transition. Focus changes do not reset them. Mosaic uses receipt time for launch because Herdr's detect and status events have no timestamp.
 
-Setup starts a detached Mosaic worker. Herdr's startup hook starts it again after a server restart. A file lock permits one worker per socket generation. It refreshes every 30 seconds and expires elapsed labels after 45 seconds without a successful update. Relevant tab and agent events also refresh labels and restart a missing worker.
+Setup starts a detached Mosaic worker and a separate watchdog. Herdr's startup hook starts them again after a server restart. File locks permit one of each per socket generation. The worker refreshes every 30 seconds. Herdr expires elapsed labels after 45 seconds without a successful update. Relevant tab and agent events also refresh labels and restart missing processes.
 
-The worker exits when its server socket disappears or changes, the plugin is disabled or unlinked, or the sidebar is uninstalled. It checks these conditions each round, so exit can take up to one refresh interval plus an in-flight RPC. It does not install launchd or systemd units. `doctor` reports the last successful round; errors go to `refresh.log` in the plugin state directory. To restart a failed worker manually, run `dist/mosaic reconcile` from the installed checkout.
+The watchdog checks the worker's last successful round every 10 seconds. After 90 seconds without a round, it verifies the worker PID and command, stops that worker, and starts a replacement. A newly started worker gets 90 seconds for its first round. The watchdog cannot prevent the elapsed column from briefly disappearing during a stall; it restores updates without waiting for another Herdr event.
+
+Both processes exit when the server socket changes, the plugin is disabled or unlinked, or the sidebar is uninstalled. The worker checks these conditions each round, so exit can take up to one refresh interval plus an in-flight RPC. Neither process installs a launchd or systemd unit. `doctor` reports the last successful round; errors and watchdog restarts go to `refresh.log` in the plugin state directory. To restart them manually, stop the verified watchdog before the verified worker, then run `dist/mosaic reconcile` from the installed checkout.
 
 Mosaic owns the `agent-sidebar-title` and `agent-elapsed` metadata sources. Do not run another publisher for those tokens at the same time.
 

@@ -44,7 +44,7 @@ Advanced setup and maintenance:
 
 Internal hooks and recovery:
   reconcile, event, sidebar-install, sidebar-remove, picker, board, pane-move,
-  elapsed-publish, refresh-worker
+  elapsed-publish, refresh-worker, refresh-watchdog
 
 Existing command names and action IDs remain supported. See docs/actions.md.
 CLI aliases do not add Herdr menu entries. Action invocation accepts no CLI args.
@@ -105,6 +105,7 @@ export const COMMANDS = [
   "state",
   "elapsed-publish",
   "refresh-worker",
+  "refresh-watchdog",
 ] as const
 
 export type CommandName = (typeof COMMANDS)[number]

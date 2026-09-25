@@ -212,9 +212,9 @@ Other advanced direct commands remain available: `marker`, `announce`, `view-cle
 
 ## Internal hooks and recovery
 
-`reconcile`, `event`, `sidebar-install`, `sidebar-remove`, `picker`, `board`, `elapsed-publish`, and `refresh-worker` support startup, popup entrypoints, publication, and cleanup. They are not new menu actions.
+`reconcile`, `event`, `sidebar-install`, `sidebar-remove`, `picker`, `board`, `elapsed-publish`, `refresh-worker`, and `refresh-watchdog` support startup, popup entrypoints, publication, and cleanup. They are not new menu actions.
 
-For a failed refresh worker, use `dist/mosaic reconcile` as documented in [sidebar refresh](./settings.md#sidebar-refresh). `refresh-worker` requires the socket generation supplied by startup; do not start another publisher manually.
+For a failed refresh worker, use `dist/mosaic reconcile` as documented in [sidebar refresh](./settings.md#sidebar-refresh). Both refresh commands require the socket generation supplied by startup; do not start another publisher manually.
 
 ## CLI compatibility
 

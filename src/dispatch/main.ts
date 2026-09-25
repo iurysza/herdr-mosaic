@@ -59,7 +59,7 @@ import {
   WrongPluginId,
 } from "../runtime/errors.ts"
 import { PluginPaths } from "../runtime/paths.ts"
-import { runRefreshWorker } from "../runtime/worker.ts"
+import { runRefreshWatchdog, runRefreshWorker } from "../runtime/worker.ts"
 
 export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
   if (wantsHelp(argv)) {
@@ -295,17 +295,19 @@ export const runCommand = Effect.fnUntraced(function*(argv: readonly string[]) {
     return yield* runBoard(rewritten.slice(1))
   }
 
-  if (command === "refresh-worker") {
+  if (command === "refresh-worker" || command === "refresh-watchdog") {
     const key = rewritten[1]
 
     if (rewritten.length !== 2 || key === undefined || key === "") {
       return yield* new CommandFailed({
         command,
-        message: "refresh-worker requires the socket generation from startup",
+        message: `${command} requires the socket generation from startup`,
       })
     }
 
-    const code = yield* runRefreshWorker(key)
+    const code = command === "refresh-worker"
+      ? yield* runRefreshWorker(key)
+      : yield* runRefreshWatchdog(key)
 
     return { code, stdout: "", stderr: "" } as const
   }
