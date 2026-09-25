@@ -9,6 +9,18 @@
 - Clarify menu labels while preserving every existing action ID and binding. No new menu entries or binding migration.
 - Make `-h` and `--help` print help without running a command, including after the command name.
 
+## [0.6.0](https://github.com/iurysza/herdr-mosaic/compare/v0.5.1...v0.6.0) (2026-09-25)
+
+
+### Features
+
+* **navigation:** add activity-aware agent cycling and shortcuts ([d878ebb](https://github.com/iurysza/herdr-mosaic/commit/d878ebb3a0f80c45dab5c1ac566502c3527bc088))
+
+
+### Bug Fixes
+
+* **sidebar:** recover stalled elapsed refresh workers ([0324f06](https://github.com/iurysza/herdr-mosaic/commit/0324f060b7f50bccd66970606988e397fe646a5c))
+
 ## [0.5.1](https://github.com/iurysza/herdr-mosaic/compare/v0.5.0...v0.5.1) (2026-09-23)
 
 

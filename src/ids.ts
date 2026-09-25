@@ -1,6 +1,6 @@
 export const PLUGIN_ID = "iurysza.mosaic"
 
-export const PLUGIN_VERSION = "0.5.1" // x-release-please-version
+export const PLUGIN_VERSION = "0.6.0" // x-release-please-version
 
 export const PLUGIN_NAME = "Mosaic"
 
