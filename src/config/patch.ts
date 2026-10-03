@@ -461,9 +461,10 @@ export function detectConflicts(
 
     const actual = doc.get(dotted(key))
 
-    if (isMissing(actual)) {
-      out.push({ key, expected, actual: undefined })
-    } else if (!tomlEqual(actual, expected)) {
+    // A missing key is not a user edit: a regenerated config simply dropped it.
+    if (isMissing(actual)) continue
+
+    if (!tomlEqual(actual, expected)) {
       out.push({ key, expected, actual })
     }
   }

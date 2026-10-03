@@ -1,4 +1,4 @@
-import { closeSync, fsyncSync, mkdirSync, openSync, renameSync, writeSync } from "node:fs"
+import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, realpathSync, renameSync, writeSync } from "node:fs"
 import { basename, dirname, join } from "node:path"
 
 import { Clock, Duration, Effect } from "effect"
@@ -66,7 +66,9 @@ export function pluginLockPath(stateDir: string, name = "plugin.lock"): string {
   return join(stateDir, name)
 }
 
-export function atomicWrite(path: string, text: string): void {
+export function atomicWrite(requested: string, text: string): void {
+  // Write through a symlink (e.g. a generated config) instead of replacing it.
+  const path = existsSync(requested) ? realpathSync(requested) : requested
   const directory = dirname(path) || "."
   mkdirSync(directory, { recursive: true })
   const tmp = join(directory, `.${basename(path)}.tmp.${process.pid}`)

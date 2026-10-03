@@ -416,6 +416,12 @@ describe("backup and conflicts", () => {
     expect(conflicts[0]?.actual).toBe("#f5c2e7")
   })
 
+  test("a missing key is not a conflict", () => {
+    const doc = new TomlDoc("[theme]\nname = \"x\"\n")
+
+    expect(detectConflicts(doc, [["theme.custom.accent", "#111111"]])).toEqual([])
+  })
+
   test("no conflict when values match", () => {
     const doc = new TomlDoc(EXISTING_THEME)
 

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process"
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, lstatSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -28,6 +28,19 @@ function waitExit(child: ReturnType<typeof spawn>): Promise<{
 }
 
 describe("atomic writes", () => {
+  test("writes through a symlink and keeps it", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mosaic-symlink-"))
+    const target = join(dir, "target.toml")
+    const link = join(dir, "link.toml")
+
+    writeFileSync(target, "old")
+    symlinkSync(target, link)
+    atomicWrite(link, "new")
+
+    expect(lstatSync(link).isSymbolicLink()).toBe(true)
+    expect(readFileSync(target, "utf8")).toBe("new")
+  })
+
   test("a leftover tmp file does not change the live JSON", () => {
     const root = mkdtempSync(join(tmpdir(), "mosaic-atomic-"))
     const path = join(root, "state.json")
