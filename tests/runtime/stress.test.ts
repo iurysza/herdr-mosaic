@@ -226,6 +226,7 @@ describe("stress integration boundaries", () => {
     })
     fake.on("workspace.list", () => ({ workspaces: [] }))
     fake.on("tab.list", () => ({ tabs: [] }))
+    fake.on("pane.list", () => ({ panes: [] }))
     await fake.listen()
 
     writeFileSync(

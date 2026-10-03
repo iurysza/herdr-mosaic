@@ -99,6 +99,7 @@ describe("worker ownership", () => {
     }))
     fake.on("agent.list", () => ({ agents: [] }))
     fake.on("tab.list", () => ({ tabs: [] }))
+    fake.on("pane.list", () => ({ panes: [] }))
     await fake.listen()
 
     writeFileSync(join(stateDir, "state.json"), JSON.stringify({ sidebar_installed: true }))

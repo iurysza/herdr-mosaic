@@ -74,6 +74,7 @@ function attachRpc(fake: FakeHerdr) {
   fake.on("client.window_title.clear", () => ({}))
   fake.on("pane.get", () => ({ pane: { tokens: {} } }))
   fake.on("tab.list", () => ({ tabs: [] }))
+  fake.on("pane.list", () => ({ panes: [] }))
 }
 
 function lifecycleEnv() {

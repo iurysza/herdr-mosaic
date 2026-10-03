@@ -8,7 +8,7 @@ import {
   fitWidth,
   formatElapsed,
 } from "../../src/agents/elapsed.ts"
-import { titleTokens } from "../../src/agents/sidebar-publish.ts"
+import { stripRenameMarker, titleTokens } from "../../src/agents/sidebar-publish.ts"
 import { slotForColour } from "../../src/spaces/identity.ts"
 
 describe("elapsed labels", () => {
@@ -78,6 +78,32 @@ describe("title tokens", () => {
     expect(Object.keys(tokens).length).toBe(12)
     expect(tokens.title_azure).toBe("Fix auth")
     expect(Object.values(tokens).filter((value) => value !== null).length).toBe(1)
+  })
+
+  test("pane label wins over the shared tab label", () => {
+    const tabs = { "w1:t1": "Fix keybindings" }
+    const panes = { "w1:p1": "Fix keybindings", "w1:p2": "Review PR" }
+
+    const first = titleTokens({ pane_id: "w1:p1", tab_id: "w1:t1" }, tabs, {}, panes)
+    const second = titleTokens({ pane_id: "w1:p2", tab_id: "w1:t1" }, tabs, {}, panes)
+
+    expect(Object.values(first).includes("Fix keybindings")).toBe(true)
+    expect(Object.values(second).includes("Review PR")).toBe(true)
+  })
+
+  test("unnamed pane falls back to the tab label", () => {
+    const tokens = titleTokens({ pane_id: "w1:p1", tab_id: "w1:t1" }, { "w1:t1": "Fix auth" }, {}, { "w1:p1": "" })
+
+    expect(Object.values(tokens).includes("Fix auth")).toBe(true)
+  })
+
+  test("strips the Smart Rename progress marker", () => {
+    expect(stripRenameMarker("\u2063◆ Review PR")).toBe("Review PR")
+    expect(stripRenameMarker("Review PR")).toBe("Review PR")
+
+    const tokens = titleTokens({ pane_id: "p1" }, {}, {}, { p1: "\u2063◇ Review PR" })
+
+    expect(Object.values(tokens).includes("Review PR")).toBe(true)
   })
 
   test("falls back through name fields and pane id", () => {

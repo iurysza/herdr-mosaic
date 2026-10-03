@@ -12,7 +12,7 @@ import {
 } from "../runtime/plugin-log.ts"
 import type { PluginPathValues } from "../runtime/paths.ts"
 import { PluginPaths } from "../runtime/paths.ts"
-import { listAgents, listTabs, rpcCall, type JsonObject } from "../runtime/rpc.ts"
+import { listAgents, listPanes, listTabs, rpcCall, type JsonObject } from "../runtime/rpc.ts"
 import { load, type PluginState } from "../state/store.ts"
 import { PALETTE, slotForColour } from "../spaces/identity.ts"
 import { elapsedLabelFor, elapsedLabels } from "./elapsed.ts"
@@ -55,12 +55,28 @@ function tokensObject(pairs: ReadonlyArray<readonly [string, Json]>): JsonObject
   return decoded.success
 }
 
-export function titleTokens(agent: JsonObject, tabs: JsonObject, identities: JsonObject): JsonObject {
+// Smart Rename prefixes a label with an invisible marker and a frame glyph
+// while it renames. Show the name underneath instead of the marker.
+const RENAME_MARKER = /^\u2063[◇◈◆] ?/u
+
+export function stripRenameMarker(label: string): string {
+  return label.replace(RENAME_MARKER, "")
+}
+
+export function titleTokens(
+  agent: JsonObject,
+  tabs: JsonObject,
+  identities: JsonObject,
+  panes: JsonObject = {},
+): JsonObject {
   const tabId = Predicate.isString(agent.tab_id) ? agent.tab_id : undefined
   const workspaceId = Predicate.isString(agent.workspace_id) ? agent.workspace_id : undefined
   const paneId = Predicate.isString(agent.pane_id) ? agent.pane_id : ""
+  const paneLabel = panes[paneId]
 
+  // Each agent pane has its own label; the tab label is shared by every pane in it.
   const title = firstText(
+    Predicate.isString(paneLabel) ? stripRenameMarker(paneLabel) : undefined,
     tabId === undefined ? undefined : tabs[tabId],
     agent.terminal_title_stripped,
     agent.name,
@@ -96,12 +112,28 @@ function tabLabels(tabs: readonly JsonObject[]): JsonObject {
   return tokensObject(pairs)
 }
 
+function paneLabels(panes: readonly JsonObject[]): JsonObject {
+  const pairs: Array<readonly [string, Json]> = []
+
+  for (const pane of panes) {
+    const id = pane.pane_id
+    const label = pane.label
+
+    if (!Predicate.isString(id) || id === "" || !Predicate.isString(label)) continue
+
+    pairs.push([id, label])
+  }
+
+  return tokensObject(pairs)
+}
+
 export const publishSidebar = Effect.fnUntraced(function*(
   state: PluginState,
   agents?: readonly JsonObject[],
 ) {
   const live = agents ?? (yield* listAgents())
   const tabs = tabLabels(yield* listTabs())
+  const panes = paneLabels(yield* listPanes())
   const now = Math.floor((yield* Clock.currentTimeMillis) / 1000)
   const paneIds: string[] = []
 
@@ -121,7 +153,7 @@ export const publishSidebar = Effect.fnUntraced(function*(
     yield* rpcCall("pane.report_metadata", {
       pane_id: paneId,
       source: TITLE_SOURCE,
-      tokens: titleTokens(agent, tabs, jsonObject(state.identities)),
+      tokens: titleTokens(agent, tabs, jsonObject(state.identities), panes),
     })
 
     yield* rpcCall("pane.report_metadata", {

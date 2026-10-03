@@ -89,6 +89,7 @@ describe("elapsed-publish CLI", () => {
       agents: [{ pane_id: "p1", workspace_id: "w1", tab_id: "t1" }],
     }))
     fake.on("tab.list", () => ({ tabs: [{ tab_id: "t1", label: "Fix auth" }] }))
+    fake.on("pane.list", () => ({ panes: [] }))
     fake.on("pane.report_metadata", () => ({}))
     fake.on("workspace.list", () => ({ workspaces: [] }))
 
