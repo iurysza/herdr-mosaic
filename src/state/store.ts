@@ -40,6 +40,7 @@ export interface PluginState {
   sidebar_backup: Json
   ownership_baseline: Json
   last_written: MutableJsonObject
+  config_realpath: Json
   last_tint: Json
   window_title_set: boolean
   keybind_installed: boolean
@@ -79,6 +80,7 @@ export function defaultState(): PluginState {
     sidebar_backup: null,
     ownership_baseline: null,
     last_written: {},
+    config_realpath: null,
     last_tint: null,
     window_title_set: false,
     keybind_installed: false,

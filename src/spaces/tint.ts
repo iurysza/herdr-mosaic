@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs"
 import { join } from "node:path"
 
 import { Clock, Effect, Predicate, Result, Schema } from "effect"
@@ -308,6 +309,14 @@ export const clearWindowTitle = Effect.fnUntraced(function*(
   state.window_title_set = false
 })
 
+function resolvedConfigPath(path: string): string | undefined {
+  try {
+    return realpathSync(path)
+  } catch {
+    return undefined
+  }
+}
+
 export const applyTint = Effect.fnUntraced(function*(
   paths: PluginPathValues,
   output: CapturedOutput,
@@ -335,6 +344,24 @@ export const applyTint = Effect.fnUntraced(function*(
 
   if (lastTintMatches(state.last_tint, workspaceId, values) && docMatchesValues(doc, values)) {
     return { status: "noop", values } satisfies TintApplyResult
+  }
+
+  const realPath = resolvedConfigPath(paths.herdrConfigPath)
+  const recordedPath = Predicate.isString(state.config_realpath) ? state.config_realpath : undefined
+
+  // A different resolved path means the config file was replaced wholesale (for
+  // example a generated bundle was repointed). Treat it as regenerated: the old
+  // originals and last-written values describe a file that no longer exists.
+  if (realPath !== undefined && recordedPath !== undefined && realPath !== recordedPath) {
+    dropLastWritten(state, backupKeyNames(), new Set())
+    state.theme_backup = null
+    state.last_tint = null
+
+    yield* pluginLog(
+      paths,
+      output,
+      `config file was regenerated (${recordedPath} -> ${realPath}); re-capturing theme originals`,
+    )
   }
 
   const conflicts = detectConflicts(doc, lastWrittenPairs(state.last_written), managed)
@@ -380,6 +407,8 @@ export const applyTint = Effect.fnUntraced(function*(
   }
 
   mergeThemeLastWritten(state, values)
+
+  if (realPath !== undefined) state.config_realpath = realPath
 
   state.last_tint = {
     workspace_id: workspaceId,

@@ -1,5 +1,5 @@
 import { join } from "node:path"
-import { readFileSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, renameSync, symlinkSync, writeFileSync } from "node:fs"
 
 import { describe, expect, test } from "bun:test"
 import { Effect } from "effect"
@@ -239,6 +239,99 @@ describe("tint CLI", () => {
     } finally {
       await fake.close()
     }
+  })
+
+  describe("regenerated config", () => {
+    // Mirrors an apply that repoints config.toml at a new generated bundle.
+    function linkedEnv(first: string) {
+      const ctx = tintEnv(first)
+      const dir = join(ctx.sandbox.root, "bundles")
+
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(join(dir, "one.toml"), first)
+      renameSync(ctx.configPath, `${ctx.configPath}.orig`)
+      symlinkSync(join(dir, "one.toml"), ctx.configPath)
+
+      return {
+        ...ctx,
+        dir,
+        regenerate(name: string, text: string) {
+          writeFileSync(join(dir, name), text)
+          symlinkSync(join(dir, name), join(dir, "tmp-link"))
+          renameSync(join(dir, "tmp-link"), ctx.configPath)
+        },
+      }
+    }
+
+    const NEXT = `${EXISTING_THEME}`.replace("#f5c2e7", "#7aa2f7")
+
+    test("repointed config with reset value is taken over and originals re-captured", async () => {
+      const ctx = linkedEnv(EXISTING_THEME)
+
+      await ctx.fake.listen()
+
+      try {
+        expect((await run(["tint-enable"], ctx.env)).code).toBe(0)
+
+        ctx.regenerate("two.toml", NEXT)
+
+        const second = await run(["tint-enable"], ctx.env)
+
+        expect(second.stderr).not.toContain("modified outside")
+        expect(loadDoc(ctx.configPath).get(["theme", "custom", "accent"])).toBe("#4f8cff")
+
+        const state = load(ctx.statePath)
+        const backup = JSON.stringify(state.theme_backup)
+
+        expect(backup).toContain("#7aa2f7")
+        expect(backup).not.toContain("#f5c2e7")
+      } finally {
+        await ctx.fake.close()
+      }
+    })
+
+    test("same path with an edited value still conflicts", async () => {
+      const ctx = linkedEnv(EXISTING_THEME)
+
+      await ctx.fake.listen()
+
+      try {
+        expect((await run(["tint-enable"], ctx.env)).code).toBe(0)
+
+        const target = join(ctx.dir, "one.toml")
+        const doc = loadDoc(target)
+
+        doc.set(["theme", "custom", "accent"], "#123456")
+        writeFileSync(target, doc.dumps())
+
+        const blocked = await run(["tint-enable"], ctx.env)
+
+        expect(blocked.stdout).toContain("conflict for w1")
+        expect(blocked.stderr).toContain("modified outside")
+      } finally {
+        await ctx.fake.close()
+      }
+    })
+
+    test("uninstall-style restore after regeneration yields the new file's values", async () => {
+      const ctx = linkedEnv(EXISTING_THEME)
+
+      await ctx.fake.listen()
+
+      try {
+        expect((await run(["tint-enable"], ctx.env)).code).toBe(0)
+        ctx.regenerate("two.toml", NEXT)
+
+        const retaken = await run(["tint-enable"], ctx.env)
+
+        expect(retaken.stdout).toContain("applied for w1")
+        expect(readFileSync(ctx.configPath, "utf8")).not.toBe(NEXT)
+        expect((await run(["tint-disable"], ctx.env)).code).toBe(0)
+        expect(readFileSync(ctx.configPath, "utf8")).toBe(NEXT)
+      } finally {
+        await ctx.fake.close()
+      }
+    })
   })
 
   test("theme-restore is tint-disable", async () => {

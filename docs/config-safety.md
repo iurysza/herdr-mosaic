@@ -10,6 +10,8 @@ Mosaic edits selected keys in Herdr's `config.toml`. It does not regenerate the 
 
 Mosaic detects manual changes to tracked theme and sidebar values. It leaves conflicting values alone unless the command supports `--force` and you pass it. Review the conflict before forcing a write.
 
+Mosaic records the resolved real path of `config.toml` after each tint write. If that path changes (for example a generated config bundle is repointed), Mosaic treats the file as regenerated: it re-captures the theme originals from the new file, drops its last-written record for those keys, and takes them over without a conflict. The same path with a different value is still a manual edit.
+
 ## What Mosaic changes
 
 Mosaic owns the shared spaces and agents row templates, its managed picker, pane-move, and pane-promotion bindings, its agent view, and its metadata. Any compatible action bindings changed during setup have their original text recorded for restoration. When tint is enabled, it writes the accent and selected surface colors. Depending on intensity, it also tints borders and separators.

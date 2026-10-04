@@ -362,6 +362,7 @@ const uninstallLocked = Effect.fnUntraced(function*(
   state.tint_enabled = false
   state.last_tint = null
   state.last_written = {}
+  state.config_realpath = null
   storeActionRenames(state, remaining)
   save(statePath(paths.stateDir), state)
   yield* pluginLog(paths, output, `uninstall complete: ${notes.join("; ")}`)
