@@ -9,6 +9,20 @@
 - Clarify menu labels while preserving every existing action ID and binding. No new menu entries or binding migration.
 - Make `-h` and `--help` print help without running a command, including after the command name.
 
+## [0.7.0](https://github.com/iurysza/herdr-mosaic/compare/v0.6.0...v0.7.0) (2026-10-05)
+
+
+### Features
+
+* **sidebar:** title agent rows with the pane label ([c38cc97](https://github.com/iurysza/herdr-mosaic/commit/c38cc977448495f2b16bf098cec200ff008f0e2b))
+
+
+### Bug Fixes
+
+* **bench:** answer pane.list before the refresh heartbeat ([#19](https://github.com/iurysza/herdr-mosaic/issues/19)) ([9e896e8](https://github.com/iurysza/herdr-mosaic/commit/9e896e8eb1df688f704c23353b90b72850429eed))
+* **config:** treat missing keys as no conflict and write through symlinks ([6fde294](https://github.com/iurysza/herdr-mosaic/commit/6fde29408c6edadbf2e055ea545e01f60a23b04e))
+* **tint:** treat a replaced config file as regenerated ([2bb6601](https://github.com/iurysza/herdr-mosaic/commit/2bb660147c3653cb8e5a9b282966d73424906527))
+
 ## [0.6.0](https://github.com/iurysza/herdr-mosaic/compare/v0.5.1...v0.6.0) (2026-09-25)
 
 
