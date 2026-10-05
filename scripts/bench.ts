@@ -204,6 +204,25 @@ function cpuSeconds(pid: number, ticksPerSecond: number): ProcCpu | undefined {
   }
 }
 
+function readOptionalText(path: string): string {
+  try {
+    return readFileSync(path, "utf8")
+  } catch {
+    return ""
+  }
+}
+
+function heartbeatMissed(
+  label: string,
+  reason: string,
+  logPath: string,
+  pluginLogPath: string,
+): Error {
+  return new Error(
+    `${label}: ${reason}\n${readOptionalText(logPath)}${readOptionalText(pluginLogPath)}`,
+  )
+}
+
 function decodeHeartbeat(raw: string): typeof WorkerHeartbeat.Type {
   const parsed: unknown = JSON.parse(raw)
   const decoded = Schema.decodeUnknownResult(WorkerHeartbeat)(parsed)
@@ -247,6 +266,7 @@ function attachPublishHandlers(fake: FakeHerdr): void {
     agents: [{ pane_id: "w1:p1", workspace_id: "w1", name: "bench" }],
   }))
   fake.on("tab.list", () => ({ tabs: [] }))
+  fake.on("pane.list", () => ({ panes: [] }))
   fake.on("pane.report_metadata", () => ({}))
   fake.on("workspace.list", () => ({ workspaces: [] }))
 }
@@ -293,6 +313,7 @@ async function sampleWorker(
   }
 
   const started = performance.now()
+  const pluginLogPath = join(stateDir, "plugin.log")
   let peakRss = 0
   let heartbeatRaw: string | undefined
 
@@ -306,14 +327,35 @@ async function sampleWorker(
         heartbeatRaw = readFileSync(heartbeatPath, "utf8")
         break
       } catch {
+        if (fake.unexpected.length > 0) {
+          throw heartbeatMissed(
+            label,
+            `unhandled RPC ${fake.unexpected.join(", ")} before the first heartbeat`,
+            logPath,
+            pluginLogPath,
+          )
+        }
+
+        if (child.exitCode !== null || child.signalCode !== null) {
+          throw heartbeatMissed(
+            label,
+            `worker exited ${child.exitCode ?? child.signalCode} before the first heartbeat`,
+            logPath,
+            pluginLogPath,
+          )
+        }
+
         await sleep(20)
       }
     }
 
     if (heartbeatRaw === undefined) {
-      const logText = readFileSync(logPath, "utf8")
-
-      throw new Error(`${label}: worker heartbeat missing after ${workerWaitMs}ms\n${logText}`)
+      throw heartbeatMissed(
+        label,
+        `worker heartbeat missing after ${workerWaitMs}ms`,
+        logPath,
+        pluginLogPath,
+      )
     }
 
     const heartbeat = decodeHeartbeat(heartbeatRaw)
@@ -363,7 +405,7 @@ async function main(): Promise<void> {
     conditions: {
       isolatedHome: true,
       path: "/usr/bin:/bin",
-      worker: "one FakeHerdr pane; sample after first heartbeat; SIGTERM; no MOSAIC_TEST_ISOLATED",
+      worker: "one FakeHerdr pane; pane.list returns no labels; sample after first heartbeat; SIGTERM; no MOSAIC_TEST_ISOLATED",
     },
     tsSourceHelp: timeCommand(
       "bun source --help",
