@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # Root Bun manifest only. Skill manifests under .agents are not application dependencies.
+  # Minor and patch updates are grouped. Majors stay ungrouped so
+  # dependabot-auto-merge can leave them for a human.
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      bun-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    groups:
+      github-actions-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
