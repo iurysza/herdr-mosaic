@@ -1,0 +1,84 @@
+name: Dependabot auto-merge
+
+# Squash-merge Dependabot pull requests after Verify succeeds.
+# Semver-major updates stay open for a human.
+#
+# main has no required status checks, so `gh pr merge --auto` would merge
+# while Verify is still running. This job waits for that workflow instead.
+# It does not check out pull request code.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  actions: read
+  checks: read
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Squash-merge after Verify succeeds
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${UPDATE_TYPE}" == "version-update:semver-major" ]]; then
+            echo "Semver-major update; leaving the pull request for a human."
+            exit 0
+          fi
+
+          echo "update-type=${UPDATE_TYPE}"
+
+          run_id=""
+          for _ in $(seq 1 60); do
+            run_id="$(
+              gh run list \
+                --workflow verify.yml \
+                --commit "${PR_SHA}" \
+                --event pull_request \
+                --limit 1 \
+                --json databaseId \
+                --jq '.[0].databaseId // empty'
+            )"
+            if [[ -n "${run_id}" ]]; then
+              break
+            fi
+            sleep 10
+          done
+
+          if [[ -z "${run_id}" ]]; then
+            echo "Verify did not start for ${PR_SHA}." >&2
+            exit 1
+          fi
+
+          head_sha="$(gh run view "${run_id}" --json headSha --jq .headSha)"
+          if [[ "${head_sha}" != "${PR_SHA}" ]]; then
+            echo "Verify run ${run_id} is for ${head_sha}, not ${PR_SHA}." >&2
+            exit 1
+          fi
+
+          echo "Watching Verify run ${run_id}"
+          gh run watch "${run_id}" --compact --exit-status --interval 15
+
+          gh pr merge "${PR_URL}" --squash --match-head-commit "${PR_SHA}"
