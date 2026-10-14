@@ -19,12 +19,12 @@
     "bench": "bun run scripts/bench.ts"
   },
   "dependencies": {
-    "effect": "4.0.0"
+    "effect": "4.0.3"
   },
   "devDependencies": {
-    "@oxlint/plugins": "1.86.0",
+    "@oxlint/plugins": "1.87.0",
     "@types/bun": "1.4.2",
-    "oxlint": "1.86.0",
+    "oxlint": "1.87.0",
     "typescript": "7.0.2"
   }
 }
