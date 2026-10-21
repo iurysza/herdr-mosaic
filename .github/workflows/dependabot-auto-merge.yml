@@ -5,7 +5,8 @@ name: Dependabot auto-merge
 #
 # main has no required status checks, so `gh pr merge --auto` would merge
 # while Verify is still running. This job waits for that workflow instead.
-# It does not check out pull request code.
+# It does not check out pull request code. Steps that run `gh` set GH_REPO
+# so the CLI can resolve the repository without a git checkout.
 
 on:
   pull_request_target:
@@ -37,6 +38,7 @@ jobs:
       - name: Squash-merge after Verify succeeds
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           PR_SHA: ${{ github.event.pull_request.head.sha }}
           UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
